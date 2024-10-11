@@ -10,5 +10,5 @@ export default defineNuxtConfig({
   experimental: {
     crossOriginPrefetch: true
   },
-  modules: ['@nuxtjs/tailwindcss', '@vueuse/nuxt', 'shadcn-nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@vueuse/nuxt', 'shadcn-nuxt', '@nuxt/icon'],
 })

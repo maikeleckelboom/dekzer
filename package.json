@@ -15,6 +15,7 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@nuxt/icon": "^1.5.6",
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@vueuse/math": "^11.1.0",
     "@vueuse/nuxt": "^11.1.0",
@@ -23,9 +24,11 @@
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "radix-vue": "^1.9.7",
+    "realtime-bpm-analyzer": "^4.0.2",
     "shadcn-nuxt": "^0.10.4",
     "typescript": "^5.6.3",
     "vue-tsc": "^2.1.6",
-    "waveform-data": "^4.5.0"
+    "waveform-data": "^4.5.0",
+    "web-audio-beat-detector": "^8.2.15"
   }
 }
