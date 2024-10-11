@@ -1,31 +1,45 @@
 <script lang="ts" setup>
 import WaveformData from 'waveform-data'
 import { analyze } from 'web-audio-beat-detector'
-import { type IAudioMetadata, parseWebStream } from 'music-metadata'
+import {
+	type IAudioMetadata,
+	type ICommonTagsResult,
+	type IFormat,
+	type IPicture,
+	parseWebStream,
+	selectCover
+} from 'music-metadata'
+import type { Track } from '~~/layers/track/types'
+import { Button } from '~~/layers/ui/components/button'
 
 definePageMeta({
 	title: 'Dekzer'
 })
 
 const audioContext = shallowRef<AudioContext | null>(null)
+const trackFile = shallowRef<File | null>(null)
+const trackFileUrl = shallowRef<string | null>(null)
+const trackTempo = shallowRef<number | null>(null)
+const trackWaveformData = shallowRef<WaveformData | null>(null)
+const trackMetadata = shallowRef<IAudioMetadata | null>(null)
+
+function clearState() {
+	trackFile.value = null
+	trackFileUrl.value = null
+	trackWaveformData.value = null
+	trackMetadata.value = null
+	trackTempo.value = null
+	track.value = null
+}
 
 onMounted(() => {
 	audioContext.value = new AudioContext()
 })
-const trackFile = shallowRef<File | null>(null)
-const trackUrl = shallowRef<string | null>(null)
 
-const trackTempo = ref<number | null>(null)
-const trackMetadata = shallowRef<IAudioMetadata | null>(null)
-const trackWaveformData = shallowRef<WaveformData | null>(null)
-
-function clearState() {
-	trackFile.value = null
-	trackUrl.value = null
-	trackWaveformData.value = null
-	trackMetadata.value = null
-	trackTempo.value = null
-}
+onUnmounted(() => {
+	URL.revokeObjectURL(trackFileUrl.value)
+	clearState()
+})
 
 function onFileChange(event: Event) {
 	clearState()
@@ -33,13 +47,9 @@ function onFileChange(event: Event) {
 		const { files: [file] } = event.target as HTMLInputElement
 		if (!file) return
 		trackFile.value = file
-		trackUrl.value = URL.createObjectURL(file)
+		trackFileUrl.value = URL.createObjectURL(file)
 	})
 }
-
-onUnmounted(() => {
-	URL.revokeObjectURL(trackUrl.value)
-})
 
 async function fetchMetadata(url, file) {
 	const response = await fetch(url, {
@@ -52,13 +62,13 @@ async function fetchMetadata(url, file) {
 	})
 }
 
-async function fetchBuffer(url: string): Promise<ArrayBuffer> {
+async function fetchArrayBuffer(url: string): Promise<ArrayBuffer> {
 	const response = await fetch(url)
 	return await response.arrayBuffer()
 }
 
 async function fetchWaveform(url: string, context: AudioContext): Promise<WaveformData> {
-	const arrayBuffer = await fetchBuffer(url)
+	const arrayBuffer = await fetchArrayBuffer(url)
 	const options = {
 		audio_context: context,
 		array_buffer: arrayBuffer,
@@ -72,21 +82,20 @@ async function fetchWaveform(url: string, context: AudioContext): Promise<Wavefo
 }
 
 async function getAudioBuffer(url: string, context: AudioContext): Promise<AudioBuffer> {
-	const freshBuffer = await fetchBuffer(url)
+	const freshBuffer = await fetchArrayBuffer(url)
 	return await context.decodeAudioData(freshBuffer)
 }
 
-async function getTempo(url: string, context: AudioContext, options = { minTempo: 150, maxTempo: 240 }) {
+async function getTempo(url: string, context: AudioContext, options = { minTempo: 60, maxTempo: 220 }) {
 	const buffer = await getAudioBuffer(url, context)
 	const { minTempo, maxTempo } = options
-	return await analyze(buffer, { minTempo, maxTempo })
+	return await analyze(buffer, { minTempo, maxTempo }) ?? null
 }
 
-whenever(logicAnd(audioContext, trackFile, trackUrl), async () => {
+whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 	const context = unref(audioContext)!
 	const file = unref(trackFile)!
-	const url = unref(trackUrl)!
-
+	const url = unref(trackFileUrl)!
 	try {
 		const [metadata, waveform, tempo] = await Promise.all([
 			fetchMetadata(url, file),
@@ -101,20 +110,47 @@ whenever(logicAnd(audioContext, trackFile, trackUrl), async () => {
 	}
 })
 
-const coverSrc = computed(() => {
-	const picture = trackMetadata.value?.common.picture
-	if (picture && picture.length) {
-		console.log('picture', picture)
-		const blob = new Blob([picture[0].data], { type: picture[0].format })
+const track = shallowRef<Partial<Track> | null>(null)
 
-		return URL.createObjectURL(blob)
+function getTrackPictureUrl(picture: IPicture[] | undefined): string | undefined {
+	const cover = selectCover(picture)
+	if (!cover) return
+	return URL.createObjectURL(new Blob([cover.data], { type: cover.format, name: cover.name }))
+}
+
+function getTrackCommon(common): ICommonTagsResult {
+	return {
+		title: common.title,
+		year: common.year,
+		date: common.date,
+		artists: common.artists,
+		artist: common.artist,
+		album: common.album,
+		pictureUrl: getTrackPictureUrl(common.picture)
 	}
-	return ''
-})
+}
 
-whenever(trackMetadata, (metadata) => {
-	console.log('trackMetadata', metadata)
-})
+function getTrackFormat(format: IFormat) {
+	return {
+		container: format.container,
+		codec: format.codec,
+		sampleRate: format.sampleRate,
+		numberOfChannels: format.numberOfChannels,
+		numberOfSamples: format.numberOfSamples,
+		duration: format.duration,
+		bitrate: format.bitrate
+	}
+}
+
+function setTrackMetadata(metadata: IAudioMetadata) {
+	track.value = {
+		...getTrackCommon(metadata.common),
+		format: getTrackFormat(metadata.format)
+	}
+}
+
+whenever(trackMetadata, setTrackMetadata)
+
 
 whenever(trackWaveformData, (waveform) => {
 	console.log('waveformData', waveform)
@@ -133,12 +169,20 @@ whenever(trackTempo, (tempo) => {
 			@change="onFileChange"
 		/>
 
-		<div v-if="coverSrc">
-			<img :src="coverSrc" />
+		<Button @click="clearState">Clear</Button>
+
+
+		<div v-if="track">
+			<pre>{{ { track } }}</pre>
+		</div>
+		<div v-if="track?.pictureUrl">
+			<img :src="track.pictureUrl" alt=""
+					 class="w-full rounded object-cover object-center"
+			/>
 		</div>
 
-		<div v-if="trackUrl" class="flex flex-col gap-4">
-			<audio :src="trackUrl" controls />
+		<div v-if="trackFileUrl" class="flex flex-col gap-4">
+			<audio :src="trackFileUrl" controls />
 			<div v-if="trackTempo">
 				<pre>{{ { tempo: trackTempo } }}</pre>
 			</div>
