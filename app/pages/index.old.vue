@@ -1,7 +1,7 @@
 <script lang="ts" setup>
+import { type IAudioMetadata, parseWebStream } from 'music-metadata'
 import WaveformData from 'waveform-data'
 import { analyze } from 'web-audio-beat-detector'
-import { type IAudioMetadata, parseWebStream } from 'music-metadata'
 
 definePageMeta({
 	title: 'Dekzer'
@@ -13,9 +13,13 @@ onMounted(() => {
 	audioContext.value = new AudioContext()
 })
 
+
+// const trackArrayBuffer = shallowRef<ArrayBuffer | null>(null)
+// const audioBuffer = shallowRef<AudioBuffer | null>(null)
 const trackTempo = ref<number | null>(null)
 const trackMetadata = shallowRef<IAudioMetadata | null>(null)
 const trackWaveformData = shallowRef<WaveformData | null>(null)
+
 
 const uploadedFile = shallowRef<File | null>(null)
 const uploadedFileUrl = shallowRef<string | null>(null)
@@ -29,7 +33,7 @@ async function clearState() {
 	await nextTick()
 }
 
-function onFileChange(event: Event) {
+ function onFileChange(event: Event) {
 	clearState()
 	const { files: [file] } = event.target as HTMLInputElement
 	if (!file) return
@@ -71,31 +75,26 @@ async function fetchWaveform(url: string, context: AudioContext): Promise<Wavefo
 	})
 }
 
-async function getAudioBuffer(url: string, context: AudioContext): Promise<AudioBuffer> {
-	const freshBuffer = await fetchBuffer(url)
+async function getAudioBuffer() {
+	const context = unref(audioContext)!
+	const freshBuffer = await fetchBuffer(uploadedFileUrl.value!)
 	return await context.decodeAudioData(freshBuffer)
 }
 
-async function getTempo(url: string, context: AudioContext, options = { minTempo: 80, maxTempo: 240 }) {
-	const buffer = await getAudioBuffer(url, context)
+async function getTempo(options = { minTempo: 80, maxTempo: 240 }) {
+	const buffer = await getAudioBuffer()
 	const { minTempo, maxTempo } = options
 	return await analyze(buffer, { minTempo, maxTempo })
 }
 
-whenever(logicAnd(audioContext, uploadedFile, uploadedFileUrl), async () => {
-	const context = unref(audioContext)!
+whenever(logicAnd(uploadedFile, uploadedFileUrl), async () => {
 	const file = unref(uploadedFile)!
 	const url = unref(uploadedFileUrl)!
-
+	const context = unref(audioContext)!
 	try {
-		const [metadata, waveform, tempo] = await Promise.all([
-			fetchMetadata(url, file),
-			fetchWaveform(url, context),
-			getTempo(url, context)
-		])
-		trackMetadata.value = metadata
-		trackWaveformData.value = waveform
-		trackTempo.value = tempo
+		trackMetadata.value = await fetchMetadata(url, file)
+		trackWaveformData.value = await fetchWaveform(url, context)
+		trackTempo.value = await getTempo()
 	} catch (error) {
 		console.error(error)
 	}
