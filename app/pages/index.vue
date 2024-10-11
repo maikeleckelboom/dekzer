@@ -12,33 +12,33 @@ const audioContext = shallowRef<AudioContext | null>(null)
 onMounted(() => {
 	audioContext.value = new AudioContext()
 })
+const trackFile = shallowRef<File | null>(null)
+const trackUrl = shallowRef<string | null>(null)
 
 const trackTempo = ref<number | null>(null)
 const trackMetadata = shallowRef<IAudioMetadata | null>(null)
 const trackWaveformData = shallowRef<WaveformData | null>(null)
 
-const uploadedFile = shallowRef<File | null>(null)
-const uploadedFileUrl = shallowRef<string | null>(null)
-
-async function clearState() {
-	uploadedFile.value = null
-	uploadedFileUrl.value = null
+function clearState() {
+	trackFile.value = null
+	trackUrl.value = null
 	trackWaveformData.value = null
 	trackMetadata.value = null
 	trackTempo.value = null
-	await nextTick()
 }
 
 function onFileChange(event: Event) {
 	clearState()
-	const { files: [file] } = event.target as HTMLInputElement
-	if (!file) return
-	uploadedFile.value = file
-	uploadedFileUrl.value = URL.createObjectURL(file)
+	nextTick(() => {
+		const { files: [file] } = event.target as HTMLInputElement
+		if (!file) return
+		trackFile.value = file
+		trackUrl.value = URL.createObjectURL(file)
+	})
 }
 
 onUnmounted(() => {
-	URL.revokeObjectURL(uploadedFileUrl.value)
+	URL.revokeObjectURL(trackUrl.value)
 })
 
 async function fetchMetadata(url, file) {
@@ -76,16 +76,16 @@ async function getAudioBuffer(url: string, context: AudioContext): Promise<Audio
 	return await context.decodeAudioData(freshBuffer)
 }
 
-async function getTempo(url: string, context: AudioContext, options = { minTempo: 80, maxTempo: 240 }) {
+async function getTempo(url: string, context: AudioContext, options = { minTempo: 150, maxTempo: 240 }) {
 	const buffer = await getAudioBuffer(url, context)
 	const { minTempo, maxTempo } = options
 	return await analyze(buffer, { minTempo, maxTempo })
 }
 
-whenever(logicAnd(audioContext, uploadedFile, uploadedFileUrl), async () => {
+whenever(logicAnd(audioContext, trackFile, trackUrl), async () => {
 	const context = unref(audioContext)!
-	const file = unref(uploadedFile)!
-	const url = unref(uploadedFileUrl)!
+	const file = unref(trackFile)!
+	const url = unref(trackUrl)!
 
 	try {
 		const [metadata, waveform, tempo] = await Promise.all([
@@ -99,6 +99,17 @@ whenever(logicAnd(audioContext, uploadedFile, uploadedFileUrl), async () => {
 	} catch (error) {
 		console.error(error)
 	}
+})
+
+const coverSrc = computed(() => {
+	const picture = trackMetadata.value?.common.picture
+	if (picture && picture.length) {
+		console.log('picture', picture)
+		const blob = new Blob([picture[0].data], { type: picture[0].format })
+
+		return URL.createObjectURL(blob)
+	}
+	return ''
 })
 
 whenever(trackMetadata, (metadata) => {
@@ -122,6 +133,22 @@ whenever(trackTempo, (tempo) => {
 			@change="onFileChange"
 		/>
 
+		<div v-if="coverSrc">
+			<img :src="coverSrc" />
+		</div>
+
+		<div v-if="trackUrl" class="flex flex-col gap-4">
+			<audio :src="trackUrl" controls />
+			<div v-if="trackTempo">
+				<pre>{{ { tempo: trackTempo } }}</pre>
+			</div>
+			<div v-if="trackMetadata">
+				<pre>{{ { metadata: trackMetadata } }}</pre>
+			</div>
+			<div v-if="trackWaveformData">
+				<pre>{{ { waveform: trackWaveformData } }}</pre>
+			</div>
+		</div>
 
 	</div>
 </template>
