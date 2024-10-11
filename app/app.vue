@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {ConfigProvider} from 'radix-vue'
+import { Toaster } from '~~/layers/ui/components/toast'
 
 function reportError(error: unknown) {
 	console.error(error)
@@ -8,11 +9,12 @@ function reportError(error: unknown) {
 
 <template>
 	<NuxtErrorBoundary @error="reportError">
-    <ConfigProvider>
-      <NuxtLayout>
-        <NuxtPage />
-        <NuxtRouteAnnouncer />
-        <NuxtLoadingIndicator />
+		<NuxtRouteAnnouncer />
+		<NuxtLoadingIndicator />
+		<ConfigProvider>
+			<NuxtLayout>
+				<NuxtPage />
+				<Toaster />
       </NuxtLayout>
     </ConfigProvider>
 	</NuxtErrorBoundary>

@@ -17,11 +17,11 @@ export default defineNuxtConfig({
 		viewer: false
 	},
 	imports: {
-		// presets: [
-		//     {
-		//         from: '~~/layers/ui/components/toast/use-toast.ts',
-		//         imports: ['useToast']
-		//     }
-		// ]
+		presets: [
+		    {
+		        from: '~~/layers/ui/components/toast/use-toast.ts',
+		        imports: ['useToast']
+		    }
+		]
 	}
 })
