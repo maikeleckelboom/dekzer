@@ -11,17 +11,18 @@ import {
 } from 'music-metadata'
 import type { Track } from '~~/layers/track/types'
 import { Button } from '~~/layers/ui/components/button'
+import { useSharedAudioContext } from '~/composables/useSharedAudioContext'
 
 definePageMeta({
 	title: 'Dekzer'
 })
 
-const audioContext = shallowRef<AudioContext | null>(null)
+const { audioContext } = useSharedAudioContext()
+
 const trackFile = shallowRef<File | null>(null)
 const trackFileUrl = shallowRef<string | null>(null)
 const trackWaveform = shallowRef<WaveformData | null>(null)
 const trackMetadata = shallowRef<IAudioMetadata | null>(null)
-
 
 function clearState() {
 	trackFile.value = null
@@ -30,20 +31,6 @@ function clearState() {
 	trackMetadata.value = null
 	track.value = null
 }
-
-onMounted(() => {
-	/**
-	 * Create AudioContext instance once per application lifecycle.
-	 */
-	audioContext.value = new AudioContext({ latencyHint: 'interactive' })
-})
-
-onUnmounted(() => {
-	/**
-	 * Close AudioContext instance on component unmount.
-	 */
-	audioContext.value?.close()
-})
 
 onUnmounted(() => {
 	URL.revokeObjectURL(trackFileUrl.value)
@@ -162,7 +149,6 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 const form = useTemplateRef<HTMLFormElement>()
 
 onUnmounted(() => {
-	audioContext.value?.close()
 	form.value?.reset()
 })
 </script>
