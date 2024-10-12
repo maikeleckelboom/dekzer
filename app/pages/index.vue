@@ -33,8 +33,8 @@ function clearState() {
 }
 
 onUnmounted(() => {
-	URL.revokeObjectURL(trackFileUrl.value)
 	clearState()
+	URL.revokeObjectURL(trackFileUrl.value)
 })
 
 function onFileChange(event: Event) {
@@ -43,6 +43,7 @@ function onFileChange(event: Event) {
 	trackFile.value = file
 	trackFileUrl.value = URL.createObjectURL(file)
 }
+
 
 async function fetchMetadata(url, file) {
 	const response = await fetch(url, {
@@ -55,9 +56,15 @@ async function fetchMetadata(url, file) {
 	})
 }
 
+
 async function fetchArrayBuffer(url: string): Promise<ArrayBuffer> {
 	const response = await fetch(url)
 	return await response.arrayBuffer()
+}
+
+async function getAudioBuffer(url: string, context: AudioContext): Promise<AudioBuffer> {
+	const freshBuffer = await fetchArrayBuffer(url)
+	return await context.decodeAudioData(freshBuffer)
 }
 
 async function fetchWaveform(url: string, context: AudioContext, scale: number = 256): Promise<WaveformData> {
@@ -74,12 +81,7 @@ async function fetchWaveform(url: string, context: AudioContext, scale: number =
 	})
 }
 
-async function getAudioBuffer(url: string, context: AudioContext): Promise<AudioBuffer> {
-	const freshBuffer = await fetchArrayBuffer(url)
-	return await context.decodeAudioData(freshBuffer)
-}
-
-const track = shallowRef<Partial<Track> | null>(null)
+const track = useState<Partial<Track> | null>('track', () => null)
 
 function formatTrackMetadata(metadata: IAudioMetadata): Partial<Track> {
 	const getTrackPictureUrl = (picture: IPicture[] | undefined): string | undefined => {
@@ -87,13 +89,17 @@ function formatTrackMetadata(metadata: IAudioMetadata): Partial<Track> {
 		if (!cover) return
 		return URL.createObjectURL(new Blob([cover.data], { type: cover.format, name: cover.name }))
 	}
+
 	const getTrackCommon = (common: ICommonTagsResult): Omit<Track, 'format'> => ({
 		title: common.title,
 		year: common.year,
 		date: common.date,
+		bpm: common.bpm,
+		key: common.key,
 		artists: common.artists,
 		artist: common.artist,
 		album: common.album,
+		genre: common.genre,
 		pictureUrl: getTrackPictureUrl(common.picture)
 	})
 	const getTrackFormat = (format: IFormat): Track['format'] => ({
@@ -107,6 +113,7 @@ function formatTrackMetadata(metadata: IAudioMetadata): Partial<Track> {
 		bitsPerSample: format.bitsPerSample,
 		lossless: format.lossless
 	})
+	console.log({ metadata })
 	return {
 		...getTrackCommon(metadata.common),
 		format: getTrackFormat(metadata.format)
@@ -147,16 +154,15 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 })
 
 const form = useTemplateRef<HTMLFormElement>()
-
-onUnmounted(() => {
-	form.value?.reset()
-})
+const formReset = () => form.value?.reset()
+onUnmounted(formReset)
+onMounted(formReset)
 </script>
 
 <template>
 	<div class="flex flex-col gap-4 m-8">
 
-		<VirtualDeck :audio-ctx="audioContext" :track="track" :url="trackFileUrl" />
+		<VirtualDeck :url="trackFileUrl" />
 
 		<form ref="form" class="flex flex-col gap-4" @submit.prevent>
 			<input

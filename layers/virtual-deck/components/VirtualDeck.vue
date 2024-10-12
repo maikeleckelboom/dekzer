@@ -1,15 +1,13 @@
 <script lang="ts" setup>
 import { clamp } from '@vueuse/core'
 import { VirtualDeck } from '#components'
-import type { Track } from '~~/layers/track/types'
 
-const { url, track, audioCtx } = defineProps<{
-	url: string | null
-	track?: Track
-	audioCtx?: AudioContext
+const { url } = defineProps<{
+	url?: string
 }>()
 
-const audioContext = shallowRef<AudioContext>()
+const { audioContext } = useSharedAudioContext()
+
 const audioBuffer = shallowRef<AudioBuffer>()
 const sourceNode = shallowRef<AudioBufferSourceNode>()
 const constantSource = shallowRef<ConstantSourceNode>()
@@ -37,22 +35,28 @@ async function initializeAudioBuffer(context: AudioContext, url: string): Promis
 }
 
 function initializeAudioContext(): AudioContext {
-	const context = audioCtx ?? new AudioContext({ latencyHint: 'interactive' })
-	audioContext.value = context
+	const context = unref(audioContext)
+
+	if (!context) {
+		const newContext = new AudioContext()
+		audioContext.value = newContext
+		return newContext
+	}
+
 	if (context.state === 'suspended') {
 		context.resume()
 	}
+
 	return context
 }
 
-let rAF: number | null = null
-let startTime: number = 0
+const startTime = ref<number>(0)
 const startOffset = ref<number>(0)
 
 function updateCurrentTime() {
 	const context = unref(audioContext)
 	if (!context) return
-	currentTime.value = context.currentTime - startTime + startOffset.value
+	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
 function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
@@ -65,26 +69,24 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const source = initializeSourceNode(context, buffer)
 	source.connect(context.destination)
-	// source.onended = () => {
-	// 	startOffset.value = 0
-	// 	playing.value = false
-	// }
 	return source
+}
+
+async function setupSourceNode() {
+	const context = initializeAudioContext()
+	const buffer = await initializeAudioBuffer(context, url)
+	const source = initializeSourceNode(context, buffer)
 }
 
 onMounted(async () => {
 	if (!url) return
-	const context = initializeAudioContext()
-	const buffer = await initializeAudioBuffer(context, url)
-	const source = initializeSourceNode(context, buffer)
+	await setupSourceNode()
 })
+
+let rAF: number | null = null
 
 function closeContextCleanupNodes() {
 	if (rAF !== null) cancelAnimationFrame(rAF)
-
-	if (audioContext.value) {
-		audioContext.value.close()
-	}
 
 	duration.value = 0
 	currentTime.value = 0
@@ -126,7 +128,7 @@ async function play() {
 		return
 	}
 
-	startTime = context.currentTime
+	startTime.value = context.currentTime
 	const source = initializeAndConnectSource(context, buffer)
 	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
 	if (isOutOfRange) {
@@ -148,7 +150,7 @@ function pause() {
 		return
 	}
 
-	startOffset.value += context.currentTime - startTime
+	startOffset.value += context.currentTime - startTime.value
 	stopPlaying(source)
 }
 
@@ -200,7 +202,6 @@ const progress = computed(() => {
 						:current-time="currentTime"
 						:disabled="!isReady"
 						:remaining-time="remainingTime"
-						:tempo="track?.tempo"
 					/>
 				</template>
 			</LayoutContainer>
@@ -208,8 +209,8 @@ const progress = computed(() => {
 		</div>
 		<Button
 			v-if="isReady"
-			variant="secondary"
 			class="w-fit"
+			variant="secondary"
 			@click="playing ? pause() : play()">
 			{{ playing ? 'Pause' : 'Play' }}
 		</Button>

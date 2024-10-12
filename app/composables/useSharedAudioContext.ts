@@ -1,11 +1,14 @@
-export const useSharedAudioContext = createSharedComposable(() => {
-	const audioContext = shallowRef<AudioContext | null>(null)
-	const isReady = computed(() => audioContext.value !== null)
-	const state = computed(() => audioContext.value?.state || 'closed')
+function useAudioContext(contextOptions: AudioContextOptions = { latencyHint: 'interactive' }) {
+	const audioContext = useState<AudioContext | null>('audioContext', () => null)
+
+	const isReady = computed<boolean>(() => audioContext.value !== null)
+	const state = computed<AudioContextState>(() => audioContext.value?.state ?? 'closed')
 
 	onMounted(() => {
-		audioContext.value ??= new AudioContext({ latencyHint: 'interactive' })
+		audioContext.value ??= new AudioContext(contextOptions)
 	})
+
+	onUnmounted(close)
 
 	async function suspend() {
 		if (!audioContext.value || audioContext.value.state === 'suspended') {
@@ -28,8 +31,6 @@ export const useSharedAudioContext = createSharedComposable(() => {
 		await audioContext.value.close()
 	}
 
-	onUnmounted(close)
-
 	return {
 		audioContext,
 		isReady,
@@ -38,4 +39,6 @@ export const useSharedAudioContext = createSharedComposable(() => {
 		resume,
 		suspend
 	}
-})
+}
+
+export const useSharedAudioContext = createSharedComposable(useAudioContext)

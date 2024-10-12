@@ -1,13 +1,25 @@
+import type { ILyricsTag } from 'music-metadata'
+
 export interface Track {
 	title: string
-	year: number
-	date: string
+	genre: string[]
 	artists: string[]
+	bpm: number
+	key: string
 	artist: string
 	album: string
+	year: number
+	date: string
 	pictureUrl: string
 	format: TrackFormat
 	tempo: number
+	tags: string[]
+	releaseDate: string
+	lyrics: ILyricsTag[]
+	// ...
+	composer: string
+	producer: string
+
 }
 
 export interface TrackFormat {
