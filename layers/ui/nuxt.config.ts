@@ -14,7 +14,13 @@ export default defineNuxtConfig({
 		componentDir: join(currentDir, './components')
 	},
 	tailwindcss: {
-		viewer: false
+		viewer: false,
+		cssPath: join(currentDir, './assets/css/tailwind.css')
+	},
+	colorMode: {
+		classSuffix: '',
+		preference: 'system',
+		fallback: 'light'
 	},
 	imports: {
 		presets: [
@@ -24,4 +30,14 @@ export default defineNuxtConfig({
 		    }
 		]
 	}
+	// fonts: {
+	// 	google: {
+	// 		families: [
+	// 			{
+	// 				name: 'Inter',
+	// 				styles: ['400', '500', '600', '700']
+	// 			}
+	// 		]
+	// 	}
+	// },
 })
