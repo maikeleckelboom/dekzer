@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { clamp } from '@vueuse/core'
 import { VirtualDeck } from '#components'
+import type { Track } from '~~/layers/track/types'
 
-const { url, tempo } = defineProps<{
-	url: string
-	tempo?: number
+const { url, track } = defineProps<{
+	url: string | null
+	track?: Track
 }>()
 
 const audioContext = shallowRef<AudioContext>()
@@ -44,13 +45,10 @@ let rAF: number | null = null
 let startTime: number = 0
 const startOffset = ref<number>(0)
 
-function updateCurrentTime(time?: number) {
+function updateCurrentTime() {
 	const context = unref(audioContext)
 	if (!context) return
-
-	const targetTime = time ?? context.currentTime
-
-	currentTime.value = targetTime - startTime + startOffset.value
+	currentTime.value = context.currentTime - startTime + startOffset.value
 }
 
 function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
@@ -60,7 +58,7 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 	return bufferSource
 }
 
-function reinitializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
+function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const source = initializeSourceNode(context, buffer)
 	source.connect(context.destination)
 	return source
@@ -130,15 +128,12 @@ async function play() {
 	}
 
 	startTime = context.currentTime
-
-	const source = reinitializeSourceNode(context, buffer)
+	const source = initializeAndConnectSource(context, buffer)
 	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
-
 	if (isOutOfRange) {
 		console.warn('Cannot play audio: start offset is out of range')
 		return
 	}
-
 	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
 	startPlaying()
 }
@@ -166,7 +161,7 @@ const progress = computed(() => {
 const positionIndicator = useTemplateRef<HTMLDivElement>('positionIndicator')
 const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
 
-const { isInteracting, angleFromSeconds } = useVirtualDeck(deck, positionIndicator, currentTime)
+const { isInteracting } = useVirtualDeck(deck, positionIndicator, currentTime)
 
 const wasPlaying = ref<boolean>(false)
 
@@ -180,16 +175,12 @@ watch(isInteracting, (interacting) => {
 	}
 })
 
-watch(currentTime, (time) => {
-	const elStylus = unrefElement(positionIndicator)!
-	const angle = angleFromSeconds(time)
-	elStylus.style.transform = `rotate(${angle}deg)`
-})
+
 </script>
 
 <template>
 	<div class="flex flex-col gap-8">
-		<div class="flex flex-nowrap gap-x-6 p-6 rounded bg-muted/50 border-2 items-center ">
+		<div class="flex flex-nowrap gap-x-6 p-4 rounded bg-muted/50 border-2 items-center min-w-fit">
 			<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
 				<template #progressIndicator>
 					<ProgressIndicator :progress="progress" />
@@ -202,7 +193,7 @@ watch(currentTime, (time) => {
 						:current-time="currentTime"
 						:disabled="!isReady"
 						:remaining-time="remainingTime"
-						:tempo="tempo"
+						:tempo="track?.tempo"
 					/>
 				</template>
 			</LayoutContainer>
@@ -211,7 +202,8 @@ watch(currentTime, (time) => {
 		<Button
 			:disabled="!isReady"
 			:label="playing ? 'Pause' : 'Play'"
-			variant="ghost"
+			variant="secondary"
+			class="w-fit"
 			@click="playing ? pause() : play()">
 			{{ playing ? 'Pause' : 'Play' }}
 		</Button>

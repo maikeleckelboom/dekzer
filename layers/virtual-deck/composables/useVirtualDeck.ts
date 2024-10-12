@@ -82,6 +82,12 @@ export function useVirtualDeck(
 		})
 	})
 
+	watch(currentTime, (time) => {
+		if(!elStylus) return
+		const angle = angleFromSeconds(time)
+		elStylus.style.transform = `rotate(${angle}deg)`
+	})
+
 	return {
 		isInteracting,
 		angle,

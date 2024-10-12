@@ -18,7 +18,7 @@ const strokeWidth = 12
 </script>
 
 <template>
-	<svg :viewBox="viewBox" class="absolute size-full z-10" data-name="progress-circle">
+	<svg :viewBox="viewBox" class="absolute size-full" data-name="progress-circle">
 		<circle
 			:cx="cx"
 			:cy="cy"

@@ -149,16 +149,22 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 		console.error(error)
 	}
 })
+
+const form = useTemplateRef<HTMLFormElement>()
+onUnmounted(() => {
+	audioContext.value?.close()
+	form.value?.reset()
+})
 </script>
 
 <template>
 	<div class="flex flex-col gap-4 m-8">
 
 		<div v-if="trackFileUrl">
-			<VirtualDeck :tempo="track?.tempo" :url="trackFileUrl" />
+			<VirtualDeck :track="track" :url="trackFileUrl" />
 		</div>
 
-		<form class="flex flex-col gap-4" @submit.prevent>
+		<form ref="form" class="flex flex-col gap-4" @submit.prevent>
 			<input
 				v-if="!trackFile"
 				accept="audio/*"
@@ -167,14 +173,13 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 			/>
 			<Button type="reset" variant="outline" @click="clearState">Clear</Button>
 		</form>
-		<div v-if="trackFileUrl" class="flex flex-col gap-4">
-			<audio :src="trackFileUrl" controls />
-		</div>
-		<div v-if="track?.pictureUrl">
-			<img :src="track.pictureUrl" alt="" class="w-full rounded object-cover object-center" />
-		</div>
-		<div v-if="track">
-			<pre>{{ { track } }}</pre>
+		<div class="grid grid-cols-2 gap-2">
+			<div v-if="track?.pictureUrl">
+				<img :src="track.pictureUrl" alt="" class="w-full rounded object-cover object-center" />
+			</div>
+			<div v-if="track">
+				<pre>{{ { track } }}</pre>
+			</div>
 		</div>
 	</div>
 </template>

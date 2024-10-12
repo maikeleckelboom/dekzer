@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 const {
 	currentTime,
 	remainingTime,
@@ -36,15 +36,18 @@ const remainingTimeDisplay = computed(() => {
 const bpm = computed(() => {
 	if (!tempo) return ''
 	const rounded = Math.round(tempo).toFixed(2)
-	return `${rounded}`
+	if(rounded.endsWith('.00')) {
+		return `${Math.round(tempo)}`
+	}
+	return rounded
 })
 </script>
 
 <template>
-	<div class="absolute inset-0 items-center z-10 grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
+	<div class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
 		<div class="flex flex-col items-center col-span-2">
 			<strong
-				class="capitalize text-2xl  font-black whitespace-pre-wrap text-center text-background select-none">
+				class="capitalize text-3xl  font-black whitespace-pre-wrap text-center text-background select-none">
 				<slot name="bpm">
 					{{ bpm }}
 				</slot>
@@ -52,19 +55,19 @@ const bpm = computed(() => {
 			<p v-if="bpm || slots.bpm" class="text-xs text-center text-background">BPM</p>
 		</div>
 		<div>
-			<slot name="pitch" v-if="pitch || slots.pitch">
+			<slot v-if="pitch || slots.pitch" name="pitch">
 				{{ pitch }}
 			</slot>
 		</div>
 		<div>
-			<slot name="pitchRange" v-if="pitchRange || slots.pitchRange">
+			<slot v-if="pitchRange || slots.pitchRange" name="pitchRange">
 				{{ pitchRange }}
 			</slot>
 		</div>
 		<div class="flex flex-col items-center col-span-2 mt-4">
 			<strong
 				:class="
-					cn('capitalize text-xl font-bold tabular-nums text-center text-background leading-none select-none')
+					cn('capitalize text-lg font-bold tabular-nums text-center text-background leading-none select-none')
 				">
 				<slot name="currentTime">
 					{{ currentTimeDisplay }}
@@ -72,7 +75,7 @@ const bpm = computed(() => {
 			</strong>
 			<strong
 				:class="
-					cn('capitalize text-xl font-bold tabular-nums text-center text-background leading-none select-none')
+					cn('capitalize text-lg font-bold tabular-nums text-center text-background leading-none select-none')
 				">
 				<slot name="remainingTime">
 					{{ remainingTimeDisplay }}

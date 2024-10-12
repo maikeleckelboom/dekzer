@@ -22,7 +22,7 @@ defineSlots<{
 			<slot
 				name="positionIndicator"
 				v-bind="{
-					className: 'stylus w-auto aspect-[1/8] h-1/2 top-0 origin-[50%_100%] absolute bg-background z-20'
+					className: 'stylus w-auto aspect-[1/8] h-1/2 top-0 origin-[50%_100%] absolute bg-background -z-0'
 				}" />
 		</div>
 		<slot name="surface" />

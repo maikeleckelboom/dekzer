@@ -5,7 +5,7 @@ useHead({
 </script>
 
 <template>
-	<div class="max-w-7xl">
+	<div class="max-w-7xl overflow-x-clip">
 		<slot />
 	</div>
 </template>
