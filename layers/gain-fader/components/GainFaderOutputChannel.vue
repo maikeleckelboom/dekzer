@@ -29,11 +29,14 @@ const bars = computed(() => {
 	return result
 })
 
+
+// 2 red, 4 orange, 34 green
 const colorMap = new Map([
 	[0, '#f44336'],
 	[-3, '#ff9800'],
 	[-10, { start: '#02af02', end: '#a9f314' }]
 ])
+
 
 function interpolateColor(start: string, end: string, normalized: number): string {
 	const interpolateChannel = (startHex: string, endHex: string): number =>
@@ -62,17 +65,18 @@ function getClosestColor(value: number): string {
 		return color
 	}
 
+	const normalized = normalize(value)
+
 	if (color && color.start && color.end) {
-		const normalized = normalize(value)
 		return interpolateColor(color.start, color.end, normalized)
 	}
 
 	return ''
 }
 
+
 function segmentStyle(segment: number): Record<string, string> {
-	const color = getClosestColor(segment)
-	return modelValue.value >= segment ? { backgroundColor: color } : {}
+	return modelValue.value >= segment ? { backgroundColor: getClosestColor(segment) } : {}
 }
 </script>
 

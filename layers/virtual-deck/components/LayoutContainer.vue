@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 defineSlots<{
-	positionIndicator: { className: string }
+	stylus: { className: string }
 	progressIndicator: void
 	surface: void
 }>()
@@ -20,7 +20,7 @@ defineSlots<{
 		<div class="size-[calc(100%-1.325rem)] bg-foreground rounded-full grid place-items-center" data-name="disc">
 			<div class="size-5 bg-muted-foreground rounded-full z-30 pointer-events-none" data-name="center" />
 			<slot
-				name="positionIndicator"
+				name="stylus"
 				v-bind="{
 					className: 'stylus w-auto aspect-[1/8] h-1/2 top-0 origin-[50%_100%] absolute bg-background -z-0'
 				}" />

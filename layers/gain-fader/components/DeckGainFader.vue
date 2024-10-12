@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 interface Props {
-	channels?: [number, number]
+	channels: [number, number]
 }
 
-const { channels = [-10, -3] } = defineProps<Props>()
+const { channels = [-10, -3] } = defineProps<Partial<Props>>()
 
 const MASTER_GAIN_DEFAULT = 3 as const
 const MASTER_GAIN_MIN: number = -12 as const
@@ -20,7 +20,7 @@ const gainValue = useState<number>(`deck-gain-fader-${uid}`, () => TRACK_GAIN_DE
 <template>
 	<GainFaderRoot>
 		<GainFaderOutputChannel :model-value="channels.at(0)" />
-		<GainFaderHandle v-model="gainValue" :max="TRACK_GAIN_MAX" :min="TRACK_GAIN_MIN" />
+		<GainFaderHandle v-model="gainValue" :max="TRACK_GAIN_MAX" :min="TRACK_GAIN_MIN" :title="gainValue" />
 		<GainFaderOutputChannel :model-value="channels.at(1)" />
 	</GainFaderRoot>
 </template>

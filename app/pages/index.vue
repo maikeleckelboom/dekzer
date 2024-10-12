@@ -32,14 +32,23 @@ function clearState() {
 }
 
 onMounted(() => {
-	audioContext.value = new AudioContext()
+	/**
+	 * Create AudioContext instance once per application lifecycle.
+	 */
+	audioContext.value = new AudioContext({ latencyHint: 'interactive' })
+})
+
+onUnmounted(() => {
+	/**
+	 * Close AudioContext instance on component unmount.
+	 */
+	audioContext.value?.close()
 })
 
 onUnmounted(() => {
 	URL.revokeObjectURL(trackFileUrl.value)
 	clearState()
 })
-
 
 function onFileChange(event: Event) {
 	const { files: [file] } = event.target as HTMLInputElement
@@ -151,6 +160,7 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 })
 
 const form = useTemplateRef<HTMLFormElement>()
+
 onUnmounted(() => {
 	audioContext.value?.close()
 	form.value?.reset()
@@ -160,9 +170,7 @@ onUnmounted(() => {
 <template>
 	<div class="flex flex-col gap-4 m-8">
 
-		<div v-if="trackFileUrl">
-			<VirtualDeck :track="track" :url="trackFileUrl" />
-		</div>
+		<VirtualDeck :audio-ctx="audioContext" :track="track" :url="trackFileUrl" />
 
 		<form ref="form" class="flex flex-col gap-4" @submit.prevent>
 			<input
@@ -173,9 +181,9 @@ onUnmounted(() => {
 			/>
 			<Button type="reset" variant="outline" @click="clearState">Clear</Button>
 		</form>
-		<div class="grid grid-cols-2 gap-2">
-			<div v-if="track?.pictureUrl">
-				<img :src="track.pictureUrl" alt="" class="w-full rounded object-cover object-center" />
+		<div class="grid md:grid-cols-2 gap-2">
+			<div v-if="track?.pictureUrl" class="rounded relative overflow-clip max-w-full">
+				<img :src="track.pictureUrl" alt="" class="size-full object-cover" />
 			</div>
 			<div v-if="track">
 				<pre>{{ { track } }}</pre>

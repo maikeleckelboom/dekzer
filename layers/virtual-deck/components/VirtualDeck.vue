@@ -3,9 +3,10 @@ import { clamp } from '@vueuse/core'
 import { VirtualDeck } from '#components'
 import type { Track } from '~~/layers/track/types'
 
-const { url, track } = defineProps<{
+const { url, track, audioCtx } = defineProps<{
 	url: string | null
 	track?: Track
+	audioCtx?: AudioContext
 }>()
 
 const audioContext = shallowRef<AudioContext>()
@@ -36,8 +37,11 @@ async function initializeAudioBuffer(context: AudioContext, url: string): Promis
 }
 
 function initializeAudioContext(): AudioContext {
-	const context = new AudioContext({ latencyHint: 'interactive' })
+	const context = audioCtx ?? new AudioContext({ latencyHint: 'interactive' })
 	audioContext.value = context
+	if (context.state === 'suspended') {
+		context.resume()
+	}
 	return context
 }
 
@@ -61,6 +65,10 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const source = initializeSourceNode(context, buffer)
 	source.connect(context.destination)
+	// source.onended = () => {
+	// 	startOffset.value = 0
+	// 	playing.value = false
+	// }
 	return source
 }
 
@@ -72,6 +80,8 @@ onMounted(async () => {
 })
 
 function closeContextCleanupNodes() {
+	if (rAF !== null) cancelAnimationFrame(rAF)
+
 	if (audioContext.value) {
 		audioContext.value.close()
 	}
@@ -87,9 +97,6 @@ function closeContextCleanupNodes() {
 }
 
 onUnmounted(() => {
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-	}
 	closeContextCleanupNodes()
 })
 
@@ -100,21 +107,13 @@ function renderAnimationFrame() {
 
 function startPlaying() {
 	playing.value = true
-
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-	}
-
+	if (rAF !== null) cancelAnimationFrame(rAF)
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
 function stopPlaying(source: AudioBufferSourceNode) {
 	playing.value = false
-
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-	}
-
+	if (rAF !== null) cancelAnimationFrame(rAF)
 	source.stop()
 }
 
@@ -153,15 +152,9 @@ function pause() {
 	stopPlaying(source)
 }
 
-const progress = computed(() => {
-	if (duration.value === 0) return 0
-	return clamp(currentTime.value / duration.value, 0, 1)
-})
-
-const positionIndicator = useTemplateRef<HTMLDivElement>('positionIndicator')
 const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
-
-const { isInteracting } = useVirtualDeck(deck, positionIndicator, currentTime)
+const stylus = useTemplateRef<HTMLDivElement>('stylus')
+const { isInteracting } = useVirtualDeck(deck, stylus, currentTime)
 
 const wasPlaying = ref<boolean>(false)
 
@@ -175,6 +168,20 @@ watch(isInteracting, (interacting) => {
 	}
 })
 
+watch(() => url, async (newUrl) => {
+	if (!newUrl) {
+		closeContextCleanupNodes()
+		return
+	}
+	const context = initializeAudioContext()
+	const buffer = await initializeAudioBuffer(context, newUrl)
+	const source = initializeSourceNode(context, buffer)
+})
+
+const progress = computed(() => {
+	if (duration.value === 0) return 0
+	return clamp(currentTime.value / duration.value, 0, 1)
+})
 
 </script>
 
@@ -185,8 +192,8 @@ watch(isInteracting, (interacting) => {
 				<template #progressIndicator>
 					<ProgressIndicator :progress="progress" />
 				</template>
-				<template #positionIndicator="{ className }">
-					<div ref="positionIndicator" :class="cn(className)" />
+				<template #stylus="{ className }">
+					<div ref="stylus" :class="cn(className)" />
 				</template>
 				<template #surface>
 					<VirtualDeckSurface
@@ -200,8 +207,7 @@ watch(isInteracting, (interacting) => {
 			<DeckGainFader />
 		</div>
 		<Button
-			:disabled="!isReady"
-			:label="playing ? 'Pause' : 'Play'"
+			v-if="isReady"
 			variant="secondary"
 			class="w-fit"
 			@click="playing ? pause() : play()">
