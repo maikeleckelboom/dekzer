@@ -152,10 +152,10 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 </script>
 
 <template>
-	<div class="flex flex-col gap-4 mx-auto max-w-md my-12">
+	<div class="flex flex-col gap-4 m-8">
 
 		<div v-if="trackFileUrl">
-			<VirtualDeck :url="trackFileUrl" :tempo="track?.tempo"/>
+			<VirtualDeck :tempo="track?.tempo" :url="trackFileUrl" />
 		</div>
 
 		<form class="flex flex-col gap-4" @submit.prevent>

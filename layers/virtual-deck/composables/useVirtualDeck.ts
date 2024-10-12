@@ -4,7 +4,6 @@ export function useVirtualDeck(
 	deck: MaybeElementRef<HTMLElement>,
 	stylus: MaybeElementRef<HTMLElement>,
 	currentTime: Ref<number>,
-	angle: Ref<number>,
 	rate: MaybeRefOrGetter<number> = 1
 ) {
 	let elDeck: HTMLElement | null = null
@@ -17,6 +16,8 @@ export function useVirtualDeck(
 			throw new Error('You need to provide both deck and stylus elements')
 		}
 	})
+
+	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
 
 	const angleStart = ref<number>(0)
 	const isInteracting = ref<boolean>(false)
@@ -83,6 +84,7 @@ export function useVirtualDeck(
 
 	return {
 		isInteracting,
-		angle
+		angle,
+		angleFromSeconds
 	}
 }

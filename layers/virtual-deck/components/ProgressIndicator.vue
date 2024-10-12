@@ -1,23 +1,20 @@
 <script lang="ts" setup>
 interface Props {
 	progress: number
-	size?: number
 }
 
-const { progress, size = 100 } = defineProps<Props>()
+const { progress} = defineProps<Props>()
 
-const viewBox = `0 0 ${size} ${size}`
+const CIRCLE_SIZE = 100
+
+const viewBox = `0 0 ${CIRCLE_SIZE} ${CIRCLE_SIZE}`
 const strokeDashArray = 314
-const cx = computed(() => size / 2)
-const cy = computed(() => size / 2)
-const r = computed(() => size / 2)
+const cx = computed(() => CIRCLE_SIZE / 2)
+const cy = computed(() => CIRCLE_SIZE / 2)
+const r = computed(() => CIRCLE_SIZE / 2)
 const strokeDasharray = computed(() => 2 * Math.PI * r.value)
 const strokeDashoffset = computed(() => strokeDasharray.value * (1 - progress))
 const strokeWidth = 12
-
-watchEffect(() => {
-	console.log({ cx, cy, r, strokeDashArray, strokeDashoffset, strokeWidth })
-})
 </script>
 
 <template>

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { usePlatterPosition } from '~~/layers/virtual-deck/composables/usePlatterPosition'
 import { clamp } from '@vueuse/core'
 import { VirtualDeck } from '#components'
 
@@ -167,8 +166,7 @@ const progress = computed(() => {
 const positionIndicator = useTemplateRef<HTMLDivElement>('positionIndicator')
 const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
 
-const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
-const { isInteracting } = useVirtualDeck(deck, positionIndicator, currentTime, angle)
+const { isInteracting, angleFromSeconds } = useVirtualDeck(deck, positionIndicator, currentTime)
 
 const wasPlaying = ref<boolean>(false)
 
@@ -190,30 +188,32 @@ watch(currentTime, (time) => {
 </script>
 
 <template>
-	<div class="space-x-4">
-		<LayoutContainer
-			ref="deck"
-			:class="cn(!isReady && 'pointer-events-none opacity-50 filter grayscale')"
-			:progress="progress">
-			<template #positionIndicator="{ className }">
-				<div ref="positionIndicator" :class="cn(className)" data-name="positionIndicator" />
-			</template>
-			<template #surface>
-				<VirtualDeckSurface
-					:current-time="currentTime"
-					:disabled="!isReady"
-					:remaining-time="remainingTime"
-					:tempo="tempo"
-				/>
-			</template>
-		</LayoutContainer>
-		<DeckGainFader />
+	<div class="flex flex-col gap-8">
+		<div class="flex flex-nowrap gap-x-6 p-6 rounded bg-muted/50 border-2 items-center ">
+			<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
+				<template #progressIndicator>
+					<ProgressIndicator :progress="progress" />
+				</template>
+				<template #positionIndicator="{ className }">
+					<div ref="positionIndicator" :class="cn(className)" />
+				</template>
+				<template #surface>
+					<VirtualDeckSurface
+						:current-time="currentTime"
+						:disabled="!isReady"
+						:remaining-time="remainingTime"
+						:tempo="tempo"
+					/>
+				</template>
+			</LayoutContainer>
+			<DeckGainFader />
+		</div>
+		<Button
+			:disabled="!isReady"
+			:label="playing ? 'Pause' : 'Play'"
+			variant="ghost"
+			@click="playing ? pause() : play()">
+			{{ playing ? 'Pause' : 'Play' }}
+		</Button>
 	</div>
-	<Button
-		:disabled="!isReady"
-		:label="playing ? 'Pause' : 'Play'"
-		variant="ghost"
-		@click="playing ? pause() : play()">
-		{{ playing ? 'Pause' : 'Play' }}
-	</Button>
 </template>

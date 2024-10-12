@@ -35,7 +35,8 @@ const remainingTimeDisplay = computed(() => {
 
 const bpm = computed(() => {
 	if (!tempo) return ''
-	return tempo.toFixed(2)
+	const rounded = Math.round(tempo).toFixed(2)
+	return `${rounded}`
 })
 </script>
 
@@ -43,7 +44,7 @@ const bpm = computed(() => {
 	<div class="absolute inset-0 items-center z-10 grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
 		<div class="flex flex-col items-center col-span-2">
 			<strong
-				class="capitalize text-2xl tracking-tight font-black whitespace-pre-wrap text-center text-background select-none leading-[1]">
+				class="capitalize text-2xl  font-black whitespace-pre-wrap text-center text-background select-none">
 				<slot name="bpm">
 					{{ bpm }}
 				</slot>
