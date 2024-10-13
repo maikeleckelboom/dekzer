@@ -15,11 +15,11 @@ export function useVirtualDeck(
 	onMounted(() => {
 		elDeck = unrefElement(deck)
 		elStylus = unrefElement(stylus)
+
 		if (!elDeck || !elStylus) {
 			throw new Error('You need to provide both deck and stylus elements')
 		}
 	})
-
 
 	const progress = computed(() => {
 		if (toValue(duration) === 0) return 0
@@ -91,10 +91,10 @@ export function useVirtualDeck(
 		})
 	})
 
-	watch(currentTime, (time) => {
+	watch(currentTime, (timeInSeconds) => {
 		if (!elStylus) return
-		const angle = angleFromSeconds(time)
-		elStylus.style.transform = `rotate(${angle}deg)`
+		const angle = angleFromSeconds(timeInSeconds)
+		elStylus!.style.transform = `rotate(${angle}deg)`
 	})
 
 	return {

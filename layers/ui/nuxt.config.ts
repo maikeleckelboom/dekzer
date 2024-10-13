@@ -32,15 +32,15 @@ export default defineNuxtConfig({
 	},
 	vueuse: {
 		autoImports: true
-	}
-	// fonts: {
-	// 	google: {
-	// 		families: [
-	// 			{
-	// 				name: 'Inter',
-	// 				styles: ['400', '500', '600', '700']
-	// 			}
-	// 		]
-	// 	}
-	// },
+	},
+	fonts: {
+		google: {
+			families: [
+				{
+					name: 'Arimo',
+					styles: ['400', '500', '600', '700']
+				}
+			]
+		}
+	},
 })

@@ -1,185 +1,48 @@
 <script lang="ts" setup>
-import { VirtualDeck, VirtualDeckStylus } from '#components'
-import VirtualDeckProgressCircle from '~~/layers/virtual-deck/components/VirtualDeckProgressCircle.vue'
-
-const { url } = defineProps<{
-	url?: string
-}>()
-
-
-watch(() => url, async (newUrl) => {
-	if (!newUrl) {
-		cleanupRefs()
-		return
-	}
-	await setupBufferAndSourceNode()
-})
-
-
-const { audioContext } = useAudioContext()
-
-const audioBuffer = shallowRef<AudioBuffer>()
-const sourceNode = shallowRef<AudioBufferSourceNode>()
-const constantSource = shallowRef<ConstantSourceNode>()
-
-const currentTime = ref<number>(0)
-const duration = ref<number>(0)
-const playing = ref<boolean>(false)
-
-const remainingTime = computed(() => duration.value - currentTime.value)
-const isReady = computed<boolean>(() => !!audioBuffer.value)
-
-async function fetchAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
-	const response = await fetch(url, {
-		headers: { 'ResponseType': 'stream' }
-	})
-	const arrayBuffer = await response.arrayBuffer()
-	return await context.decodeAudioData(arrayBuffer)
-}
-
-async function initializeAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
-	const buffer = await fetchAudioBuffer(context, url)
-	audioBuffer.value = buffer
-	duration.value = buffer.duration
-	return buffer
-}
-
-function initializeAudioContext(): AudioContext {
-	const context = audioContext.value ??= new AudioContext()
-	if (context.state === 'suspended') context.resume()
-	return context
-}
-
-const startTime = ref<number>(0)
-const startOffset = ref<number>(0)
-
-function updateCurrentTime() {
-	const context = unref(audioContext)
-	if (!context) return
-	currentTime.value = context.currentTime - startTime.value + startOffset.value
-}
-
-function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const bufferSource = context.createBufferSource()
-	bufferSource.buffer = buffer
-	sourceNode.value = bufferSource
-	return bufferSource
-}
-
-function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const source = initializeSourceNode(context, buffer)
-	source.connect(context.destination)
-	return source
-}
-
-async function setupBufferAndSourceNode() {
-	const context = initializeAudioContext()
-	const buffer = await initializeAudioBuffer(context, url)
-	const source = initializeSourceNode(context, buffer)
-}
-
-onMounted(async () => {
-	if (!url) return
-	await setupBufferAndSourceNode()
-})
-
-let rAF: number | null = null
-
-function cleanupRefs() {
-	if (rAF !== null) cancelAnimationFrame(rAF)
-
-	duration.value = 0
-	currentTime.value = 0
-	startOffset.value = 0
-	playing.value = false
-
-	audioBuffer.value = undefined
-	sourceNode.value = undefined
-}
-
-onUnmounted(() => {
-	cleanupRefs()
-})
-
-function renderAnimationFrame() {
-	updateCurrentTime()
-	rAF = requestAnimationFrame(renderAnimationFrame)
-}
-
-function startPlaying() {
-	playing.value = true
-	if (rAF !== null) cancelAnimationFrame(rAF)
-	rAF = requestAnimationFrame(renderAnimationFrame)
-}
-
-function stopPlaying(source: AudioBufferSourceNode) {
-	playing.value = false
-	if (rAF !== null) cancelAnimationFrame(rAF)
-	source.stop()
-}
-
-async function play() {
-	const context = unref(audioContext)
-	const buffer = unref(audioBuffer)
-	if (!context || !buffer) {
-		console.warn('Cannot play audio: context or buffer is not initialized')
-		return
-	}
-	startTime.value = context.currentTime
-	const source = initializeAndConnectSource(context, buffer)
-	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
-	if (isOutOfRange) {
-		console.warn('Cannot play audio: start offset is out of range')
-		return
-	}
-	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
-	startPlaying()
-}
-
-function pause() {
-	if (!playing.value) return
-	const context = unref(audioContext)
-	const source = unref(sourceNode)
-	if (!context || !source) {
-		console.warn('Cannot pause audio: context or source is not initialized')
-		return
-	}
-	startOffset.value += context.currentTime - startTime.value
-	stopPlaying(source)
-}
+import { VirtualDeck, VirtualDeckAudioInput, VirtualDeckStylus, VirtualDeckTrackPanel } from '#components'
 
 const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
 const stylus = useTemplateRef<InstanceType<typeof VirtualDeckStylus>>('stylus')
-const { isInteracting, progress } = useVirtualDeck(deck, stylus, currentTime, duration)
 
-const wasPlaying = ref<boolean>(false)
+interface VirtualDeckProps {
+	currentTime: number
+	duration: number
+	bpm: number
+	pitch: number
+	pitchRange: number
+}
 
-watch(isInteracting, (interacting) => {
-	startOffset.value = currentTime.value
-	if (interacting) {
-		wasPlaying.value = playing.value
-		pause()
-	} else if (wasPlaying.value) {
-		play()
-	}
+const {
+	duration = 200.7,
+	bpm = 0,
+	pitchRange = 8
+} = defineProps<VirtualDeckProps>()
+
+const currentTime = defineModel<VirtualDeckProps['currentTime']>('virtualDeckCurrentTime', {
+	default: 0
 })
 
+const pitch = defineModel<VirtualDeckProps['pitch']>('virtualDeckPitch', {
+	default: 0
+})
+
+const { isInteracting, progress, angle } = useVirtualDeck(deck, stylus, currentTime, duration)
 </script>
 
 <template>
-	<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
-		<template #progress>
-			<VirtualDeckProgressCircle :progress="progress" />
-		</template>
-		<template #stylus>
-			<VirtualDeckStylus ref="stylus" />
-		</template>
-		<template #surface>
-			<VirtualDeckSurface
+	<VirtualDeckRoot ref="deck">
+		<VirtualDeckProgressCircle :progress="progress" />
+		<VirtualDeckPlatter>
+			<VirtualDeckStylus ref="stylus" :initial-angle="angle" />
+		</VirtualDeckPlatter>
+		<VirtualDeckAudioInput>
+			<VirtualDeckTrackPanel
+				:bpm="bpm"
 				:current-time="currentTime"
-				:disabled="!isReady"
-				:remaining-time="remainingTime"
+				:duration="duration"
+				:pitch="pitch"
+				:pitch-range="pitchRange"
 			/>
-		</template>
-	</LayoutContainer>
+		</VirtualDeckAudioInput>
+	</VirtualDeckRoot>
 </template>

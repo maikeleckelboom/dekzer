@@ -154,11 +154,10 @@ onMounted(formReset)
 	<div class="flex flex-col gap-4 m-8">
 
 		<div class="grid grid-cols-2 gap-x-6 p-4 rounded bg-muted/50 border-2 items-center">
-			<VirtualDeck :url="trackFileUrl" />
-			<VirtualDeck/>
+			<OldVirtualDeck :url="trackFileUrl" />
 		</div>
 
-		<NewVirtualDeck/>
+		<VirtualDeck />
 
 		<form ref="form" class="flex flex-col gap-4" @submit.prevent>
 			<input
