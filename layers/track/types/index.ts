@@ -13,13 +13,9 @@ export interface Track {
 	pictureUrl: string
 	format: TrackFormat
 	tempo: number
-	tags: string[]
-	releaseDate: string
 	lyrics: ILyricsTag[]
-	// ...
 	composer: string
 	producer: string
-
 }
 
 export interface TrackFormat {

@@ -7,8 +7,8 @@ const {
 	pitchRange,
 	disabled = false
 } = defineProps<{
-	currentTime: number
-	remainingTime: number
+	currentTime?: number
+	remainingTime?: number
 	tempo?: number
 	pitch?: string
 	pitchRange?: string
@@ -25,18 +25,18 @@ const slots = defineSlots<{
 
 const currentTimeDisplay = computed(() => {
 	if (disabled) return ''
-	return currentTime ? formatSeconds(currentTime) : '00:00.0'
+	return currentTime ? formatSeconds(currentTime) : '' // '00:00.0'
 })
 
 const remainingTimeDisplay = computed(() => {
 	if (disabled) return ''
-	return remainingTime ? formatSeconds(remainingTime) : '00:00.0'
+	return remainingTime ? formatSeconds(remainingTime) : '' // '00:00.0'
 })
 
 const bpm = computed(() => {
 	if (!tempo) return ''
 	const rounded = Math.round(tempo).toFixed(2)
-	if(rounded.endsWith('.00')) {
+	if (rounded.endsWith('.00')) {
 		return `${Math.round(tempo)}`
 	}
 	return rounded

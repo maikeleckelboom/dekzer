@@ -1,28 +1,23 @@
 <script lang="ts" setup>
 import WaveformData from 'waveform-data'
 import { analyze } from 'web-audio-beat-detector'
-import {
-	type IAudioMetadata,
-	type ICommonTagsResult,
-	type IFormat,
-	type IPicture,
-	parseWebStream,
-	selectCover
-} from 'music-metadata'
-import type { Track } from '~~/layers/track/types'
 import { Button } from '~~/layers/ui/components/button'
-import { useSharedAudioContext } from '~/composables/useSharedAudioContext'
+import { useAudioContext } from '~/composables/useAudioContext'
+import { type IAudioMetadata, type IPicture, parseWebStream, selectCover } from 'music-metadata'
+import type { Track } from '~~/layers/track/types'
 
 definePageMeta({
 	title: 'Dekzer'
 })
 
-const { audioContext } = useSharedAudioContext()
+const { audioContext } = useAudioContext()
 
 const trackFile = shallowRef<File | null>(null)
 const trackFileUrl = shallowRef<string | null>(null)
 const trackWaveform = shallowRef<WaveformData | null>(null)
 const trackMetadata = shallowRef<IAudioMetadata | null>(null)
+
+const track = useState<Partial<Track> | null>('track', () => null)
 
 function clearState() {
 	trackFile.value = null
@@ -81,16 +76,14 @@ async function fetchWaveform(url: string, context: AudioContext, scale: number =
 	})
 }
 
-const track = useState<Partial<Track> | null>('track', () => null)
 
-function formatTrackMetadata(metadata: IAudioMetadata): Partial<Track> {
-	const getTrackPictureUrl = (picture: IPicture[] | undefined): string | undefined => {
-		const cover = selectCover(picture)
-		if (!cover) return
-		return URL.createObjectURL(new Blob([cover.data], { type: cover.format, name: cover.name }))
+function formatTrackMetadata({ common, format }: IAudioMetadata): Partial<Track> {
+	const createPictureUrl = (pictures?: IPicture[]): string | undefined => {
+		const cover = selectCover(pictures)
+		return cover ? URL.createObjectURL(new Blob([cover.data], { type: cover.format })) : undefined
 	}
 
-	const getTrackCommon = (common: ICommonTagsResult): Omit<Track, 'format'> => ({
+	return {
 		title: common.title,
 		year: common.year,
 		date: common.date,
@@ -100,23 +93,21 @@ function formatTrackMetadata(metadata: IAudioMetadata): Partial<Track> {
 		artist: common.artist,
 		album: common.album,
 		genre: common.genre,
-		pictureUrl: getTrackPictureUrl(common.picture)
-	})
-	const getTrackFormat = (format: IFormat): Track['format'] => ({
-		container: format.container,
-		codec: format.codec,
-		sampleRate: format.sampleRate,
-		numberOfChannels: format.numberOfChannels,
-		numberOfSamples: format.numberOfSamples,
-		duration: format.duration,
-		bitrate: format.bitrate,
-		bitsPerSample: format.bitsPerSample,
-		lossless: format.lossless
-	})
-	console.log({ metadata })
-	return {
-		...getTrackCommon(metadata.common),
-		format: getTrackFormat(metadata.format)
+		lyrics: common.lyrics,
+		producer: common.producer,
+		composer: common.composer,
+		pictureUrl: createPictureUrl(common.picture),
+		format: {
+			container: format.container,
+			codec: format.codec,
+			sampleRate: format.sampleRate,
+			numberOfChannels: format.numberOfChannels,
+			numberOfSamples: format.numberOfSamples,
+			duration: format.duration,
+			bitrate: format.bitrate,
+			bitsPerSample: format.bitsPerSample,
+			lossless: format.lossless
+		}
 	}
 }
 
@@ -146,7 +137,7 @@ whenever(logicAnd(audioContext, trackFile, trackFileUrl), async () => {
 
 	try {
 		const { metadata, tempo, waveform } = await analyzeTrack()
-		track.value = { ...formatTrackMetadata(metadata), tempo }
+		track.value = { ...formatTrackMetadata(metadata), tempo: Math.round(tempo) }
 		trackWaveform.value = waveform
 	} catch (error) {
 		console.error(error)
@@ -162,7 +153,12 @@ onMounted(formReset)
 <template>
 	<div class="flex flex-col gap-4 m-8">
 
-		<VirtualDeck :url="trackFileUrl" />
+		<div class="grid grid-cols-2 gap-x-6 p-4 rounded bg-muted/50 border-2 items-center">
+			<VirtualDeck :url="trackFileUrl" />
+			<VirtualDeck/>
+		</div>
+
+		<NewVirtualDeck/>
 
 		<form ref="form" class="flex flex-col gap-4" @submit.prevent>
 			<input

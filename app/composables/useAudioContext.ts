@@ -1,4 +1,4 @@
-function useAudioContext(contextOptions: AudioContextOptions = { latencyHint: 'interactive' }) {
+function useAudioContextFn(contextOptions: AudioContextOptions = { latencyHint: 'interactive' }) {
 	const audioContext = useState<AudioContext | null>('audioContext', () => null)
 
 	const isReady = computed<boolean>(() => audioContext.value !== null)
@@ -8,7 +8,7 @@ function useAudioContext(contextOptions: AudioContextOptions = { latencyHint: 'i
 		audioContext.value ??= new AudioContext(contextOptions)
 	})
 
-	onUnmounted(close)
+	onBeforeUnmount(close)
 
 	async function suspend() {
 		if (!audioContext.value || audioContext.value.state === 'suspended') {
@@ -29,6 +29,7 @@ function useAudioContext(contextOptions: AudioContextOptions = { latencyHint: 'i
 			return
 		}
 		await audioContext.value.close()
+		audioContext.value = null
 	}
 
 	return {
@@ -41,4 +42,4 @@ function useAudioContext(contextOptions: AudioContextOptions = { latencyHint: 'i
 	}
 }
 
-export const useSharedAudioContext = createSharedComposable(useAudioContext)
+export const useAudioContext = createSharedComposable(useAudioContextFn)

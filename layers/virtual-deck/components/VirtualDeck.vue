@@ -1,12 +1,22 @@
 <script lang="ts" setup>
-import { clamp } from '@vueuse/core'
-import { VirtualDeck } from '#components'
+import { VirtualDeck, VirtualDeckStylus } from '#components'
+import VirtualDeckProgressCircle from '~~/layers/virtual-deck/components/VirtualDeckProgressCircle.vue'
 
 const { url } = defineProps<{
 	url?: string
 }>()
 
-const { audioContext } = useSharedAudioContext()
+
+watch(() => url, async (newUrl) => {
+	if (!newUrl) {
+		cleanupRefs()
+		return
+	}
+	await setupBufferAndSourceNode()
+})
+
+
+const { audioContext } = useAudioContext()
 
 const audioBuffer = shallowRef<AudioBuffer>()
 const sourceNode = shallowRef<AudioBufferSourceNode>()
@@ -35,18 +45,8 @@ async function initializeAudioBuffer(context: AudioContext, url: string): Promis
 }
 
 function initializeAudioContext(): AudioContext {
-	const context = unref(audioContext)
-
-	if (!context) {
-		const newContext = new AudioContext()
-		audioContext.value = newContext
-		return newContext
-	}
-
-	if (context.state === 'suspended') {
-		context.resume()
-	}
-
+	const context = audioContext.value ??= new AudioContext()
+	if (context.state === 'suspended') context.resume()
 	return context
 }
 
@@ -72,7 +72,7 @@ function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer):
 	return source
 }
 
-async function setupSourceNode() {
+async function setupBufferAndSourceNode() {
 	const context = initializeAudioContext()
 	const buffer = await initializeAudioBuffer(context, url)
 	const source = initializeSourceNode(context, buffer)
@@ -80,12 +80,12 @@ async function setupSourceNode() {
 
 onMounted(async () => {
 	if (!url) return
-	await setupSourceNode()
+	await setupBufferAndSourceNode()
 })
 
 let rAF: number | null = null
 
-function closeContextCleanupNodes() {
+function cleanupRefs() {
 	if (rAF !== null) cancelAnimationFrame(rAF)
 
 	duration.value = 0
@@ -93,13 +93,12 @@ function closeContextCleanupNodes() {
 	startOffset.value = 0
 	playing.value = false
 
-	audioContext.value = undefined
 	audioBuffer.value = undefined
 	sourceNode.value = undefined
 }
 
 onUnmounted(() => {
-	closeContextCleanupNodes()
+	cleanupRefs()
 })
 
 function renderAnimationFrame() {
@@ -122,12 +121,10 @@ function stopPlaying(source: AudioBufferSourceNode) {
 async function play() {
 	const context = unref(audioContext)
 	const buffer = unref(audioBuffer)
-
 	if (!context || !buffer) {
 		console.warn('Cannot play audio: context or buffer is not initialized')
 		return
 	}
-
 	startTime.value = context.currentTime
 	const source = initializeAndConnectSource(context, buffer)
 	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
@@ -141,22 +138,19 @@ async function play() {
 
 function pause() {
 	if (!playing.value) return
-
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
-
 	if (!context || !source) {
 		console.warn('Cannot pause audio: context or source is not initialized')
 		return
 	}
-
 	startOffset.value += context.currentTime - startTime.value
 	stopPlaying(source)
 }
 
 const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
-const stylus = useTemplateRef<HTMLDivElement>('stylus')
-const { isInteracting } = useVirtualDeck(deck, stylus, currentTime)
+const stylus = useTemplateRef<InstanceType<typeof VirtualDeckStylus>>('stylus')
+const { isInteracting, progress } = useVirtualDeck(deck, stylus, currentTime, duration)
 
 const wasPlaying = ref<boolean>(false)
 
@@ -170,49 +164,22 @@ watch(isInteracting, (interacting) => {
 	}
 })
 
-watch(() => url, async (newUrl) => {
-	if (!newUrl) {
-		closeContextCleanupNodes()
-		return
-	}
-	const context = initializeAudioContext()
-	const buffer = await initializeAudioBuffer(context, newUrl)
-	const source = initializeSourceNode(context, buffer)
-})
-
-const progress = computed(() => {
-	if (duration.value === 0) return 0
-	return clamp(currentTime.value / duration.value, 0, 1)
-})
-
 </script>
 
 <template>
-	<div class="flex flex-col gap-8">
-		<div class="flex flex-nowrap gap-x-6 p-4 rounded bg-muted/50 border-2 items-center min-w-fit">
-			<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
-				<template #progressIndicator>
-					<ProgressIndicator :progress="progress" />
-				</template>
-				<template #stylus="{ className }">
-					<div ref="stylus" :class="cn(className)" />
-				</template>
-				<template #surface>
-					<VirtualDeckSurface
-						:current-time="currentTime"
-						:disabled="!isReady"
-						:remaining-time="remainingTime"
-					/>
-				</template>
-			</LayoutContainer>
-			<DeckGainFader />
-		</div>
-		<Button
-			v-if="isReady"
-			class="w-fit"
-			variant="secondary"
-			@click="playing ? pause() : play()">
-			{{ playing ? 'Pause' : 'Play' }}
-		</Button>
-	</div>
+	<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
+		<template #progress>
+			<VirtualDeckProgressCircle :progress="progress" />
+		</template>
+		<template #stylus>
+			<VirtualDeckStylus ref="stylus" />
+		</template>
+		<template #surface>
+			<VirtualDeckSurface
+				:current-time="currentTime"
+				:disabled="!isReady"
+				:remaining-time="remainingTime"
+			/>
+		</template>
+	</LayoutContainer>
 </template>

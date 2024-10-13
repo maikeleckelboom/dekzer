@@ -24,11 +24,14 @@ export default defineNuxtConfig({
 	},
 	imports: {
 		presets: [
-		    {
-		        from: '~~/layers/ui/components/toast/use-toast.ts',
-		        imports: ['useToast']
-		    }
+			{
+				from: '~~/layers/ui/components/toast/use-toast.ts',
+				imports: ['useToast']
+			}
 		]
+	},
+	vueuse: {
+		autoImports: true
 	}
 	// fonts: {
 	// 	google: {

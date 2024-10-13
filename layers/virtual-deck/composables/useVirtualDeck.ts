@@ -1,9 +1,12 @@
-import type { MaybeElementRef } from '@vueuse/core'
+import { usePlatterPosition } from '~~/layers/virtual-deck/composables/usePlatterPosition'
+import { clamp, type MaybeElementRef } from '@vueuse/core'
+import type { MaybeRefOrGetter } from 'vue'
 
 export function useVirtualDeck(
 	deck: MaybeElementRef<HTMLElement>,
 	stylus: MaybeElementRef<HTMLElement>,
 	currentTime: Ref<number>,
+	duration: MaybeRefOrGetter<number>,
 	rate: MaybeRefOrGetter<number> = 1
 ) {
 	let elDeck: HTMLElement | null = null
@@ -15,6 +18,12 @@ export function useVirtualDeck(
 		if (!elDeck || !elStylus) {
 			throw new Error('You need to provide both deck and stylus elements')
 		}
+	})
+
+
+	const progress = computed(() => {
+		if (toValue(duration) === 0) return 0
+		return clamp(currentTime.value / toValue(duration), 0, 1)
 	})
 
 	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
@@ -83,7 +92,7 @@ export function useVirtualDeck(
 	})
 
 	watch(currentTime, (time) => {
-		if(!elStylus) return
+		if (!elStylus) return
 		const angle = angleFromSeconds(time)
 		elStylus.style.transform = `rotate(${angle}deg)`
 	})
@@ -91,6 +100,7 @@ export function useVirtualDeck(
 	return {
 		isInteracting,
 		angle,
-		angleFromSeconds
+		angleFromSeconds,
+		progress
 	}
 }
