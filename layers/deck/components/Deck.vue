@@ -14,14 +14,12 @@ function onFileChange([file]: File[]) {
 const { metadata } = useAudioMetadata(uploadedFile)
 
 whenever(metadata, (data) => {
-	console.log(data)
+	console.log('metadata', data)
 })
-
-
 </script>
 
 <template>
-	<DeckDropzone class="size-full p-4 flex" @change="onFileChange">
+	<DeckDropzone class="size-full flex even:flex-row-reverse" @change="onFileChange">
 		<slot />
 	</DeckDropzone>
 </template>

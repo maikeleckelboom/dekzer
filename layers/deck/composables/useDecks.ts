@@ -11,11 +11,18 @@ interface ChannelStripControls {
 	low: number;
 }
 
+interface PlaybackContext {
+	currentTime: number
+	duration: number
+	playing: boolean
+}
+
 interface Deck {
 	id: string
 	name: string
 	channelStrip: ChannelStripControls[]
 	loadedTrack?: Track
+	playback?: PlaybackContext
 }
 
 interface UseDeckReturn {

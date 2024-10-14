@@ -2,11 +2,10 @@ import { usePlatterPosition } from '~~/layers/virtual-deck/composables/usePlatte
 import { clamp, type MaybeElementRef } from '@vueuse/core'
 import type { MaybeRefOrGetter } from 'vue'
 
+
 export function useVirtualDeck(
 	deck: MaybeElementRef<HTMLElement>,
-	stylus: MaybeElementRef<HTMLElement>,
 	currentTime: Ref<number>,
-	duration: MaybeRefOrGetter<number>,
 	playbackRate: MaybeRefOrGetter<number> = 1
 ) {
 	let elDeck: HTMLElement | null = null
@@ -14,26 +13,21 @@ export function useVirtualDeck(
 
 	onMounted(() => {
 		elDeck = unrefElement(deck)
-		elStylus = unrefElement(stylus)
+		elStylus = elDeck.querySelector('[data-name="VirtualDeckStylus"]')
 
 		if (!elDeck || !elStylus) {
 			throw new Error('You need to provide both deck and stylus elements')
 		}
 	})
 
-	const progress = computed(() => {
-		const currTime = toValue(currentTime) ?? 0
-		const totalTime = toValue(duration) ?? 10
-		return clamp(currTime / totalTime, 0, 1)
-	})
-
 	const angleStart = ref<number>(0)
-	const isInteracting = ref<boolean>(false)
+	const interacting = ref<boolean>(false)
 
 	function setPointerCapture(pointerId: number) {
 		if (!elDeck?.setPointerCapture) return
 		elDeck!.setPointerCapture(pointerId)
 	}
+
 	function releasePointerCapture(pointerId: number) {
 		if (!elDeck?.releasePointerCapture) return
 		elDeck!.releasePointerCapture(pointerId)
@@ -42,7 +36,7 @@ export function useVirtualDeck(
 	function startInteract(event: PointerEvent) {
 		setPointerCapture(event.pointerId)
 		angleStart.value = getPointerAngle(event)
-		isInteracting.value = true
+		interacting.value = true
 	}
 
 	function getPointerAngle({ clientX, clientY }: PointerEvent) {
@@ -56,7 +50,7 @@ export function useVirtualDeck(
 	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
 
 	function handlePointerMovement(event: PointerEvent) {
-		if (!isInteracting.value) return
+		if (!interacting.value) return
 
 		const pointerAngle = getPointerAngle(event)
 		const angleDelta = pointerAngle - angleStart.value
@@ -74,7 +68,7 @@ export function useVirtualDeck(
 
 	function stopInteract(event: PointerEvent) {
 		releasePointerCapture(event.pointerId)
-		isInteracting.value = false
+		interacting.value = false
 	}
 
 	useEventListener(deck, 'pointerdown', (pdEvent: PointerEvent) => {
@@ -94,13 +88,12 @@ export function useVirtualDeck(
 	watch(currentTime, (timeInSeconds) => {
 		if (!elStylus) return
 		const angle = angleFromSeconds(timeInSeconds)
-		elStylus!.style.transform = `rotate(${angle}deg)`
+		elStylus.style.transform = `rotate(${angle}deg)`
 	})
 
 	return {
-		isInteracting,
+		interacting,
 		angle,
 		angleFromSeconds,
-		progress
 	}
 }

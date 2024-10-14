@@ -1,11 +1,13 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 
 </script>
 
 <template>
-<div>
+	<div class="min-w-36 w-full grid ">
+		<slot>
 
-</div>
+		</slot>
+	</div>
 </template>
 
 <style scoped>

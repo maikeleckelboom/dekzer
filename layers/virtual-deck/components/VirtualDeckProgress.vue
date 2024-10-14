@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-interface Props {
-	progress: number
-}
+import { injectVirtualDeckRootContext } from './VirtualDeckRoot.vue'
+import type { VirtualDeckRootContext } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const { progress} = defineProps<Props>()
+const { progress, currentTime } = injectVirtualDeckRootContext() as VirtualDeckRootContext
+
+watch([progress, currentTime], ([p,c]) => {
+	console.log('Progress:', p, 'Current Time:', c)
+})
 
 const CIRCLE_SIZE = 100
 
@@ -13,7 +16,7 @@ const cx = computed(() => CIRCLE_SIZE / 2)
 const cy = computed(() => CIRCLE_SIZE / 2)
 const r = computed(() => CIRCLE_SIZE / 2)
 const strokeDasharray = computed(() => 2 * Math.PI * r.value)
-const strokeDashoffset = computed(() => strokeDasharray.value * (1 - progress))
+const strokeDashoffset = computed(() => strokeDasharray.value * (1 - progress.value))
 const strokeWidth = 12
 </script>
 

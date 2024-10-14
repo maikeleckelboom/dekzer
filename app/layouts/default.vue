@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 useHead({
-	titleTemplate: '%s  Dekzer',
+	titleTemplate: 'Dekzer - %s',
 })
 </script>
 

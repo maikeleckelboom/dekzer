@@ -15,11 +15,16 @@ const { decks } = useDecks()
 <template>
 	<DecksPlatform>
 		<Deck v-for="deck in decks" :key="deck.id" :deck="deck">
-			<div class="flex flex-col gap-1">
-				<DeckChannelStrip />
-				<PitchRangeOptions />
+			<!--			<div class="flex flex-col gap-1 justify-center">-->
+			<!--				<DeckPlaybackControls />-->
+			<!--				<PitchRangeOptions />-->
+			<!--			</div>-->
+			<div class="border flex-grow">
+				<TrackOverview />
 			</div>
-			<VirtualDeck />
+			<div class="border">
+				<VirtualDeck />
+			</div>
 		</Deck>
 	</DecksPlatform>
 </template>

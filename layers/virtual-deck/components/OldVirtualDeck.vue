@@ -95,14 +95,6 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 	return bufferSource
 }
 
-function fillGapWithSilence(context: AudioContext, buffer: AudioBuffer, source: AudioBufferSourceNode) {
-	const gap = buffer.duration - startOffset.value
-	const silence = context.createBufferSource()
-	silence.buffer = context.createBuffer(1, gap * context.sampleRate, context.sampleRate)
-	silence.connect(context.destination)
-	silence.start(0)
-	silence.stop(gap)
-}
 
 async function play() {
 	const context = unref(audioContext)
@@ -116,7 +108,8 @@ async function play() {
 	source.connect(context.destination)
 	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
 	if (isOutOfRange) {
-		fillGapWithSilence(context, buffer, source)
+		console.warn('Cannot play audio: startOffset is out of range')
+		return
 	}
 	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
 	startPlaying()
