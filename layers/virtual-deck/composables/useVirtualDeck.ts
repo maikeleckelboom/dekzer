@@ -7,7 +7,7 @@ export function useVirtualDeck(
 	stylus: MaybeElementRef<HTMLElement>,
 	currentTime: Ref<number>,
 	duration: MaybeRefOrGetter<number>,
-	rate: MaybeRefOrGetter<number> = 1
+	playbackRate: MaybeRefOrGetter<number> = 1
 ) {
 	let elDeck: HTMLElement | null = null
 	let elStylus: HTMLElement | null = null
@@ -22,11 +22,10 @@ export function useVirtualDeck(
 	})
 
 	const progress = computed(() => {
-		if (toValue(duration) === 0) return 0
-		return clamp(currentTime.value / toValue(duration), 0, 1)
+		const currTime = toValue(currentTime) ?? 0
+		const totalTime = toValue(duration) ?? 10
+		return clamp(currTime / totalTime, 0, 1)
 	})
-
-	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
 
 	const angleStart = ref<number>(0)
 	const isInteracting = ref<boolean>(false)
@@ -35,7 +34,6 @@ export function useVirtualDeck(
 		if (!elDeck?.setPointerCapture) return
 		elDeck!.setPointerCapture(pointerId)
 	}
-
 	function releasePointerCapture(pointerId: number) {
 		if (!elDeck?.releasePointerCapture) return
 		elDeck!.releasePointerCapture(pointerId)
@@ -55,6 +53,8 @@ export function useVirtualDeck(
 		return rotation < 0 ? rotation + 360 : rotation
 	}
 
+	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
+
 	function handlePointerMovement(event: PointerEvent) {
 		if (!isInteracting.value) return
 
@@ -65,7 +65,7 @@ export function useVirtualDeck(
 		const normalizeAngle = (r: number) => (r > 180 ? r - 360 : r < -180 ? r + 360 : r)
 		const normalizedDelta = normalizeAngle(angleDelta)
 		const seekedAngle = (angle.value + normalizedDelta) % 360
-		const deltaTime = (normalizedDelta / 360) * (60 / VINYL_RPM) * toValue(rate)
+		const deltaTime = (normalizedDelta / 360) * (60 / VINYL_RPM) * toValue(playbackRate)
 		const seekedTime = currentTime.value + deltaTime
 
 		angle.value = seekedAngle

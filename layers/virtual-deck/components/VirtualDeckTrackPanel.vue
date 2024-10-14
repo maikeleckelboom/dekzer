@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 interface TrackPanelProps {
-	currentTime: number
+	elapsedTime: number
 	duration: number
 	bpm: number
 	pitch: string | number
@@ -8,7 +8,7 @@ interface TrackPanelProps {
 }
 
 const {
-	currentTime,
+	elapsedTime,
 	duration,
 	bpm,
 	pitch,
@@ -16,24 +16,25 @@ const {
 } = defineProps<Partial<TrackPanelProps>>()
 
 const slots = defineSlots<{
-	currentTime(time: number): void
+	elapsedTime(time: number): void
 	remainingTime(time: number): void
 	pitch(pitch: string): void
 	pitchRange(range: string): void
 	bpm(bpm: number): void
 }>()
 
-const currentTimeDisplay = computed(() => {
-	return currentTime ? formatSeconds(currentTime) : '00:00.0'
+const elapsedTimeDisplay = computed(() => {
+	return elapsedTime ? formatSeconds(elapsedTime) : '' // '00:00.0'
 })
 
 const remainingTimeDisplay = computed(() => {
-	return duration ? formatSeconds(duration - currentTime) : '00:00.0'
+	return duration ? formatSeconds(duration - elapsedTime) : ''// '00:00.0'
 })
 
 const bpmDisplay = computed(() => {
-	if (!bpm) return ''
-	return bpm.toFixed(2)
+	if (typeof bpm === 'undefined') return ''
+	const isRound = bpm % 1 === 0
+	return isRound ? bpm.toString() : bpm.toFixed(2)
 })
 
 function getSign(value: number): string {
@@ -55,16 +56,16 @@ const pitchRangeDisplay = computed(() => {
 	<div class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
 		<div class="flex flex-col items-center col-span-2">
 			<strong
-				class="capitalize text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
+				class="capitalize text-xl md:text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
 				<slot name="bpm">
 					{{ bpmDisplay }}
 				</slot>
 			</strong>
-			<p v-if="bpm || slots.bpm" class="text-xs text-center text-background">BPM</p>
+			<p v-if="typeof bpm !== 'undefined' || slots.bpm" class="text-xs text-center text-background">BPM</p>
 		</div>
 		<div>
 			<p
-				:class="cn('capitalize text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
+				:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
 				<slot v-if="typeof pitch !== 'undefined' || slots.pitch" name="pitch">
 					{{ pitchDisplay }}
 				</slot>
@@ -72,7 +73,7 @@ const pitchRangeDisplay = computed(() => {
 		</div>
 		<div>
 			<p
-				:class="cn('capitalize text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
+				:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
 				<slot v-if="pitchRange || slots.pitchRange" name="pitchRange">
 					{{ pitchRangeDisplay }}
 				</slot>
@@ -81,15 +82,15 @@ const pitchRangeDisplay = computed(() => {
 		<div class="flex flex-col items-center col-span-2 mt-4">
 			<strong
 				:class="
-					cn('capitalize text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
+					cn('capitalize text-sm md:text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
 				">
-				<slot name="currentTime">
-					{{ currentTimeDisplay }}
+				<slot name="elapsedTime">
+					{{ elapsedTimeDisplay }}
 				</slot>
 			</strong>
 			<strong
 				:class="
-					cn('capitalize text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
+					cn('capitalize text-sm md:text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
 				">
 				<slot name="remainingTime">
 					{{ remainingTimeDisplay }}

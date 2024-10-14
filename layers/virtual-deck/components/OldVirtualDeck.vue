@@ -1,33 +1,33 @@
 <script lang="ts" setup>
 import { VirtualDeck, VirtualDeckStylus } from '#components'
-import VirtualDeckProgressCircle from '~~/layers/virtual-deck/components/VirtualDeckProgressCircle.vue'
 
 const { url } = defineProps<{
 	url?: string
 }>()
 
 
+const { audioContext, initializeContext } = useAudioContext()
+
+
 watch(() => url, async (newValue, oldValue) => {
 	if (oldValue && !newValue) {
-		cleanupRefs()
+		resetState()
 		return
 	}
-	await setupBufferAndSourceNode()
-}, { immediate: true })
 
-
-const { audioContext } = useAudioContext()
+	if (import.meta.client && navigator.userActivation.hasBeenActive) {
+		const context = initializeContext()
+		const buffer = await initializeAudioBuffer(context, url)
+		const source = initializeSourceNode(context, buffer)
+	}
+})
 
 const audioBuffer = shallowRef<AudioBuffer>()
 const sourceNode = shallowRef<AudioBufferSourceNode>()
-const constantSource = shallowRef<ConstantSourceNode>()
 
 const currentTime = ref<number>(0)
 const duration = ref<number>(0)
 const playing = ref<boolean>(false)
-
-const remainingTime = computed(() => duration.value - currentTime.value)
-const isReady = computed<boolean>(() => !!audioBuffer.value)
 
 async function fetchAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
 	const response = await fetch(url, {
@@ -44,57 +44,32 @@ async function initializeAudioBuffer(context: AudioContext, url: string): Promis
 	return buffer
 }
 
-function initializeAudioContext(): AudioContext {
-	const context = audioContext.value ??= new AudioContext()
-	if (context.state === 'suspended') context.resume()
-	return context
-}
-
 const startTime = ref<number>(0)
 const startOffset = ref<number>(0)
+
+
+let rAF: number | null = null
+
+function resetState() {
+	if (rAF !== null) {
+		cancelAnimationFrame(rAF)
+	}
+	duration.value = 0
+	currentTime.value = 0
+	startOffset.value = 0
+	startTime.value = 0
+	playing.value = false
+	audioBuffer.value = undefined
+	sourceNode.value = undefined
+}
+
+onUnmounted(resetState)
 
 function updateCurrentTime() {
 	const context = unref(audioContext)
 	if (!context) return
 	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
-
-function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const bufferSource = context.createBufferSource()
-	bufferSource.buffer = buffer
-	sourceNode.value = bufferSource
-	return bufferSource
-}
-
-function initializeAndConnectSource(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const source = initializeSourceNode(context, buffer)
-	source.connect(context.destination)
-	return source
-}
-
-async function setupBufferAndSourceNode() {
-	const context = initializeAudioContext()
-	const buffer = await initializeAudioBuffer(context, url)
-	const source = initializeSourceNode(context, buffer)
-}
-
-let rAF: number | null = null
-
-function cleanupRefs() {
-	if (rAF !== null) cancelAnimationFrame(rAF)
-
-	duration.value = 0
-	currentTime.value = 0
-	startOffset.value = 0
-	playing.value = false
-
-	audioBuffer.value = undefined
-	sourceNode.value = undefined
-}
-
-onUnmounted(() => {
-	cleanupRefs()
-})
 
 function renderAnimationFrame() {
 	updateCurrentTime()
@@ -113,6 +88,22 @@ function stopPlaying(source: AudioBufferSourceNode) {
 	source.stop()
 }
 
+function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
+	const bufferSource = context.createBufferSource()
+	bufferSource.buffer = buffer
+	sourceNode.value = bufferSource
+	return bufferSource
+}
+
+function fillGapWithSilence(context: AudioContext, buffer: AudioBuffer, source: AudioBufferSourceNode) {
+	const gap = buffer.duration - startOffset.value
+	const silence = context.createBufferSource()
+	silence.buffer = context.createBuffer(1, gap * context.sampleRate, context.sampleRate)
+	silence.connect(context.destination)
+	silence.start(0)
+	silence.stop(gap)
+}
+
 async function play() {
 	const context = unref(audioContext)
 	const buffer = unref(audioBuffer)
@@ -121,52 +112,15 @@ async function play() {
 		return
 	}
 	startTime.value = context.currentTime
-	const source = initializeAndConnectSource(context, buffer)
+	const source = initializeSourceNode(context, buffer)
+	source.connect(context.destination)
 	const isOutOfRange = startOffset.value >= buffer.duration || startOffset.value < 0
 	if (isOutOfRange) {
-		console.warn('Cannot play audio: start offset is out of range')
-		return
+		fillGapWithSilence(context, buffer, source)
 	}
 	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
 	startPlaying()
 }
-
-// preserve pitch while changing speed
-//async function play2() {
-// 	const context = unref(audioContext)
-// 	const buffer = unref(audioBuffer)
-// 	if (!context || !buffer) {
-// 		console.warn('Cannot play audio: context or buffer is not initialized')
-// 		return
-// 	}
-//
-// 	const rate = 1.5 // Change this rate, e.g., 1.5 to speed up by 50%
-// 	const offlineContext = new OfflineAudioContext({
-// 		numberOfChannels: buffer.numberOfChannels,
-// 		length: buffer.length,
-// 		sampleRate: context.sampleRate
-// 	})
-//
-// 	const source = offlineContext.createBufferSource()
-// 	source.buffer = buffer
-// 	source.playbackRate.value = rate // Speed up, but pitch will change
-//
-// 	const pitchShift = offlineContext.createBiquadFilter()
-// 	pitchShift.type = 'allpass'
-// 	pitchShift.frequency.value = 1000 // Adjust pitch shifting parameters
-//
-// 	source.connect(pitchShift)
-// 	pitchShift.connect(offlineContext.destination)
-//
-// 	source.start(0)
-//
-// 	const renderedBuffer = await offlineContext.startRendering()
-//
-// 	// Now play the rendered buffer in the main context with pitch preserved
-// 	const outputSource = initializeAndConnectSource(context, renderedBuffer)
-// 	outputSource.start(0)
-// 	startPlaying()
-// }
 
 function pause() {
 	if (!playing.value) return
@@ -199,19 +153,7 @@ watch(isInteracting, (interacting) => {
 </script>
 
 <template>
-	<LayoutContainer ref="deck" :class="!isReady && 'pointer-events-none opacity-50 filter grayscale'">
-		<template #progress>
-			<VirtualDeckProgressCircle :progress="progress" />
-		</template>
-		<template #stylus>
-			<VirtualDeckStylus ref="stylus" />
-		</template>
-		<template #surface>
-			<VirtualDeckTrackPanel
-				:current-time="currentTime"
-				:disabled="!isReady"
-				:remaining-time="remainingTime"
-			/>
-		</template>
-	</LayoutContainer>
+	<div>
+		<!-- to be re-created -->
+	</div>
 </template>

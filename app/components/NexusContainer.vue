@@ -11,16 +11,16 @@ const slots = defineSlots<{
 <template>
 	<div class="grid grid-rows-[auto,1fr,auto] grid-cols-[auto,1fr,auto] select-none border">
 		<div class="row-start-1 grid place-items-center">
-			<slot name="northwest" />
+			<slot name="northwest" /> <!-- Key lock -->
 		</div>
 		<div class="col-start-3 grid place-items-center">
-			<slot name="northeast" />
+			<slot name="northeast" /> <!-- Slip Mode -->
 		</div>
 		<div class="col-start-3 row-start-3 grid place-items-center">
-			<slot name="southeast" />
+			<slot name="southeast" /> <!-- Eject -->
 		</div>
 		<div class="row-start-3 grid place-items-center">
-			<slot name="southwest" />
+			<slot name="southwest" /> <!-- ? -->
 		</div>
 		<div class="col-start-2 row-start-2 grid place-items-center">
 			<slot />

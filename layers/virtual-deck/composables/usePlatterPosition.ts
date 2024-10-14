@@ -1,11 +1,10 @@
-export function usePlatterPosition(currentTime: MaybeRefOrGetter<number>, rate: MaybeRefOrGetter<number> = 1) {
+export function usePlatterPosition(currentTime: MaybeRefOrGetter<number>, playbackRate: MaybeRefOrGetter<number> = 1) {
 	const angle = ref<number>(0)
 
-	const getRevolutionsPerSecond = (rpm: number) => rpm / 60
-	const getAnglePerSecond = (rpm: number) => 360 * getRevolutionsPerSecond(rpm)
+	const getAnglePerSecond = (rpm: number) => 360 * rpm / 60
 
 	function angleFromSeconds(timeInSeconds: number) {
-		const anglePerSecond = getAnglePerSecond(VINYL_RPM * toValue(rate))
+		const anglePerSecond = getAnglePerSecond(VINYL_RPM * toValue(playbackRate))
 		return (timeInSeconds * anglePerSecond) % 360
 	}
 

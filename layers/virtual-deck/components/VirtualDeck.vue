@@ -1,30 +1,24 @@
 <script lang="ts" setup>
-import { VirtualDeck, VirtualDeckAudioInput, VirtualDeckStylus, VirtualDeckTrackPanel } from '#components'
-
-const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
-const stylus = useTemplateRef<InstanceType<typeof VirtualDeckStylus>>('stylus')
+import { VirtualDeck, VirtualDeckPlatter, VirtualDeckStylus, VirtualDeckTrackPanel } from '#components'
 
 interface VirtualDeckProps {
 	currentTime: number
 	duration: number
 	bpm: number
 	pitch: number
-	pitchRange: number
+	pitchRange: 8 | 16 | 50
 }
 
-const {
-	duration = 200.7,
-	bpm = 0,
-	pitchRange = 8
-} = defineProps<VirtualDeckProps>()
+type CurrentTime = VirtualDeckProps['currentTime']
+type Pitch = VirtualDeckProps['pitch']
 
-const currentTime = defineModel<VirtualDeckProps['currentTime']>('virtualDeckCurrentTime', {
-	default: 0
-})
+const { duration } = defineProps<Partial<VirtualDeckProps>>()
 
-const pitch = defineModel<VirtualDeckProps['pitch']>('virtualDeckPitch', {
-	default: 0
-})
+const currentTime = defineModel<CurrentTime>('currentTime', { default: 0 })
+const pitch = defineModel<Pitch>('pitch', { default: 0 })
+
+const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
+const stylus = useTemplateRef<InstanceType<typeof VirtualDeckStylus>>('stylus')
 
 const { isInteracting, progress, angle } = useVirtualDeck(deck, stylus, currentTime, duration)
 </script>
@@ -35,14 +29,6 @@ const { isInteracting, progress, angle } = useVirtualDeck(deck, stylus, currentT
 		<VirtualDeckPlatter>
 			<VirtualDeckStylus ref="stylus" :initial-angle="angle" />
 		</VirtualDeckPlatter>
-		<VirtualDeckAudioInput>
-			<VirtualDeckTrackPanel
-				:bpm="bpm"
-				:current-time="currentTime"
-				:duration="duration"
-				:pitch="pitch"
-				:pitch-range="pitchRange"
-			/>
-		</VirtualDeckAudioInput>
+		<VirtualDeckTrackPanel />
 	</VirtualDeckRoot>
 </template>

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 useHead({
-	titleTemplate: '%s | App'
+	titleTemplate: '%s  Dekzer',
 })
 </script>
 
 <template>
-	<div class="max-w-7xl overflow-x-clip">
+	<div class="overflow-x-clip">
 		<slot />
 	</div>
 </template>
