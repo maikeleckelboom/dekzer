@@ -10,9 +10,9 @@ const emit = defineEmits<{
 	(ev: 'change', files: File[]): void
 }>()
 
-const input = useTemplateRef<HTMLDivElement>('input')
+const ref = useTemplateRef<HTMLDivElement>('ref')
 
-const { isOverDropZone } = useDropZone(input, {
+const { isOverDropZone } = useDropZone(ref, {
 	onDrop,
 	dataTypes
 })
@@ -51,7 +51,7 @@ defineSlots<{ default: void }>()
 </script>
 
 <template>
-	<div ref="input">
+	<div ref="ref">
 		<slot />
 	</div>
 </template>

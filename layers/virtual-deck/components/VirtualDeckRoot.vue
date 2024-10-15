@@ -1,24 +1,30 @@
 <script lang="ts">
+import type { ComputedRef } from '@vue/reactivity'
+
 export interface VirtualDeckRootProps {
 	currentTime: number
-	duration?: number
-	bpm?: number
-	pitch?: number
-	pitchRange?: 8 | 16 | 50
+	duration: number
+	bpm: number
+	pitch: number
+	pitchRange: 8 | 16 | 50
 }
 
 export interface VirtualDeckRootEmits {
-	'update:currentTime': [currentTime: number]
+	'update:currentTime': [payload: number],
+	'update:angle': [payload: number],
+	'update:progress': [payload: number],
+	'interacting': [payload: boolean]
 }
 
 export interface VirtualDeckRootContext {
 	currentTime: Ref<number | undefined>
-	duration: Ref<number | undefined>
-	pitch: Ref<number>
-	pitchRange: Ref<8 | 16 | 50>
-	interacting: Ref<boolean>
-	angle: Ref<number>
+	duration: Readonly<Ref<number | undefined>>
+	pitch: ComputedRef<number>
+	pitchRange: ComputedRef<8 | 16 | 50>
+	interacting: ComputedRef<boolean>
 	progress: ComputedRef<number>
+	bpm: ComputedRef<number>
+	angle: Ref<number>
 }
 
 export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext]
@@ -30,13 +36,16 @@ import { clamp } from '@vueuse/core'
 
 defineSlots<{ default: void }>()
 
-const props = defineProps<VirtualDeckRootProps>()
+const props = defineProps<Partial<VirtualDeckRootProps>>()
 
 const emits = defineEmits<VirtualDeckRootEmits>()
 
 const currentTime = useVModel(props, 'currentTime', emits)
 
-const { pitch, pitchRange, bpm, duration } = toRefs(props)
+const pitch = computedEager(() => props.pitch)
+const pitchRange = computedEager(() => props.pitchRange)
+const bpm = computedEager(() => props.bpm)
+const duration = computedEager(() => props.duration)
 
 const root = useTemplateRef<HTMLElement>('root')
 

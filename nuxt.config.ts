@@ -26,6 +26,10 @@ export default defineNuxtConfig({
 		'@pinia/nuxt'
 	],
 	imports: {
+		dirs: [
+			'./app/stores',
+			'./layers/**/stores',
+		],
 		presets: [
 			{
 				from: 'nanoid',

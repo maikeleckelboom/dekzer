@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import type { Track } from '~~/layers/track/types'
 
 export interface IDeck {
@@ -12,13 +11,11 @@ export const useDeckStore = defineStore('deck.store', () => {
 		{
 			id: 'Deck 1',
 			name: 'Deck 1',
-			track: null
 		},
-		// {
-		// 	id: 'Deck 2',
-		// 	name: 'Deck 2',
-		// 	track: null
-		// }
+		{
+			id: 'Deck 2',
+			name: 'Deck 2',
+		}
 	])
 
 	function addDeck(deck: IDeck): void {
@@ -46,11 +43,29 @@ export const useDeckStore = defineStore('deck.store', () => {
 		decks.value[index].track = undefined
 	}
 
+	function getDeckById(id: string): IDeck | undefined {
+		return decks.value.find(deck => deck.id === id)
+	}
+
+	const loadedTracks = computed(() => decks.value.filter(deck => deck.track).map(deck => deck.track))
+
+	function getTrackById(id: string): Track | undefined {
+		return decks.value.find(deck => deck.track?.id === id)?.track
+	}
+
+	function computedTrack(deck: IDeck){
+		return computed(() => getTrackById(deck.id))
+	}
+
 	return {
 		decks,
+		loadedTracks,
 		addDeck,
 		removeDeck,
+		getDeckById,
+		getTrackById,
 		loadTrack,
-		unloadTrack
+		unloadTrack,
+		computedTrack
 	}
 })

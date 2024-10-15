@@ -1,9 +1,8 @@
 import type { IAudioMetadata, IPicture } from 'music-metadata'
 import { selectCover } from 'music-metadata'
-import type { Track, TrackMetadata } from '~~/layers/track/types'
-import { nanoid } from 'nanoid'
+import type { TrackMetadata } from '~~/layers/track/types'
 
-export function createTrackMetadata(metadata: IAudioMetadata): Partial<TrackMetadata> {
+function createTrackMetadata(metadata: IAudioMetadata): Partial<TrackMetadata> {
 	const { common, format } = metadata
 
 	function createPictureUrl(pictures?: IPicture[]): string | undefined {
@@ -38,13 +37,5 @@ export function createTrackMetadata(metadata: IAudioMetadata): Partial<TrackMeta
 			bitsPerSample: format.bitsPerSample,
 			lossless: format.lossless
 		}
-	}
-}
-
-export function createTrack(url: string, metadata: IAudioMetadata): Track {
-	return {
-		id: nanoid(),
-		url,
-		metadata: createTrackMetadata(metadata)
 	}
 }
