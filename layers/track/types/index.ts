@@ -1,6 +1,6 @@
-import type { ILyricsTag } from 'music-metadata'
+import type { IAudioMetadata, ILyricsTag } from 'music-metadata'
 
-export interface Track {
+export interface TrackMetadata {
 	title: string
 	genre: string[]
 	artists: string[]
@@ -11,14 +11,13 @@ export interface Track {
 	year: number
 	date: string
 	pictureUrl: string
-	format: TrackFormat
-	tempo: number
+	format: TrackMetadataFormat
 	lyrics: ILyricsTag[]
 	composer: string
 	producer: string
 }
 
-export interface TrackFormat {
+export interface TrackMetadataFormat {
 	container: string
 	codec: string
 	sampleRate: number
@@ -28,4 +27,18 @@ export interface TrackFormat {
 	bitrate: number
 	bitsPerSample: number
 	lossless: boolean
+}
+
+export type Track = {
+	id: string
+	url: string
+	metadata: TrackMetadata
+}
+
+
+// mew"
+export type Track2 = {
+	id: string
+	url: string
+	metadata: IAudioMetadata
 }

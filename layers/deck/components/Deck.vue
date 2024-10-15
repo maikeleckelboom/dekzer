@@ -1,25 +1,34 @@
 <script lang="ts" setup>
-const uploadedFile = ref<File | null>(null)
+import { useForwardPropsEmits } from 'radix-vue'
+import type { HTMLAttributes } from 'vue'
+import type { DeckRootEmits, DeckRootProps } from './DeckRoot.vue'
 
-const clearFile = () => uploadedFile.value = null
-
-onBeforeUnmount(clearFile)
-
-onMounted(clearFile)
-
-function onFileChange([file]: File[]) {
-	uploadedFile.value = file
+interface DeckEmits extends DeckRootEmits {
 }
 
-const { metadata } = useAudioMetadata(uploadedFile)
+interface DeckProps extends DeckRootProps {
+	class?: HTMLAttributes['class']
+}
 
-whenever(metadata, (data) => {
-	console.log('metadata', data)
+const props = defineProps<DeckProps>()
+const emits = defineEmits<DeckEmits>()
+
+const delegatedProps = computed(() => {
+	const { class: _, ...delegated } = props
+
+	return delegated
 })
+
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+/**
+ * Here we may implement specific business logic for the Deck component
+ */
+
 </script>
 
 <template>
-	<DeckDropzone class="size-full flex even:flex-row-reverse" @change="onFileChange">
+	<DeckRoot v-bind="forwarded">
 		<slot />
-	</DeckDropzone>
+	</DeckRoot>
 </template>

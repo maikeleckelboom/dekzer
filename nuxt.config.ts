@@ -22,6 +22,15 @@ export default defineNuxtConfig({
 		'@nuxt/icon',
 		'@nuxtjs/color-mode',
 		'nuxt-lucide-icons',
-		'@nuxt/fonts'
+		'@nuxt/fonts',
+		'@pinia/nuxt'
 	],
+	imports: {
+		presets: [
+			{
+				from: 'nanoid',
+				imports: ['nanoid']
+			}
+		]
+	}
 })

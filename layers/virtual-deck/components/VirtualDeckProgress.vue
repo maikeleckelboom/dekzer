@@ -2,11 +2,7 @@
 import { injectVirtualDeckRootContext } from './VirtualDeckRoot.vue'
 import type { VirtualDeckRootContext } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const { progress, currentTime } = injectVirtualDeckRootContext() as VirtualDeckRootContext
-
-watch([progress, currentTime], ([p,c]) => {
-	console.log('Progress:', p, 'Current Time:', c)
-})
+const { progress } = injectVirtualDeckRootContext() as VirtualDeckRootContext
 
 const CIRCLE_SIZE = 100
 

@@ -1,101 +1,82 @@
 <script lang="ts" setup>
-interface TrackPanelProps {
-	elapsedTime: number
-	duration: number
-	bpm: number
-	pitch: string | number
-	pitchRange: string | number
-}
+import {
+	injectVirtualDeckRootContext,
+	type VirtualDeckRootContext
+} from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const {
-	elapsedTime,
-	duration,
-	bpm,
-	pitch,
-	pitchRange
-} = defineProps<Partial<TrackPanelProps>>()
-
-const slots = defineSlots<{
-	elapsedTime(time: number): void
-	remainingTime(time: number): void
-	pitch(pitch: string): void
-	pitchRange(range: string): void
-	bpm(bpm: number): void
-}>()
+const { currentTime, duration, pitch, pitchRange, bpm } = injectVirtualDeckRootContext() as VirtualDeckRootContext
 
 const elapsedTimeDisplay = computed(() => {
-	return elapsedTime ? formatSeconds(elapsedTime) : '' // '00:00.0'
+	return typeof currentTime.value !== 'undefined' ? formatSeconds(currentTime.value) : ''
 })
 
 const remainingTimeDisplay = computed(() => {
-	return duration ? formatSeconds(duration - elapsedTime) : ''// '00:00.0'
+	return duration.value ? formatSeconds(duration.value - currentTime.value) : ''
 })
 
 const bpmDisplay = computed(() => {
-	if (typeof bpm === 'undefined') return ''
-	const isRound = bpm % 1 === 0
-	return isRound ? bpm.toString() : bpm.toFixed(2)
+	const tempo = unref(bpm)
+	if (typeof tempo === 'undefined') return ''
+	const isRound = tempo % 1 === 0
+	return isRound ? tempo.toString() : tempo.toFixed(2)
 })
 
-function getSign(value: number): string {
-	return value >= 0 ? '+' : ''
-}
-
+const getSign = (value: number): string => value >= 0 ? '+' : ''
 const pitchDisplay = computed(() => {
-	if (typeof pitch === 'undefined') return ''
-	return `${getSign(pitch)}${pitch}%`
+	if (typeof pitch.value === 'undefined') return ''
+	return `${getSign(pitch.value)}${pitch.value}%`
 })
 
 const pitchRangeDisplay = computed(() => {
-	if (typeof pitchRange === 'undefined') return ''
-	return `±${pitchRange}`
+	if (typeof pitchRange.value === 'undefined') return ''
+	return `±${pitchRange.value}`
 })
 </script>
 
 <template>
 	<div class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
 		<div class="flex flex-col items-center col-span-2">
-			<strong
-				class="capitalize text-xl md:text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
-				<slot name="bpm">
+			<template v-if="bpm">
+				<strong
+					class="capitalize text-xl md:text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
 					{{ bpmDisplay }}
-				</slot>
-			</strong>
-			<p v-if="typeof bpm !== 'undefined' || slots.bpm" class="text-xs text-center text-background">BPM</p>
+				</strong>
+				<p class="text-xs text-center text-background">BPM</p>
+			</template>
 		</div>
 		<div>
-			<p
-				:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
-				<slot v-if="typeof pitch !== 'undefined' || slots.pitch" name="pitch">
+			<template v-if="pitchDisplay">
+				<p
+					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
 					{{ pitchDisplay }}
-				</slot>
-			</p>
+				</p>
+			</template>
 		</div>
 		<div>
-			<p
-				:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
-				<slot v-if="pitchRange || slots.pitchRange" name="pitchRange">
+			<template v-if="pitchRange">
+				<p
+					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
 					{{ pitchRangeDisplay }}
-				</slot>
-			</p>
+				</p>
+			</template>
 		</div>
-		<div class="flex flex-col items-center col-span-2 mt-4">
-			<strong
-				:class="
-					cn('capitalize text-sm md:text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
+		<template v-if="typeof currentTime !== 'undefined' && typeof duration !== 'undefined'">
+			<div class="flex flex-col items-center col-span-2 mt-4">
+				<strong
+					:class="
+					cn('capitalize text-sm md:text-lg md:leading-none font-semibold tabular-nums text-center text-background leading-none select-none')
 				">
-				<slot name="elapsedTime">
 					{{ elapsedTimeDisplay }}
-				</slot>
-			</strong>
-			<strong
-				:class="
-					cn('capitalize text-sm md:text-lg font-semibold tabular-nums text-center text-background leading-none select-none')
+				</strong>
+				<strong
+					:class="
+					cn('capitalize text-sm md:text-lg md:leading-none font-semibold tabular-nums text-center text-background leading-none select-none')
 				">
-				<slot name="remainingTime">
-					{{ remainingTimeDisplay }}
-				</slot>
-			</strong>
-		</div>
+					<slot name="remainingTime">
+						{{ remainingTimeDisplay }}
+					</slot>
+				</strong>
+			</div>
+		</template>
 	</div>
 </template>

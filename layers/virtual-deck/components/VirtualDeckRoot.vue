@@ -1,20 +1,24 @@
 <script lang="ts">
-
 export interface VirtualDeckRootProps {
 	currentTime: number
-	duration: number
-	pitch: number
-	pitchRange: 8 | 16 | 50
+	duration?: number
+	bpm?: number
+	pitch?: number
+	pitchRange?: 8 | 16 | 50
+}
+
+export interface VirtualDeckRootEmits {
+	'update:currentTime': [currentTime: number]
 }
 
 export interface VirtualDeckRootContext {
-	currentTime: Ref<number>
-	duration: Ref<number>
+	currentTime: Ref<number | undefined>
+	duration: Ref<number | undefined>
 	pitch: Ref<number>
 	pitchRange: Ref<8 | 16 | 50>
-	progress: ComputedRef<number>
 	interacting: Ref<boolean>
 	angle: Ref<number>
+	progress: ComputedRef<number>
 }
 
 export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext]
@@ -22,28 +26,21 @@ export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext]
 </script>
 
 <script lang="ts" setup>
-import { VirtualDeck } from '#components'
 import { clamp } from '@vueuse/core'
 
 defineSlots<{ default: void }>()
 
-const props  = defineProps<Partial<VirtualDeckRootProps>>()
+const props = defineProps<VirtualDeckRootProps>()
 
-const {
-	duration,
-	pitch,
-	pitchRange
-} = toRefs(props)
+const emits = defineEmits<VirtualDeckRootEmits>()
 
-const currentTime = defineModel<number>('currentTime', {
-	default: 0,
-	required: false
-})
+const currentTime = useVModel(props, 'currentTime', emits)
 
+const { pitch, pitchRange, bpm, duration } = toRefs(props)
 
-const deck = useTemplateRef<InstanceType<typeof VirtualDeck>>('deck')
+const root = useTemplateRef<HTMLElement>('root')
 
-const { interacting, angle } = useVirtualDeck(deck, currentTime)
+const { interacting, angle } = useVirtualDeck(root, currentTime)
 
 const progress = computed(() => {
 	const currTime = toValue(currentTime) ?? 0
@@ -54,6 +51,7 @@ const progress = computed(() => {
 provideVirtualDeckRootContext({
 	currentTime,
 	duration,
+	bpm,
 	pitch,
 	pitchRange,
 	progress,
@@ -64,7 +62,8 @@ provideVirtualDeckRootContext({
 
 <template>
 	<div
-		ref="deck"
+		ref="root"
+		:aria-disabled="!duration"
 		:class="
 			cn(
 				'grid place-items-center relative overflow-clip m-auto',

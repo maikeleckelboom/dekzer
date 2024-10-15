@@ -30,9 +30,7 @@ const duration = ref<number>(0)
 const playing = ref<boolean>(false)
 
 async function fetchAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
-	const response = await fetch(url, {
-		headers: { 'ResponseType': 'stream' }
-	})
+	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
 	const arrayBuffer = await response.arrayBuffer()
 	return await context.decodeAudioData(arrayBuffer)
 }

@@ -1,5 +1,5 @@
 import { usePlatterPosition } from '~~/layers/virtual-deck/composables/usePlatterPosition'
-import { clamp, type MaybeElementRef } from '@vueuse/core'
+import { type MaybeElementRef } from '@vueuse/core'
 import type { MaybeRefOrGetter } from 'vue'
 
 
@@ -13,11 +13,19 @@ export function useVirtualDeck(
 
 	onMounted(() => {
 		elDeck = unrefElement(deck)
-		elStylus = elDeck.querySelector('[data-name="VirtualDeckStylus"]')
+		elStylus = elDeck.querySelector('[data-name="stylus"]')
 
 		if (!elDeck || !elStylus) {
 			throw new Error('You need to provide both deck and stylus elements')
 		}
+	})
+
+	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
+
+	watch(currentTime, (timeInSeconds) => {
+		if (!elStylus) return
+		const angle = angleFromSeconds(timeInSeconds)
+		elStylus.style.transform = `rotate(${angle}deg)`
 	})
 
 	const angleStart = ref<number>(0)
@@ -25,12 +33,12 @@ export function useVirtualDeck(
 
 	function setPointerCapture(pointerId: number) {
 		if (!elDeck?.setPointerCapture) return
-		elDeck!.setPointerCapture(pointerId)
+		elDeck.setPointerCapture(pointerId)
 	}
 
 	function releasePointerCapture(pointerId: number) {
 		if (!elDeck?.releasePointerCapture) return
-		elDeck!.releasePointerCapture(pointerId)
+		elDeck.releasePointerCapture(pointerId)
 	}
 
 	function startInteract(event: PointerEvent) {
@@ -46,8 +54,6 @@ export function useVirtualDeck(
 		const rotation = Math.atan2(y, x) * (180 / Math.PI) + 90
 		return rotation < 0 ? rotation + 360 : rotation
 	}
-
-	const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
 
 	function handlePointerMovement(event: PointerEvent) {
 		if (!interacting.value) return
@@ -72,6 +78,10 @@ export function useVirtualDeck(
 	}
 
 	useEventListener(deck, 'pointerdown', (pdEvent: PointerEvent) => {
+		if (typeof currentTime.value === 'undefined') {
+			return
+		}
+
 		startInteract(pdEvent)
 
 		const cleanupPm = useEventListener('pointermove', (pmEvent: PointerEvent) => {
@@ -85,15 +95,8 @@ export function useVirtualDeck(
 		})
 	})
 
-	watch(currentTime, (timeInSeconds) => {
-		if (!elStylus) return
-		const angle = angleFromSeconds(timeInSeconds)
-		elStylus.style.transform = `rotate(${angle}deg)`
-	})
-
 	return {
 		interacting,
-		angle,
-		angleFromSeconds,
+		angle
 	}
 }

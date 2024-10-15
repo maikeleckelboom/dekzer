@@ -1,28 +1,19 @@
 <script lang="ts" setup>
 import { VirtualDeckPlatter, VirtualDeckProgress, VirtualDeckStylus, VirtualDeckTrackPanel } from '#components'
+import type { VirtualDeckRootEmits, VirtualDeckRootProps } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
+import { useForwardPropsEmits } from 'radix-vue'
 
-interface VirtualDeckProps {
-	currentTime: number
-	duration: number
-	pitch: number
-	pitchRange: number
+interface VirtualDeckProps extends Partial<VirtualDeckRootProps> {
 }
 
-const props = defineProps<Partial<VirtualDeckProps>>()
+const props = defineProps<VirtualDeckProps>()
 
-const currentTime = ref(props.currentTime ?? 0)
-const duration = ref(props.duration ?? 10)
-const pitch = ref(props.pitch ?? 0)
-const pitchRange = ref(props.pitchRange ?? 8)
+const emits = defineEmits<VirtualDeckRootEmits>()
+const forward = useForwardPropsEmits(props, emits)
 </script>
 
 <template>
-	<VirtualDeckRoot
-		v-model:current-time="currentTime"
-		:duration="duration"
-		:pitch="pitch"
-		:pitch-range="pitchRange"
-	>
+	<VirtualDeckRoot v-bind="forward">
 		<VirtualDeckProgress />
 		<VirtualDeckPlatter>
 			<VirtualDeckStylus />

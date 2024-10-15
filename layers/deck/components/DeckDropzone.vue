@@ -1,15 +1,14 @@
 <script lang="ts" setup>
 import type { UseFileDialogOptions } from '@vueuse/core'
 
-const { dataTypes } = defineProps<{ dataTypes?: string[] }>()
+const {
+	dataTypes,
+	...props
+} = defineProps<UseFileDialogOptions>()
 
 const emit = defineEmits<{
-	(ev: 'change', files: File[] | FileList): void
+	(ev: 'change', files: File[]): void
 }>()
-
-function handleEmit(files: File[] | FileList) {
-	emit('change', files)
-}
 
 const input = useTemplateRef<HTMLDivElement>('input')
 
@@ -26,21 +25,15 @@ function onDrop(files: FileList | File[] | null, _: DragEvent) {
 		return file.size > 0
 	})
 	if (files.length) {
-		handleEmit(files)
+		emit('change', files)
 	}
 }
 
-defineSlots<{ default: void }>()
-
-defineExpose({
-	isOverDropZone
-})
-
-function openFilePicker(options?: UseFileDialogOptions) {
+async function openFilePicker(options?: UseFileDialogOptions): void {
 	const handle = useFileDialog({
-		directory: false,
-		multiple: false,
-		accept: Array.isArray(dataTypes) ? dataTypes.join(',') : '*'
+		accept: Array.isArray(dataTypes) ? dataTypes.join(',') : '*',
+		...props,
+		...options
 	})
 	handle.open()
 	handle.onChange((files: FileList | null) => {
@@ -48,6 +41,13 @@ function openFilePicker(options?: UseFileDialogOptions) {
 		handle.reset()
 	})
 }
+
+defineExpose({
+	isOverDropZone,
+	openFilePicker
+})
+
+defineSlots<{ default: void }>()
 </script>
 
 <template>
