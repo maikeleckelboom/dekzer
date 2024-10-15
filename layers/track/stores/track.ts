@@ -14,7 +14,7 @@ export const useTrackStore = defineStore('tracks.store', () => {
 	return {
 		tracks,
 		createTrack(url: string, metadata: IAudioMetadata) {
-			const { quality: _, common, native, format } = metadata
+			const { quality: _, native: __, common, format } = metadata
 			const { movementIndex, picture, ...restCommon } = common
 			const { tagTypes, ...restFormat } = format
 			const pictureUrl = createPictureUrl(picture)
@@ -23,8 +23,7 @@ export const useTrackStore = defineStore('tracks.store', () => {
 				url,
 				pictureUrl,
 				common: restCommon,
-				format: restFormat,
-				native
+				format: restFormat
 			}
 		},
 		getTrackById(id: string) {

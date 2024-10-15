@@ -3,25 +3,25 @@ import type { Track } from '~~/layers/track/types'
 export interface IDeck {
 	id: string
 	name: string
-	track: Track|null
+	track: Track | null
 }
 
 export const useDeckStore = defineStore('deck.store', () => {
 	const decks = useState<IDeck[]>('decks', () => [
 		{
 			id: 'Deck 1',
-			name: 'Deck 1',
+			name: 'Deck 1'
 		},
 		{
 			id: 'Deck 2',
-			name: 'Deck 2',
+			name: 'Deck 2'
 		}
 	])
 
 	function addDeck(deck: IDeck): void {
 		if (decks.value.some(d => d.id === deck.id)) return
 		decks.value.push({
-			...deck,
+			...deck
 		})
 	}
 
@@ -49,12 +49,12 @@ export const useDeckStore = defineStore('deck.store', () => {
 
 	const loadedTracks = computed(() => decks.value.filter(deck => deck.track).map(deck => deck.track))
 
-	function getTrackById(id: string): Track | undefined {
-		return decks.value.find(deck => deck.track?.id === id)?.track
+	function getTrackByById(id: string): Track | undefined {
+		return loadedTracks.value.find(track => track.id === id)
 	}
 
-	function computedTrack(deck: IDeck){
-		return computed(() => getTrackById(deck.id))
+	function computedTrack(deck: IDeck) {
+		return computed(() => getTrackByDeckId(deck.id))
 	}
 
 	return {
@@ -63,7 +63,7 @@ export const useDeckStore = defineStore('deck.store', () => {
 		addDeck,
 		removeDeck,
 		getDeckById,
-		getTrackById,
+		getTrackByById,
 		loadTrack,
 		unloadTrack,
 		computedTrack

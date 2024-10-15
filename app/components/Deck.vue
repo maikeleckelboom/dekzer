@@ -17,8 +17,8 @@ const pitchRange = ref<8 | 16 | 50>(8)
 const pitch = ref<number>(0)
 
 
+const loadedTrack = computedEager(() => store.getTrackByById(deck.track?.id))
 const trackStore = useTrackStore()
-const loadedTrack = computedEager(() => trackStore.getTrackById(deck?.track?.id))
 
 
 async function onTrackLoad(file: File) {
@@ -33,7 +33,7 @@ async function onTrackLoad(file: File) {
 </script>
 
 <template>
-	<DeckRoot :selectTrackEvent="selectTrackEvent" @trackLoaded="onTrackLoad">
+	<DeckRoot @trackLoaded="onTrackLoad">
 		<div class="border flex-grow">
 			<TrackOverview />
 		</div>

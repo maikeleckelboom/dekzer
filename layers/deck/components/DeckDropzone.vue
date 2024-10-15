@@ -1,26 +1,23 @@
 <script lang="ts" setup>
 import type { UseFileDialogOptions } from '@vueuse/core'
 
-const {
-	dataTypes,
-	...props
-} = defineProps<UseFileDialogOptions>()
+const props = defineProps<UseFileDialogOptions>()
 
 const emit = defineEmits<{
 	(ev: 'change', files: File[]): void
 }>()
 
-const ref = useTemplateRef<HTMLDivElement>('ref')
+const element = useTemplateRef<HTMLDivElement>('element')
 
-const { isOverDropZone } = useDropZone(ref, {
+const { isOverDropZone } = useDropZone(element, {
 	onDrop,
-	dataTypes
+	dataTypes: props.dataTypes
 })
 
 function onDrop(files: FileList | File[] | null, _: DragEvent) {
 	files = Array.from(files ?? []).filter((file) => {
-		if (dataTypes && Array.isArray(dataTypes)) {
-			return dataTypes.some((type) => file.type.includes(type))
+		if (props.dataTypes && Array.isArray(props.dataTypes)) {
+			return props.dataTypes.some((type) => file.type.includes(type))
 		}
 		return file.size > 0
 	})
@@ -31,9 +28,9 @@ function onDrop(files: FileList | File[] | null, _: DragEvent) {
 
 async function openFilePicker(options?: UseFileDialogOptions): void {
 	const handle = useFileDialog({
-		accept: Array.isArray(dataTypes) ? dataTypes.join(',') : '*',
-		...props,
-		...options
+		accept: Array.isArray(props.dataTypes) ? props.dataTypes.join(',') : '*',
+		multiple: options?.multiple ?? false,
+		directory: options?.directory ?? false
 	})
 	handle.open()
 	handle.onChange((files: FileList | null) => {
@@ -51,7 +48,7 @@ defineSlots<{ default: void }>()
 </script>
 
 <template>
-	<div ref="ref">
+	<div ref="element">
 		<slot />
 	</div>
 </template>
