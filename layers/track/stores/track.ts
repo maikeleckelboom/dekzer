@@ -1,5 +1,5 @@
 import type { Track } from '~~/layers/track/types'
-import { type IAudioMetadata, type IPicture, selectCover } from 'music-metadata'
+import { type IAudioMetadata, ICommonTagsResult, IFormat, type IPicture, selectCover } from 'music-metadata'
 
 function createPictureUrl(pictures?: IPicture[]): string | undefined {
 	const cover = selectCover(pictures)
@@ -15,8 +15,8 @@ export const useTrackStore = defineStore('tracks.store', () => {
 		tracks,
 		createTrack(url: string, metadata: IAudioMetadata) {
 			const { quality: _, native: __, common, format } = metadata
-			const { movementIndex, picture, ...restCommon } = common
-			const { tagTypes, ...restFormat } = format
+			const { movementIndex, picture, ...restCommon } = common as Omit<ICommonTagsResult, 'movementIndex' | 'picture'>
+			const { tagTypes, ...restFormat } = format as Omit<IFormat, 'tagTypes'>
 			const pictureUrl = createPictureUrl(picture)
 			return {
 				id: nanoid(),
@@ -30,7 +30,9 @@ export const useTrackStore = defineStore('tracks.store', () => {
 			return tracks.value.find((track) => track?.id === id)
 		},
 		addTrack(track: Track) {
-			if (tracks.value.some((t) => t.id === track.id)) return
+			if (tracks.value.some((t) => t.id === track.id) || !tracks.value.some((t) => t.url === track.url)) {
+				return
+			}
 			tracks.value.unshift(track)
 		},
 		removeTrack(track: Track) {

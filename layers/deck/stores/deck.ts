@@ -10,11 +10,13 @@ export const useDeckStore = defineStore('deck.store', () => {
 	const decks = useState<IDeck[]>('decks', () => [
 		{
 			id: 'Deck 1',
-			name: 'Deck 1'
+			name: 'Deck 1',
+			track: null
 		},
 		{
 			id: 'Deck 2',
-			name: 'Deck 2'
+			name: 'Deck 2',
+			track: null
 		}
 	])
 
@@ -31,41 +33,35 @@ export const useDeckStore = defineStore('deck.store', () => {
 		decks.value.splice(index, 1)
 	}
 
-	function loadTrack(deck: IDeck, track: Track): void {
+	function load(deck: IDeck, track: Track): void {
 		const index = decks.value.findIndex(d => d.id === deck.id)
 		if (index === -1) return
 		decks.value[index].track = track
 	}
 
-	function unloadTrack(deck: IDeck): void {
+	function eject(deck: IDeck): void {
 		const index = decks.value.findIndex(d => d.id === deck.id)
 		if (index === -1) return
-		decks.value[index].track = undefined
+		decks.value[index].track = null
 	}
 
-	function getDeckById(id: string): IDeck | undefined {
-		return decks.value.find(deck => deck.id === id)
-	}
 
 	const loadedTracks = computed(() => decks.value.filter(deck => deck.track).map(deck => deck.track))
 
-	function getTrackByById(id: string): Track | undefined {
-		return loadedTracks.value.find(track => track.id === id)
-	}
-
-	function computedTrack(deck: IDeck) {
-		return computed(() => getTrackByDeckId(deck.id))
+	function getTrackByById(id: string | undefined): Track | undefined {
+		if (typeof id === 'undefined') return
+		return loadedTracks.value.find(track => track?.id === id)
 	}
 
 	return {
 		decks,
 		loadedTracks,
-		addDeck,
-		removeDeck,
-		getDeckById,
-		getTrackByById,
-		loadTrack,
-		unloadTrack,
-		computedTrack
+		load,
+		eject,
+		computedTrack: (deck: IDeck & { track?: Track }) => computed(() =>
+			deck.track?.id
+				? deck.track
+				: getTrackByById(deck.track?.id)
+		)
 	}
 })

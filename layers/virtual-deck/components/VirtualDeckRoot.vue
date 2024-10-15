@@ -13,7 +13,7 @@ export interface VirtualDeckRootEmits {
 	'update:currentTime': [payload: number],
 	'update:angle': [payload: number],
 	'update:progress': [payload: number],
-	'interacting': [payload: boolean]
+	'update:interacting': [payload: boolean]
 }
 
 export interface VirtualDeckRootContext {
@@ -47,9 +47,13 @@ const pitchRange = computedEager(() => props.pitchRange)
 const bpm = computedEager(() => props.bpm)
 const duration = computedEager(() => props.duration)
 
-const root = useTemplateRef<HTMLElement>('root')
+const virtualDeck = useTemplateRef<HTMLElement>('virtualDeck')
 
-const { interacting, angle } = useVirtualDeck(root, currentTime)
+const { interacting, angle } = useVirtualDeck(virtualDeck, currentTime)
+
+watch(interacting, (value) => {
+	emits('update:interacting', value)
+})
 
 const progress = computed(() => {
 	const currTime = toValue(currentTime) ?? 0
@@ -71,7 +75,7 @@ provideVirtualDeckRootContext({
 
 <template>
 	<div
-		ref="root"
+		ref="virtualDeck"
 		:aria-disabled="!duration"
 		:class="
 			cn(

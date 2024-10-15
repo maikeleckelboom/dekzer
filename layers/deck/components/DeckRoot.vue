@@ -1,7 +1,8 @@
 <script lang="ts">
 
 export interface DeckRootProps {
-	loadTrackTrigger?: 'click' | 'dblclick'
+	active?: boolean
+	browseTrigger?: 'click' | 'dblclick'
 }
 
 export interface DeckRootEmits {
@@ -12,27 +13,29 @@ export interface DeckRootEmits {
 <script lang="ts" setup>
 import type { DeckDropzone } from '#components'
 
+// TODO: Refactor (change active prop to something more meaningful)
+
 const props = withDefaults(defineProps<DeckRootProps>(), {
-	loadTrackTrigger: 'dblclick'
+	active: false,
+	browseTrigger: 'dblclick'
 })
 
 const emit = defineEmits<DeckRootEmits>()
 
 const deckDropzone = useTemplateRef<InstanceType<DeckDropzone>>('deckDropzone')
 
-useEventListener(deckDropzone, props.loadTrackTrigger, (event: Event) => {
-	event.preventDefault()
-	if (!deckDropzone.value) return
+useEventListener(deckDropzone, props.browseTrigger, (event: Event) => {
+	if (!deckDropzone.value || props.active) return
 	deckDropzone.value.openFilePicker()
-})
+}, { passive: true })
 
-function onFileDrop([file]: File[]) {
+function onChange([file]: File[]) {
 	emit('trackLoaded', file)
 }
 </script>
 
 <template>
-	<DeckDropzone ref="deckDropzone" class="size-full flex even:flex-row-reverse" @change="onFileDrop">
+	<DeckDropzone ref="deckDropzone" class="size-full flex even:flex-row-reverse" @change="onChange">
 		<slot />
 	</DeckDropzone>
 </template>

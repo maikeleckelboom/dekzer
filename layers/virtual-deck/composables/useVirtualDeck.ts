@@ -97,6 +97,6 @@ export function useVirtualDeck(
 
 	return {
 		interacting,
-		angle
+		angle,
 	}
 }
