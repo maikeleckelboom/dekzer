@@ -1,7 +1,5 @@
-import { usePlatterPosition } from '~~/layers/virtual-deck/composables/usePlatterPosition'
-import { type MaybeElementRef } from '@vueuse/core'
-import type { MaybeRefOrGetter } from 'vue'
-
+import { usePlatterPosition } from './usePlatterPosition'
+import type { MaybeElementRef, MaybeRefOrGetter } from '@vueuse/core'
 
 export function useVirtualDeck(
 	deck: MaybeElementRef<HTMLElement>,
@@ -97,6 +95,6 @@ export function useVirtualDeck(
 
 	return {
 		interacting,
-		angle,
+		angle
 	}
 }

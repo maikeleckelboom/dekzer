@@ -20,17 +20,11 @@ export const useDeckStore = defineStore('deck.store', () => {
 		}
 	])
 
-	function addDeck(deck: IDeck): void {
-		if (decks.value.some(d => d.id === deck.id)) return
-		decks.value.push({
-			...deck
-		})
-	}
+	const loadedTracks = computed(() => decks.value.filter(deck => deck.track).map(deck => deck.track))
 
-	function removeDeck(deck: IDeck): void {
-		const index = decks.value.findIndex(d => d.id === deck.id)
-		if (index === -1) return
-		decks.value.splice(index, 1)
+	function getTrackByById(id: string | undefined): Track | undefined {
+		if (typeof id === 'undefined') return
+		return loadedTracks.value.find(track => track?.id === id)
 	}
 
 	function load(deck: IDeck, track: Track): void {
@@ -45,13 +39,6 @@ export const useDeckStore = defineStore('deck.store', () => {
 		decks.value[index].track = null
 	}
 
-
-	const loadedTracks = computed(() => decks.value.filter(deck => deck.track).map(deck => deck.track))
-
-	function getTrackByById(id: string | undefined): Track | undefined {
-		if (typeof id === 'undefined') return
-		return loadedTracks.value.find(track => track?.id === id)
-	}
 
 	return {
 		decks,
