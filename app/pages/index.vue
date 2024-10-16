@@ -18,14 +18,10 @@ const { decks } = storeToRefs(deckStore)
 
 const trackStore = useTrackStore()
 const { tracks } = storeToRefs(trackStore)
-
-watch(tracks, (value) => {
-	console.log(value)
-}, { deep: true })
 </script>
 
 <template>
-	<div class="grid md:grid-cols-2 divide-x border-y">
+	<div class="grid md:grid-cols-2 md:divide-x">
 		<Deck :deck="deck" v-for="deck in decks" :key="deck.id" />
 	</div>
 </template>

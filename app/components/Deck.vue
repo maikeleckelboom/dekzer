@@ -25,13 +25,12 @@ async function createAndLoadTrack(file: File) {
 
 const track = deckStore.computedTrack(deck)
 
-const playing = ref<boolean>(false)
 const sourceNode = ref<AudioBufferSourceNode | null>(null)
 const audioBuffer = ref<AudioBuffer | null>(null)
+const startTime = ref<number>(0)
+const startOffset = ref<number>(0)
 const currentTime = ref<number>(0)
-const pitchRange = ref<8 | 16 | 50>(8)
-const pitch = ref<number>(0)
-
+const playing = ref<boolean>(false)
 
 async function fetchAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
 	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
@@ -44,10 +43,6 @@ async function initializeAudioBuffer(context: AudioContext, url: string): Promis
 	audioBuffer.value = buffer
 	return buffer
 }
-
-const startTime = ref<number>(0)
-const startOffset = ref<number>(0)
-
 
 function resetState() {
 	currentTime.value = 0
@@ -75,8 +70,7 @@ whenever(logicAnd(track, () => track.value?.url), async () => {
 
 onBeforeUnmount(() => {
 	if (playing.value) pause()
-	audioContext.value?.close()
-	audioBuffer.value = null
+	audioContext.value?.suspend()
 	resetState()
 })
 
@@ -115,12 +109,14 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 async function play() {
 	const context = unref(audioContext)
 	const buffer = unref(audioBuffer)
+
 	if (!context || !buffer) {
 		console.warn('Cannot play audio: context or buffer is not initialized.', { context, buffer })
 		return
 	}
 
 	const isOutOfRange = context.currentTime > buffer.duration || context.currentTime < 0
+
 	if (isOutOfRange) {
 		console.warn('Cannot play audio: startOffset is out of range.', {
 			currentTime: context.currentTime,
@@ -141,10 +137,12 @@ async function play() {
 function pause() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
+
 	if (!context || !source) {
-		console.warn('Cannot pause audio: context or source is not initialized.')
+		console.warn('Cannot pause audio: context or source is not initialized.', { context, source })
 		return
 	}
+
 	if (!playing.value) {
 		console.warn('Cannot pause audio: audio is not playing.')
 		return
@@ -170,19 +168,24 @@ watch(interacting, (interacting) => {
 		play()
 	}
 })
+
+
+const pitchRange = ref<8 | 16 | 50>(8)
+const pitch = ref<number>(0)
 </script>
 
 <template>
-	<DeckRoot :active="!!track" @trackLoaded="createAndLoadTrack">
-		<div class="border flex-grow flex-col flex">
-			<TrackOverview>
-				<div class="p-2">
+	<DeckRoot :active="!!track" class="flex even:flex-row-reverse" @trackLoaded="createAndLoadTrack">
+		<div class="border flex-col flex w-full">
+			<TrackOverview class="p-2" v-if="!!track">
+				<div class="mb-2">
+					<strong>currentTime</strong>
 					<p class="tabular-nums truncate">{{ currentTime }}</p>
 				</div>
+				<DeckPlayPause :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
-			<DeckPlayPause :playing="playing" @playPause="onPlayPause" />
 		</div>
-		<div class="border p-2 flex">
+		<div class="border flex w-fit p-2">
 			<VirtualDeck
 				v-model:currentTime="currentTime"
 				v-model:interacting="interacting"
@@ -190,7 +193,6 @@ watch(interacting, (interacting) => {
 				:duration="track?.format.duration"
 				:pitch="pitch"
 				:pitchRange="pitchRange"
-
 			/>
 		</div>
 	</DeckRoot>

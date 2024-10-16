@@ -31,12 +31,15 @@ const pitchRangeDisplay = computed(() => {
 	if (typeof pitchRange.value === 'undefined') return ''
 	return `±${pitchRange.value}`
 })
+
+const isReady = computed(() => typeof currentTime.value !== 'undefined' && toValue(duration))
 </script>
 
 <template>
-	<div class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6">
+	<div :class="isReady ? 'opacity-100' : 'opacity-0'"
+			 class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6 md:my-6">
 		<div class="flex flex-col items-center col-span-2">
-			<template v-if="bpm">
+			<template v-if="bpmDisplay">
 				<strong
 					class="capitalize text-xl md:text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
 					{{ bpmDisplay }}
@@ -44,7 +47,7 @@ const pitchRangeDisplay = computed(() => {
 				<p class="text-xs text-center text-background">BPM</p>
 			</template>
 		</div>
-		<div>
+		<div class="mb-4">
 			<template v-if="pitchDisplay">
 				<p
 					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
@@ -52,7 +55,7 @@ const pitchRangeDisplay = computed(() => {
 				</p>
 			</template>
 		</div>
-		<div>
+		<div class="mb-4">
 			<template v-if="pitchRange">
 				<p
 					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
@@ -61,7 +64,7 @@ const pitchRangeDisplay = computed(() => {
 			</template>
 		</div>
 		<template v-if="typeof currentTime !== 'undefined' && typeof duration !== 'undefined'">
-			<div class="flex flex-col items-center col-span-2 mt-4">
+			<div class="flex flex-col items-center col-span-2 ">
 				<strong
 					:class="
 					cn('capitalize text-sm md:text-lg md:leading-none font-semibold tabular-nums text-center text-background leading-none select-none')

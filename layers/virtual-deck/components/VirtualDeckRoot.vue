@@ -11,7 +11,6 @@ export interface VirtualDeckRootProps {
 
 export interface VirtualDeckRootEmits {
 	'update:currentTime': [payload: number],
-	'update:angle': [payload: number],
 	'update:progress': [payload: number],
 	'update:interacting': [payload: boolean]
 }
@@ -59,6 +58,10 @@ const progress = computed(() => {
 	const currTime = toValue(currentTime) ?? 0
 	const totalTime = toValue(duration) ?? 10
 	return clamp(currTime / totalTime, 0, 1)
+})
+
+watch(progress, (value) => {
+	emits('update:progress', value)
 })
 
 provideVirtualDeckRootContext({

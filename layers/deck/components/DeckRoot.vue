@@ -35,7 +35,7 @@ function onChange([file]: File[]) {
 </script>
 
 <template>
-	<DeckDropzone ref="deckDropzone" class="size-full flex even:flex-row-reverse" @change="onChange">
+	<DeckDropzone ref="deckDropzone" class="size-full" @change="onChange">
 		<slot />
 	</DeckDropzone>
 </template>
