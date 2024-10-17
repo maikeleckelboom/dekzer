@@ -4,7 +4,7 @@ import { parseWebStream } from 'music-metadata'
 import { useTrackStore } from '~~/layers/track/stores/track'
 import { type IDeck, useDeckStore } from '~~/layers/deck/stores/deck'
 import { useSharedAudioContext } from '~/composables/useAudioContext'
-import { loadAudioBuffer } from '~/utils/audioUtils'
+import { createBufferSourceNode, loadAudioBuffer } from '~/utils/audioUtils'
 
 interface DeckProps extends DeckRootProps {
 	deck: IDeck
@@ -33,47 +33,26 @@ const startOffset = ref<number>(0)
 const currentTime = ref<number>(0)
 const playing = ref<boolean>(false)
 
-
-function resetState() {
-	currentTime.value = 0
-	startOffset.value = 0
-	startTime.value = 0
-	audioBuffer.value = null
-	playing.value = false
-	deckStore.eject(deck)
-}
-
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
-const trackLoaded = shallowRef<boolean>(false)
+const loaded = shallowRef<boolean>(false)
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
 	const context = await getAudioContext()
-	if (!context) {
-		console.warn('Cannot load track: audio context is not initialized')
-		return
-	}
 	const { url } = track.value
 	audioBuffer.value = await loadAudioBuffer(context, url)
-	trackLoaded.value = true
+	loaded.value = true
 })
 
 onBeforeUnmount(() => {
 	if (playing.value) pause()
-	resetState()
+	deckStore.eject(deck)
 })
 
 function updateCurrentTime() {
 	const context = unref(audioContext)
-	if (!context) {
-		console.warn('Cannot update current time: audio context is not initialized.')
-		return
-	}
 	const source = unref(sourceNode)
-	if (!source) {
-		console.warn('Cannot update current time: source node is not initialized.')
-		return
-	}
+	if (!source || !context) return
 	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
@@ -96,13 +75,6 @@ function stopPlaying(source: AudioBufferSourceNode) {
 	source.stop()
 }
 
-function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const bufferSource = context.createBufferSource()
-	bufferSource.buffer = buffer
-	sourceNode.value = bufferSource
-	return sourceNode.value
-}
-
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
@@ -116,7 +88,8 @@ async function play() {
 	}
 
 	startTime.value = context.currentTime
-	const source = initializeSourceNode(context, buffer)
+	const source = createBufferSourceNode(context, buffer)
+	sourceNode.value = source
 	source.connect(context.destination)
 	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
 	startPlaying()
@@ -125,9 +98,7 @@ async function play() {
 function pause() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
-
-	if (!context || !source) return
-	if (!playing.value) return
+	if (!context || !source || !playing.value) return
 
 	startOffset.value += context.currentTime - startTime.value
 	stopPlaying(source)
@@ -149,14 +120,10 @@ watch(interacting, (interacting) => {
 		play()
 	}
 })
-
-
-const pitchRange = ref<8 | 16 | 50>(8)
-const pitch = ref<number>(0)
 </script>
 
 <template>
-	<DeckRoot :disabled="!trackLoaded" class="flex even:flex-row-reverse" @trackLoaded="createAndLoadTrack">
+	<DeckRoot :disabled="!loaded" class="flex even:flex-row-reverse" @load="createAndLoadTrack">
 		<div class="border flex-col flex w-full">
 			<TrackOverview class="p-2">
 				<div class="mb-2">
@@ -172,8 +139,6 @@ const pitch = ref<number>(0)
 				v-model:interacting="interacting"
 				:bpm="track?.common.bpm"
 				:duration="track?.format.duration"
-				:pitch="pitch"
-				:pitchRange="pitchRange"
 			/>
 		</div>
 	</DeckRoot>
