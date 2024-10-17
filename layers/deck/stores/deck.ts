@@ -42,7 +42,6 @@ export const useDeckStore = defineStore('deck.store', () => {
 		decks.value[index].track = null
 	}
 
-
 	return {
 		decks,
 		loadedTracks,

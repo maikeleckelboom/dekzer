@@ -1,16 +1,10 @@
-async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
+export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
 	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
 	const arrayBuffer = await response.arrayBuffer()
 	return await context.decodeAudioData(arrayBuffer)
 }
 
-function createBufferSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const bufferSource = context.createBufferSource()
-	bufferSource.buffer = buffer
-	return bufferSource
-}
-
-function fadeIn(node: AudioBufferSourceNode, duration: number) {
+export function fadeIn(node: AudioBufferSourceNode, duration: number) {
 	const gainNode = audioContext.createGain()
 	gainNode.gain.setValueAtTime(0, audioContext.currentTime)
 	gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration)
@@ -18,7 +12,7 @@ function fadeIn(node: AudioBufferSourceNode, duration: number) {
 	gainNode.connect(audioContext.destination)
 }
 
-function fadeOut(node: AudioBufferSourceNode, duration: number) {
+export function fadeOut(node: AudioBufferSourceNode, duration: number) {
 	const gainNode = audioContext.createGain()
 	node.connect(gainNode)
 	gainNode.connect(audioContext.destination)
@@ -26,9 +20,44 @@ function fadeOut(node: AudioBufferSourceNode, duration: number) {
 	gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration)
 }
 
-export {
-	loadAudioBuffer,
-	createBufferSourceNode,
-	fadeIn,
-	fadeOut
+export function createConstantSourceNode(context: AudioContext, offsetValue: number = 0): ConstantSourceNode {
+	const constantSourceNode = context.createConstantSource()
+	constantSourceNode.offset.value = offsetValue
+	constantSourceNode.start(context.currentTime)
+	return constantSourceNode
+}
+
+export function createBufferSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
+	const source = context.createBufferSource()
+	source.buffer = buffer
+	return source
+}
+
+export function createAnalysers(context: AudioContext, fftSize = 2048): [AnalyserNode, AnalyserNode] {
+	const analyser = context.createAnalyser()
+	const analyserR = context.createAnalyser()
+
+	analyser.fftSize = fftSize
+	analyserR.fftSize = fftSize
+
+	return [analyser, analyserR]
+}
+
+export function createAnalyserNodes(context: AudioContext, source: AudioBufferSourceNode): [AnalyserNode, AnalyserNode] {
+	const [analyser, analyserR] = createAnalysers(context)
+	const splitter = context.createChannelSplitter(2)
+
+	source.connect(splitter)
+	splitter.connect(analyser, 0)
+	splitter.connect(analyserR, 1)
+
+	return [analyser, analyserR]
+}
+
+export function setupDestination(context: AudioContext, source: AudioBufferSourceNode) {
+	source.connect(context.destination)
+}
+
+export function canPlay(context: AudioContext | null, buffer: AudioBuffer | null, playing: boolean): boolean {
+	return !!(context && buffer && !playing)
 }

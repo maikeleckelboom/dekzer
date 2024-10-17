@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
+import { createAnalyserNodes, setupDestination } from '~/utils/audioUtils'
 
 interface DeckProps extends DeckRootProps {
 	deck: IDeck
@@ -13,32 +14,26 @@ const trackStore = useTrackStore()
 
 const track = deckStore.computedTrack(deck)
 
-const startTime = ref<number>(0)
-const startOffset = ref<number>(0)
-const currentTime = ref<number>(0)
-const playing = ref<boolean>(false)
+const startTime = shallowRef<number>(0)
+const startOffset = shallowRef<number>(0)
+const currentTime = shallowRef<number>(0)
+const playing = shallowRef<boolean>(false)
 const loaded = shallowRef<boolean>(false)
 
-const audioBuffer = ref<AudioBuffer | null>(null)
-const sourceNode = ref<AudioBufferSourceNode | null>(null)
-const constantSourceNode = ref<ConstantSourceNode | null>(null)
+const audioBuffer = shallowRef<AudioBuffer | null>(null)
+const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
+const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
 
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
-function initializeConstantSourceNode(context: AudioContext) {
-	constantSourceNode.value = context.createConstantSource()
-	constantSourceNode.value.offset.value = 0
-	constantSourceNode.value.start(context.currentTime)
-}
-
 let rAF: number | null = null
 
-function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
+function playScheduledTime(context: AudioContext, playbackStart: number) {
 	const timeUntilStart = playbackStart - context.currentTime
 	if (timeUntilStart > 0) {
 		currentTime.value = startOffset.value = (timeUntilStart * -1)
 		startTime.value = context.currentTime
-		rAF = requestAnimationFrame(() => startPlayingWhenReady(context, playbackStart))
+		rAF = requestAnimationFrame(() => playScheduledTime(context, playbackStart))
 	} else {
 		startTime.value = context.currentTime
 		startPlaying()
@@ -51,21 +46,9 @@ function schedulePlayback() {
 	if (!context || !source) return
 	const playbackStart = context.currentTime + Math.abs(startOffset.value)
 	source.start(playbackStart)
-	startPlayingWhenReady(context, playbackStart)
+	playScheduledTime(context, playbackStart)
 	playing.value = true
 }
-
-whenever(logicAnd(track, () => 'url' in track.value), async () => {
-	const context = await getAudioContext()
-	const { url } = track.value
-	audioBuffer.value = await loadAudioBuffer(context, url)
-	loaded.value = true
-})
-
-onBeforeUnmount(() => {
-	if (playing.value) pause()
-	deckStore.eject(deck)
-})
 
 function updateCurrentTime() {
 	const context = unref(audioContext)
@@ -110,27 +93,25 @@ const { leftVolume, rightVolume, start: startAnalysers, stop: stopAnalysers } = 
 	2048
 )
 
+function setupAnalyserNodes(context: AudioContext, source: AudioBufferSourceNode): [AnalyserNode, AnalyserNode] {
+	const [analyser, analyserR] = createAnalyserNodes(context, source)
+	analyserNode.value = analyser
+	analyserNodeR.value = analyserR
+	return [analyser, analyserR]
+}
+
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
-
-	if (!canPlay(context, buffer)) {
-		return
-	}
-
+	if (!canPlay(context, buffer)) return
 	const source = setupSourceNode(context, buffer)
 	setupAnalyserNodes(context, source)
-	setupDestination(context, source)
-
 	startAnalysers()
+	setupDestination(context, source)
 	startTime.value = context.currentTime
-
 	handlePlayback(context, buffer)
 }
 
-function canPlay(context: AudioContext | null, buffer: AudioBuffer | null): boolean {
-	return !!(context && buffer && !playing.value)
-}
 
 function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const source = createBufferSourceNode(context, buffer)
@@ -138,36 +119,16 @@ function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBuffe
 	return source
 }
 
-function setupAnalyserNodes(context: AudioContext, source: AudioBufferSourceNode) {
-	const [analyser, analyserR] = createAnalysers(context)
-	const splitter = context.createChannelSplitter(2)
-
-	source.connect(splitter)
-	splitter.connect(analyser, 0)
-	splitter.connect(analyserR, 1)
-
-	analyserNode.value = analyser
-	analyserNodeR.value = analyserR
-}
-
-function createAnalysers(context: AudioContext, fftSize = 2048): [AnalyserNode, AnalyserNode] {
-	const analyser = context.createAnalyser()
-	const analyserR = context.createAnalyser()
-
-	analyser.fftSize = fftSize
-	analyserR.fftSize = fftSize
-
-	return [analyser, analyserR]
-}
-
-function setupDestination(context: AudioContext, source: AudioBufferSourceNode) {
-	source.connect(context.destination)
+function setupConstantSourceNode(context: AudioContext) {
+	const source = createConstantSourceNode(context)
+	constantSourceNode.value = source
+	return source
 }
 
 function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
-		initializeConstantSourceNode(context)
+		setupConstantSourceNode(context)
 		schedulePlayback(buffer)
 	} else if (offsetStart >= buffer.duration) {
 		startPlaying()
@@ -185,7 +146,6 @@ function pause() {
 	stopAnalysers()
 }
 
-const interacting = shallowRef<boolean>(false)
 const wasPlaying = shallowRef<boolean>(false)
 
 function onPlayPause(playing: boolean) {
@@ -193,6 +153,17 @@ function onPlayPause(playing: boolean) {
 	if (playing) play()
 	else pause()
 }
+
+async function createAndLoadTrack(file: File) {
+	const url = URL.createObjectURL(file)
+	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
+	const metadata = await parseWebStream(response.body, { mimeType: file.type, size: file.size, url })
+	const track = trackStore.createTrack(url, metadata)
+	trackStore.addTrack(track)
+	deckStore.load(deck, track)
+}
+
+const interacting = shallowRef<boolean>(false)
 
 watch(interacting, async (interacting) => {
 	startOffset.value = currentTime.value
@@ -204,14 +175,16 @@ watch(interacting, async (interacting) => {
 	}
 })
 
-async function createAndLoadTrack(file: File) {
-	const url = URL.createObjectURL(file)
-	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
-	const metadata = await parseWebStream(response.body, { mimeType: file.type, size: file.size, url })
-	const track = trackStore.createTrack(url, metadata)
-	trackStore.addTrack(track)
-	deckStore.load(deck, track)
-}
+whenever(track, async ({ url }) => {
+	const context = await getAudioContext()
+	audioBuffer.value = await loadAudioBuffer(context, url)
+	loaded.value = true
+})
+
+onBeforeUnmount(() => {
+	if (playing.value) pause()
+	deckStore.eject(deck)
+})
 </script>
 
 <template>
