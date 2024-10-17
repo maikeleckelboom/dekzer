@@ -48,29 +48,15 @@ function startConstantSourceNode(context: AudioContext) {
 	constantSourceNode.value = constantSrc
 }
 
-function getTimeUntilTrackStarts(context: AudioContext, startPlaybackTime: number) {
-	return startPlaybackTime - context.currentTime
-}
-
-function updateCurrentTimeUntilStart(startPlaybackTime: number) {
-	const context = unref(audioContext)
-	if (!context) return
-
-	const timeUntilStart = getTimeUntilTrackStarts(context, startPlaybackTime)
-
+function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
+	const timeUntilStart = playbackStart - context.currentTime
 	if (timeUntilStart > 0) {
 		currentTime.value = startOffset.value = (timeUntilStart * -1)
-		rAF = requestAnimationFrame(() => updateCurrentTimeUntilStart(startPlaybackTime))
-		return
+		rAF = requestAnimationFrame(() => startPlayingWhenReady(context, playbackStart))
+	} else {
+		startTime.value = context.currentTime
+		startPlaying()
 	}
-
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-		rAF = null
-	}
-
-	startTime.value = context.currentTime
-	startPlaying()
 }
 
 
@@ -81,7 +67,7 @@ function startPlayingScheduled() {
 	const playbackStart = context.currentTime + Math.abs(startOffset.value)
 	source.start(playbackStart)
 	startConstantSourceNode(context)
-	updateCurrentTimeUntilStart(playbackStart)
+	startPlayingWhenReady(context, playbackStart)
 	playing.value = true
 }
 
@@ -124,6 +110,12 @@ function stopPlaying() {
 		cancelAnimationFrame(rAF)
 		rAF = null
 	}
+	const constantSrc = unref(constantSourceNode)
+	const source = unref(sourceNode)
+	const ctx = unref(audioContext)
+	source?.stop()
+	constantSrc?.stop()
+	ctx?.suspend()
 }
 
 function continuePlaying(context: AudioContext) {
@@ -137,7 +129,7 @@ async function play() {
 	if (!context || !buffer || playing.value) {
 		return
 	}
-	
+
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
@@ -147,7 +139,7 @@ async function play() {
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
 		startPlayingScheduled(buffer)
-	} else if (offsetStart >= buffer.duration) {
+	} else if (offsetStart >= buffer!.duration) {
 		startConstantSourceNode(context)
 		startPlaying()
 	} else {
