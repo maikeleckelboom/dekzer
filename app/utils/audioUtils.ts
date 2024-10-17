@@ -3,19 +3,32 @@ async function loadAudioBuffer(context: AudioContext, url: string): Promise<Audi
 	const arrayBuffer = await response.arrayBuffer()
 	return await context.decodeAudioData(arrayBuffer)
 }
-export function createBufferSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
+
+function createBufferSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const bufferSource = context.createBufferSource()
 	bufferSource.buffer = buffer
 	return bufferSource
 }
-function playAudioBuffer(context: AudioContext, buffer: AudioBuffer): void {
-	const source = context.createBufferSource()
-	source.buffer = buffer
-	source.connect(context.destination)
-	source.start()
+
+function fadeIn(node: AudioBufferSourceNode, duration: number) {
+	const gainNode = audioContext.createGain()
+	gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+	gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration)
+	node.connect(gainNode)
+	gainNode.connect(audioContext.destination)
+}
+
+function fadeOut(node: AudioBufferSourceNode, duration: number) {
+	const gainNode = audioContext.createGain()
+	node.connect(gainNode)
+	gainNode.connect(audioContext.destination)
+	gainNode.gain.setValueAtTime(1, audioContext.currentTime)
+	gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration)
 }
 
 export {
 	loadAudioBuffer,
-	playAudioBuffer,
+	createBufferSourceNode,
+	fadeIn,
+	fadeOut
 }

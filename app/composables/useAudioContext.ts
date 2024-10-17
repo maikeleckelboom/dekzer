@@ -20,7 +20,7 @@ export const useSharedAudioContext = createSharedComposable((options: AudioConte
 
 		const context = unref(audioContext)!
 
-		if (context.state === 'suspended') {
+		if (context.state === 'suspended' && navigator.userActivation.hasBeenActive) {
 			await context.resume()
 		}
 
@@ -34,7 +34,6 @@ export const useSharedAudioContext = createSharedComposable((options: AudioConte
 	}
 
 	onMounted(async () => {
-		if (navigator.userActivation.hasBeenActive) {}
 		await getAudioContext()
 	})
 

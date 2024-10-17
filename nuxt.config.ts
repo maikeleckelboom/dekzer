@@ -25,11 +25,12 @@ export default defineNuxtConfig({
 		'@nuxt/fonts',
 		'@pinia/nuxt'
 	],
+	pinia: {
+		storesDirs: [
+			`${currentDir}/layers/**/stores`
+		]
+	},
 	imports: {
-		dirs: [
-			'./app/stores',
-			'./layers/**/stores',
-		],
 		presets: [
 			{
 				from: 'nanoid',

@@ -1,4 +1,4 @@
-export function useStereoVolumeMeter(
+export function useVolumeAnalyzer(
 	analyzer: MaybeRefOrGetter<AnalyserNode>,
 	analyserR: MaybeRefOrGetter<AnalyserNode>,
 	fftSize: 1024 | 2048 | 4096 = 1024
@@ -60,8 +60,8 @@ export function useStereoVolumeMeter(
 	}
 
 	return {
-		valueL: readonly(returnValueL),
-		valueR: readonly(returnValueR),
+		leftVolume: readonly(returnValueL),
+		rightVolume: readonly(returnValueR),
 		start,
 		stop
 	}

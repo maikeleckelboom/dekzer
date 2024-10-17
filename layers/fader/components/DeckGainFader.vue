@@ -1,13 +1,9 @@
 <script lang="ts" setup>
 interface Props {
-	channels: [number, number]
+	channels?: [number, number]
 }
 
-const { channels = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY] } = defineProps<Partial<Props>>()
-
-const MASTER_GAIN_DEFAULT = 3 as const
-const MASTER_GAIN_MIN: number = -12 as const
-const MASTER_GAIN_MAX: number = 12 as const
+const { channels = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY] } = defineProps<Props>()
 
 const TRACK_GAIN_MIN: number = -24 as const
 const TRACK_GAIN_MAX: number = 24 as const

@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
+import { type IDeck, useDeckStore } from '~~/layers/deck/stores/deck'
+import { useTrackStore } from '~~/layers/track/stores/track'
 
 interface DeckProps extends DeckRootProps {
 	deck: IDeck
@@ -11,17 +13,35 @@ const { deck } = defineProps<DeckProps>()
 const deckStore = useDeckStore()
 const trackStore = useTrackStore()
 
+async function createAndLoadTrack(file: File) {
+	const url = URL.createObjectURL(file)
+	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
+	const metadata = await parseWebStream(response.body, { mimeType: file.type, size: file.size, url })
+	const track = trackStore.createTrack(url, metadata)
+	trackStore.addTrack(track)
+	deckStore.load(deck, track)
+}
+
 const track = deckStore.computedTrack(deck)
 
-const startTime = ref<number>(0)
-const startOffset = ref<number>(0)
-const currentTime = ref<number>(0)
-const playing = ref<boolean>(false)
+const startTime = shallowRef<number>(0)
+const startOffset = shallowRef<number>(0)
+const currentTime = shallowRef<number>(0)
+const playing = shallowRef<boolean>(false)
 const loaded = shallowRef<boolean>(false)
 
-const audioBuffer = ref<AudioBuffer | null>(null)
-const sourceNode = ref<AudioBufferSourceNode | null>(null)
-const constantSourceNode = ref<ConstantSourceNode | null>(null)
+const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
+const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
+const audioBuffer = shallowRef<AudioBuffer | null>(null)
+const analyserNode = shallowRef<AnalyserNode | null>(null)
+const analyserNodeR = shallowRef<AnalyserNode | null>(null)
+
+const {
+	rightVolume,
+	leftVolume,
+	start: startAnalyserNodes,
+	stop: stopAnalyserNodes
+} = useVolumeAnalyzer(analyserNode, analyserNodeR, 2048)
 
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
@@ -97,19 +117,11 @@ function stopPlaying() {
 	try {
 		sourceNode.value?.stop()
 		sourceNode.value = null
+		// constantSourceNode.value?.stop()
+		// constantSourceNode.value = null
 	} catch {
 	}
 }
-
-const analyserNode = shallowRef<AnalyserNode | null>(null)
-const analyserNodeR = shallowRef<AnalyserNode | null>(null)
-
-const { leftVolume, rightVolume, start: startAnalysers, stop: stopAnalysers } = useVolumeAnalyzer(
-	analyserNode,
-	analyserNodeR,
-	2048
-)
-
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
@@ -122,7 +134,7 @@ async function play() {
 	setupAnalyserNodes(context, source)
 	setupDestination(context, source)
 
-	startAnalysers()
+	startAnalyserNodes()
 	startTime.value = context.currentTime
 
 	handlePlayback(context, buffer)
@@ -150,7 +162,7 @@ function setupAnalyserNodes(context: AudioContext, source: AudioBufferSourceNode
 	analyserNodeR.value = analyserR
 }
 
-function createAnalysers(context: AudioContext, fftSize = 2048): [AnalyserNode, AnalyserNode] {
+function createAnalysers(context: AudioContext, fftSize: 2048): [AnalyserNode, AnalyserNode] {
 	const analyser = context.createAnalyser()
 	const analyserR = context.createAnalyser()
 
@@ -166,6 +178,7 @@ function setupDestination(context: AudioContext, source: AudioBufferSourceNode) 
 
 function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
 	const offsetStart = unref(startOffset)
+
 	if (offsetStart < 0) {
 		initializeConstantSourceNode(context)
 		schedulePlayback(buffer)
@@ -182,7 +195,7 @@ function pause() {
 	if (!context) return
 	startOffset.value += context.currentTime - startTime.value
 	stopPlaying()
-	stopAnalysers()
+	stopAnalyserNodes()
 }
 
 const interacting = shallowRef<boolean>(false)
@@ -203,15 +216,6 @@ watch(interacting, async (interacting) => {
 		await play()
 	}
 })
-
-async function createAndLoadTrack(file: File) {
-	const url = URL.createObjectURL(file)
-	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
-	const metadata = await parseWebStream(response.body, { mimeType: file.type, size: file.size, url })
-	const track = trackStore.createTrack(url, metadata)
-	trackStore.addTrack(track)
-	deckStore.load(deck, track)
-}
 </script>
 
 <template>
@@ -224,9 +228,7 @@ async function createAndLoadTrack(file: File) {
 				<DeckPlayPause :disabled="!loaded" :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
 		</div>
-		<div :class="{
-			'flex-row-reverse': deck.index % 2 === 0,
-		}" class="border flex flex-nowrap gap-4 w-fit p-2">
+		<div class="border flex flex-nowrap gap-4 w-fit p-2">
 			<VirtualDeck
 				v-model:currentTime="currentTime"
 				v-model:interacting="interacting"

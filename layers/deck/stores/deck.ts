@@ -3,6 +3,7 @@ import type { Track } from '~~/layers/track/types'
 export interface IDeck {
 	id: string
 	name: string
+	index: number
 	track: Track | null
 }
 
@@ -11,11 +12,13 @@ export const useDeckStore = defineStore('deck.store', () => {
 		{
 			id: 'Deck 1',
 			name: 'Deck 1',
+			index: 1,
 			track: null
 		},
 		{
 			id: 'Deck 2',
 			name: 'Deck 2',
+			index: 2,
 			track: null
 		}
 	])
@@ -45,10 +48,6 @@ export const useDeckStore = defineStore('deck.store', () => {
 		loadedTracks,
 		load,
 		eject,
-		computedTrack: (deck: IDeck & { track?: Track }) => computed(() =>
-			deck.track?.id
-				? deck.track
-				: getTrackByById(deck.track?.id)
-		)
+		computedTrack: (deck: IDeck) => computed(() => getTrackByById(deck.track?.id))
 	}
 })

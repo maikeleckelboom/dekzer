@@ -19,9 +19,10 @@ const variant = computed<ButtonVariant>(() => (wide ? 'wide' : 'narrow'))
 				'py-2.5 text-xs font-semibold tracking-wide',
 				'bg-secondary text-secondary-foreground border',
 				'hover:bg-secondary-foreground hover:text-secondary',
+				'disabled:opacity-60 disabled:pointer-events-none',
 				'aria-disabled:opacity-60 aria-disabled:pointer-events-none',
 				'active:bg-secondary-foreground/70 active:text-secondary',
-				'transition-all duration-[60ms]',
+				'transition-all duration-75',
 				wide ? 'px-6' : 'px-3',
 				active && 'bg-sky-800 text-foreground',
 			)
