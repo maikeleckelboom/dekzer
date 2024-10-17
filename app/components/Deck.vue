@@ -143,7 +143,6 @@ async function play() {
 	analyserR.fftSize = 2048
 
 	const splitter = context.createChannelSplitter(2)
-
 	source.connect(splitter)
 	splitter.connect(analyser, 0)
 	splitter.connect(analyserR, 1)
@@ -153,17 +152,18 @@ async function play() {
 
 	source.connect(context.destination)
 
+	startAnalysers('rms')
+
 	startTime.value = context.currentTime
+
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
 		initializeConstantSourceNode(context)
 		schedulePlayback(buffer)
 	} else if (offsetStart >= buffer.duration) {
-		startAnalysers()
 		startPlaying()
 	} else {
 		source.start(0, offsetStart, buffer.duration - offsetStart)
-		startAnalysers()
 		startPlaying()
 	}
 }
@@ -182,7 +182,8 @@ const wasPlaying = shallowRef<boolean>(false)
 
 function onPlayPause(playing: boolean) {
 	wasPlaying.value = false
-	playing ? play() : pause()
+	if (playing) play()
+	else pause()
 }
 
 watch(interacting, async (interacting) => {

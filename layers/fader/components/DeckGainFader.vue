@@ -3,7 +3,7 @@ interface Props {
 	channels: [number, number]
 }
 
-const { channels = [Number.MIN_VALUE, Number.MIN_VALUE] } = defineProps<Partial<Props>>()
+const { channels = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY] } = defineProps<Partial<Props>>()
 
 const MASTER_GAIN_DEFAULT = 3 as const
 const MASTER_GAIN_MIN: number = -12 as const
