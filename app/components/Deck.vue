@@ -31,14 +31,15 @@ const startTime = ref<number>(0)
 const startOffset = ref<number>(0)
 const currentTime = ref<number>(0)
 const playing = ref<boolean>(false)
+
 let rAF: number | null = null
 
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
 const loaded = shallowRef<boolean>(false)
 
-const sourceNode = ref<AudioBufferSourceNode | null>(null)
-const constantSourceNode = ref<ConstantSourceNode | null>(null)
+const sourceNode = ref<AudioBufferSourceNode>()
+const constantSourceNode = ref<ConstantSourceNode>()
 
 function startConstantSourceNode(context: AudioContext) {
 	// Create and start the constant source node for tracking time
@@ -48,23 +49,18 @@ function startConstantSourceNode(context: AudioContext) {
 	constantSourceNode.value = constantSrc
 }
 
-// Function to check the remaining time before the track starts
-// Function to check the remaining time before the track starts
-function checkTrackStart(scheduledStartTime: number) {
+function getTimeUntilTrackStarts(playbackStartTime: number) {
 	const context = unref(audioContext)
 	if (!context) return
-	const timeUntilStart = scheduledStartTime - context.currentTime
-	return timeUntilStart > 0 ? timeUntilStart : 0
+	return playbackStartTime - context.currentTime
 }
 
-// Function to periodically check time remaining using requestAnimationFrame
+function renderScheduledTime(start: number) {
+	const timeLeft = getTimeUntilTrackStarts(start)
 
-function trackStartAnimationFrame(scheduledStartTime: number) {
-	const timeRemaining = checkTrackStart(scheduledStartTime)
-
-	if (timeRemaining > 0) {
-		currentTime.value = startOffset.value = timeRemaining * -1
-		rAF = requestAnimationFrame(() => trackStartAnimationFrame(scheduledStartTime))
+	if (timeLeft > 0) {
+		currentTime.value = startOffset.value = (timeLeft * -1)
+		rAF = requestAnimationFrame(() => renderScheduledTime(start))
 		return
 	}
 
@@ -72,37 +68,26 @@ function trackStartAnimationFrame(scheduledStartTime: number) {
 		cancelAnimationFrame(rAF)
 		rAF = null
 	}
+
 	const context = unref(audioContext)
 	if (!context) return
 
-	const source = unref(sourceNode)
-	if (!source) return
 
 	startTime.value = context.currentTime
-	console.log('startOffset', startOffset.value, 'context.currentTime', context.currentTime, 'startTime', startTime.value, 'currentTime', currentTime.value)
 	startPlaying()
 }
 
 
 // Schedule track playback and check when it will start
-function scheduleTrackPlayback(audioBuffer: AudioBuffer, startInSeconds: number) {
+function scheduleTrackPlayback() {
 	const context = unref(audioContext)
-	if (!context) return
-
-	// Schedule the playback of the track
-	const trackSource = createBufferSourceNode(context, audioBuffer)
-	sourceNode.value = trackSource
-	trackSource.connect(context.destination)
-
-	// Calculate the exact time when the track should start
-	const scheduledStartTime = context.currentTime + Math.abs(startInSeconds)
-	trackSource.start(scheduledStartTime)
-
-	// Start the constant source node to keep track of the time
+	const source = unref(sourceNode)
+	if (!context || !source) return
+	const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
+	source.start(playbackStartTime)
 	startConstantSourceNode(context)
-
-	// Start the animation frame loop to check the remaining time
-	trackStartAnimationFrame(scheduledStartTime)
+	playing.value = true
+	renderScheduledTime(playbackStartTime)
 }
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
@@ -152,25 +137,20 @@ async function play() {
 
 	const start = unref(startOffset)
 
-	const isBeforeStart = start < 0
-	const isAfterEnd = start >= buffer.duration
-
-	if (isBeforeStart) {
-		// Play silence
-		scheduleTrackPlayback(buffer, start)
-		return
-	}
-	if (isAfterEnd) {
-		// Play silence
-		return
-	}
-
-	startTime.value = context.currentTime
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
-	source.start(0, start % buffer.duration, buffer.duration - start)
-	startPlaying()
+
+	startTime.value = context.currentTime
+
+	if (start < 0) {
+		scheduleTrackPlayback(buffer)
+	} else if (start >= buffer.duration) {
+
+	} else {
+		source.start(0, start % buffer.duration, buffer.duration - start)
+		startPlaying()
+	}
 }
 
 function pause() {
