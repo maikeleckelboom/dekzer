@@ -51,6 +51,7 @@ function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
 	const timeUntilStart = playbackStart - context.currentTime
 	if (timeUntilStart > 0) {
 		currentTime.value = startOffset.value = (timeUntilStart * -1)
+		startTime.value = context.currentTime
 		rAF = requestAnimationFrame(() => startPlayingWhenReady(context, playbackStart))
 	} else {
 		startTime.value = context.currentTime
@@ -109,52 +110,55 @@ function stopPlaying() {
 	}
 	try {
 		sourceNode.value?.stop()
-		constantSourceNode.value?.stop()
+		sourceNode.value = null
 	} catch {
 	}
-	sourceNode.value = null
-	constantSourceNode.value = null
+
+	try {
+		constantSourceNode.value?.stop()
+		constantSourceNode.value = null
+	} catch {
+	}
 	playing.value = false
 }
 
-const busy = shallowRef<boolean>(false)
 
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
-	if (!context || !buffer || playing.value || busy.value) {
+	if (!context || !buffer || playing.value ) {
 		return
 	}
 
-	busy.value = true
 
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
+
 	startTime.value = context.currentTime
 
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
 		initializeConstantSourceNode(context)
 		startPlayingScheduled(buffer)
+	} else if (offsetStart >= buffer!.duration) {
+		// initializeConstantSourceNode(context)
+		startPlaying()
 	} else {
-		if (offsetStart < buffer.duration) {
-			source.start(0, offsetStart, buffer.duration - offsetStart)
-		}
+		source.start(0, offsetStart, buffer.duration - offsetStart)
 		startPlaying()
 	}
 
-	busy.value = false
+
 }
 
 function pause() {
 	const context = unref(audioContext)
-	const source = unref(sourceNode)
-	if (!context || !source || !playing.value) return
+	if (!context) return
 
 	startOffset.value += context.currentTime - startTime.value
 
-	stopPlaying(source)
+	stopPlaying()
 }
 
 
