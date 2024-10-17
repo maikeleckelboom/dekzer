@@ -208,6 +208,11 @@ function eject(){
 										 class="rounded"
 										 @playPause="onPlayPause"
 			/>
+			<DeckButton
+				:disabled="!loaded"
+				@click="eject">
+				Eject
+			</DeckButton>
 		</div>
 		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2', {'flex-row-reverse': deck.index % 2 === 0})">
 			<VirtualDeck v-model:currentTime="currentTime"

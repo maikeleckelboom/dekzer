@@ -22,9 +22,10 @@ const emit = defineEmits<DeckRootEmits>()
 const deckDropzone = useTemplateRef<InstanceType<DeckDropzone>>('deckDropzone')
 
 useEventListener(deckDropzone, props.triggerEvent, (event: Event) => {
+	event.preventDefault()
 	if (!props.disabled) return
 	deckDropzone.value!.openFilePicker()
-}, { passive: true })
+}, { passive: false, capture: true })
 
 function onChange([file]: File[]) {
 	emit('load', file)

@@ -81,7 +81,7 @@ export function useVirtualDeck(
 		}
 
 		pdEvent.preventDefault()
-		
+
 		startInteract(pdEvent)
 
 		const cleanupPm = useEventListener('pointermove', (pmEvent: PointerEvent) => {
