@@ -1,10 +1,12 @@
+import { NEGATIVE_INFINITY } from '@vue/devtools-kit'
+
 export function useStereoVolumeMeter(
 	analyzer: MaybeRefOrGetter<AnalyserNode>,
 	analyserR: MaybeRefOrGetter<AnalyserNode>,
 	fftSize: 1024 | 2048 | 4096 = 1024
 ) {
-	const returnValueL = shallowRef<number>(Number.MIN_VALUE)
-	const returnValueR = shallowRef<number>(Number.MIN_VALUE)
+	const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
+	const returnValueR = shallowRef<number>(Number.NEGATIVE_INFINITY)
 
 	const floatSampleBufferL = new Float32Array(fftSize)
 	const floatSampleBufferR = new Float32Array(fftSize)
@@ -54,6 +56,8 @@ export function useStereoVolumeMeter(
 	}
 
 	function stop() {
+		returnValueL.value = Number.NEGATIVE_INFINITY
+		returnValueR.value = Number.NEGATIVE_INFINITY
 		cancelAnimationFrame(rAF)
 	}
 

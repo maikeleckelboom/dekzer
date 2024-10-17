@@ -145,8 +145,8 @@ async function play() {
 	const splitter = context.createChannelSplitter(2)
 
 	source.connect(splitter)
-	splitter.connect(analyser, 0) // Connect left channel to analyser
-	splitter.connect(analyserR, 1) // Connect right channel to analyserR
+	splitter.connect(analyser, 0)
+	splitter.connect(analyserR, 1)
 
 	analyserNode.value = analyser
 	analyserNodeR.value = analyserR
@@ -159,11 +159,12 @@ async function play() {
 		initializeConstantSourceNode(context)
 		schedulePlayback(buffer)
 	} else if (offsetStart >= buffer.duration) {
+		startAnalysers()
 		startPlaying()
 	} else {
 		source.start(0, offsetStart, buffer.duration - offsetStart)
-		startPlaying()
 		startAnalysers()
+		startPlaying()
 	}
 }
 
@@ -213,7 +214,6 @@ watch(interacting, async (interacting) => {
 				:duration="track?.format.duration"
 			/>
 			<DeckGainFader
-
 				:channels="[valueL, valueR]"
 			/>
 		</div>
