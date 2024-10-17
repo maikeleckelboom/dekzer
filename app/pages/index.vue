@@ -8,7 +8,7 @@ useHead({
 	meta: [
 		{
 			name: 'description',
-			content: 'The new way to experience music.'
+			content: 'A new way to experience music.'
 		}
 	]
 })

@@ -1,34 +1,51 @@
+function createAudioContext(options: AudioContextOptions = { latencyHint: 'interactive' }): AudioContext {
+	return new AudioContext(options)
+}
+
+async function stopAudioContext(context: AudioContext): Promise<void> {
+	if (!context) return
+
+	if (context.state === 'running') {
+		await context.close()
+	}
+}
+
 export const useSharedAudioContext = createSharedComposable((options: AudioContextOptions = {
 	latencyHint: 'interactive'
 }) => {
 	const audioContext = shallowRef<AudioContext | null>(null)
-	const audioContextError = shallowRef<Error | null>(null)
-	const initialized = shallowRef<boolean>(false)
 
-	async function initializeAudioContext() {
-		if (initialized.value) {
-			return await resumeAudioContext()
+	async function getAudioContext(): Promise<AudioContext> {
+		const context = createAudioContext(options)
+
+		if (!audioContext.value) {
+			audioContext.value = context
 		}
-		try {
-			audioContext.value = new AudioContext(options)
-			initialized.value = true
-			return audioContext.value
-		} catch (error) {
-			error.value = error
+
+		if (context.state === 'suspended') {
+			await context.resume()
 		}
+
+		return context
 	}
 
-	async function resumeAudioContext() {
-		if (audioContext.value && audioContext.value.state === 'suspended') {
-			await audioContext.value.resume()
-		}
-		return audioContext.value
+	async function closeAudioContext(): Promise<void> {
+		if (!audioContext.value) return
+		await stopAudioContext(audioContext.value)
+		audioContext.value = null
 	}
+
+	onMounted(() => {
+		if (navigator.userActivation.hasBeenActive) {
+			getAudioContext().then(() => {
+				console.log('Audio context ready')
+			})
+		}
+	})
 
 	return {
 		audioContext,
-		audioContextError,
-		initialized,
-		initializeAudioContext
+		getAudioContext,
+		closeAudioContext
 	}
 })
