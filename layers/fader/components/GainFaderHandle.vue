@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { clamp, type UseSwipeDirection } from '@vueuse/core'
 
-// Props
 const { dBMin, dBMax } = defineProps({
 	dBMin: { type: Number, default: -12 },
 	dBMax: { type: Number, default: 12 }
@@ -13,9 +12,10 @@ const modelValue = defineModel<number>('modelValue', {
 })
 
 const CONTAINER_HEIGHT = 214 as const
-const HANDLE_HEIGHT: number = 14 as const
-
-const top = ref<number>(0)
+const HANDLE_HEIGHT = 14 as const
+const top = ref<number>(
+	(dBMax - modelValue.value) / (dBMax - dBMin) * 100 - HANDLE_HEIGHT / CONTAINER_HEIGHT * 100
+)
 const offsetStart = ref<number>(0)
 
 const target = useTemplateRef<HTMLDivElement>('handle')
