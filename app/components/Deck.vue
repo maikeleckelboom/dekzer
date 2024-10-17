@@ -69,24 +69,19 @@ function updateCurrentTimeUntilStart(startPlaybackTime: number) {
 		rAF = null
 	}
 
-	// Ready to start playback
 	startTime.value = context.currentTime
 	startPlaying()
 }
 
 
-// Schedule track playback and check when it will start
-function scheduleTrackPlayback() {
+function startPlayingScheduled() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
 	if (!context || !source) return
-	const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
-	// Start normal playback at the scheduled time
-	source.start(playbackStartTime)
-	// Start the constant source node to track time
+	const playbackStart = context.currentTime + Math.abs(startOffset.value)
+	source.start(playbackStart)
 	startConstantSourceNode(context)
-	// Render the current time until the track starts
-	updateCurrentTimeUntilStart(playbackStartTime)
+	updateCurrentTimeUntilStart(playbackStart)
 	playing.value = true
 }
 
@@ -109,7 +104,6 @@ function updateCurrentTime() {
 	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
-
 function renderAnimationFrame() {
 	updateCurrentTime()
 	rAF = requestAnimationFrame(renderAnimationFrame)
@@ -117,28 +111,25 @@ function renderAnimationFrame() {
 
 function startPlaying() {
 	playing.value = true
-	if (rAF !== null) cancelAnimationFrame(rAF)
+	if (rAF !== null) {
+		cancelAnimationFrame(rAF)
+		rAF = null
+	}
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
 function stopPlaying() {
 	playing.value = false
-
 	if (rAF !== null) {
 		cancelAnimationFrame(rAF)
-	}
-
-	if (sourceNode.value) {
-		sourceNode.value.stop()
-		sourceNode.value = null
-	}
-
-	if (constantSourceNode.value) {
-		constantSourceNode.value.stop()
-		constantSourceNode.value = null
+		rAF = null
 	}
 }
 
+function continuePlaying(context: AudioContext) {
+	startConstantSourceNode(context)
+	startPlaying()
+}
 
 async function play() {
 	const context = await getAudioContext()
@@ -146,21 +137,21 @@ async function play() {
 	if (!context || !buffer || playing.value) {
 		return
 	}
-
-	const start = unref(startOffset)
-
+	
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
 
 	startTime.value = context.currentTime
 
-	if (start < 0) {
-		scheduleTrackPlayback(buffer)
-	} else if (start >= buffer.duration) {
-
+	const offsetStart = unref(startOffset)
+	if (offsetStart < 0) {
+		startPlayingScheduled(buffer)
+	} else if (offsetStart >= buffer.duration) {
+		startConstantSourceNode(context)
+		startPlaying()
 	} else {
-		source.start(0, start % buffer.duration, buffer.duration - start)
+		source.start(0, offsetStart, buffer.duration - offsetStart)
 		startPlaying()
 	}
 }
