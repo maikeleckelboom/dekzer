@@ -1,6 +1,6 @@
 export function useStereoVolumeMeter(
-	analyzer: AnalyserNode,
-	analyserR: AnalyserNode,
+	analyzer: MaybeRefOrGetter<AnalyserNode>,
+	analyserR: MaybeRefOrGetter<AnalyserNode>,
 	fftSize: 1024 | 2048 | 4096 = 1024
 ) {
 	const returnValueL = shallowRef<number>(Number.MIN_VALUE)
@@ -12,8 +12,8 @@ export function useStereoVolumeMeter(
 	let rAF: number | null = null
 
 	function start(algorithm: 'rms' | 'peak' = 'rms') {
-		analyzer.getFloatTimeDomainData(floatSampleBufferL)
-		analyserR.getFloatTimeDomainData(floatSampleBufferR)
+		toValue(analyzer).getFloatTimeDomainData(floatSampleBufferL)
+		toValue(analyserR).getFloatTimeDomainData(floatSampleBufferR)
 
 		if (algorithm === 'peak') {
 			let peakInstantaneousPowerL = 0
@@ -50,7 +50,7 @@ export function useStereoVolumeMeter(
 			returnValueR.value = 10 * Math.log10(sumOfSquaresR / fftSize)
 		}
 
-		rAF = requestAnimationFrame(() => start(peak))
+		rAF = requestAnimationFrame(() => start(algorithm))
 	}
 
 	function stop() {

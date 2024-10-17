@@ -7,12 +7,12 @@ import {
 const { currentTime, duration, pitch, pitchRange, bpm } = injectVirtualDeckRootContext() as VirtualDeckRootContext
 
 const elapsedTimeDisplay = computed(() => {
-	return typeof currentTime.value !== 'undefined' ? formatSeconds(currentTime.value) : ''
+	if (typeof currentTime.value === 'undefined') return ''
+	// const time = currentTime.value < 0 ? formatSeconds(currentTime.value * -1) : formatSeconds(currentTime.value)
+	return formatSeconds(currentTime.value)
 })
 
-const remainingTimeDisplay = computed(() => {
-	return duration.value ? formatSeconds(duration.value - currentTime.value) : ''
-})
+const remainingTimeDisplay = computed(() => duration.value ? formatSeconds(duration.value - currentTime.value) : '')
 
 const bpmDisplay = computed(() => {
 	const tempo = unref(bpm)

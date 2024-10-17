@@ -5,6 +5,7 @@ import { useTrackStore } from '~~/layers/track/stores/track'
 import { type IDeck, useDeckStore } from '~~/layers/deck/stores/deck'
 import { useSharedAudioContext } from '~/composables/useAudioContext'
 import { createBufferSourceNode, loadAudioBuffer } from '~/utils/audioUtils'
+import { useStereoVolumeMeter } from '~/composables/useStereoVolumeMeter'
 
 interface DeckProps extends DeckRootProps {
 	deck: IDeck
@@ -26,26 +27,25 @@ async function createAndLoadTrack(file: File) {
 
 const track = deckStore.computedTrack(deck)
 
-const audioBuffer = ref<AudioBuffer | null>(null)
 const startTime = ref<number>(0)
 const startOffset = ref<number>(0)
 const currentTime = ref<number>(0)
 const playing = ref<boolean>(false)
-
-let rAF: number | null = null
-
-const { audioContext, getAudioContext } = useSharedAudioContext()
-
 const loaded = shallowRef<boolean>(false)
 
-const sourceNode = ref<AudioBufferSourceNode>()
-const constantSourceNode = ref<ConstantSourceNode>()
+const audioBuffer = ref<AudioBuffer | null>(null)
+const sourceNode = ref<AudioBufferSourceNode | null>(null)
+const constantSourceNode = ref<ConstantSourceNode | null>(null)
+
+const { audioContext, getAudioContext } = useSharedAudioContext()
 
 function initializeConstantSourceNode(context: AudioContext) {
 	constantSourceNode.value = context.createConstantSource()
 	constantSourceNode.value.offset.value = 0
 	constantSourceNode.value.start(context.currentTime)
 }
+
+let rAF: number | null = null
 
 function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
 	const timeUntilStart = playbackStart - context.currentTime
@@ -59,7 +59,7 @@ function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
 	}
 }
 
-function startPlayingScheduled() {
+function schedulePlayback() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
 	if (!context || !source) return
@@ -69,7 +69,7 @@ function startPlayingScheduled() {
 	playing.value = true
 }
 
-whenever(logicAnd(track, () => track.value?.url), async () => {
+whenever(logicAnd(track, () => 'url' in track.value), async () => {
 	const context = await getAudioContext()
 	const { url } = track.value
 	audioBuffer.value = await loadAudioBuffer(context, url)
@@ -102,65 +102,79 @@ function startPlaying() {
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
-
 function stopPlaying() {
+	playing.value = false
 	if (rAF !== null) {
 		cancelAnimationFrame(rAF)
 		rAF = null
 	}
 	try {
 		sourceNode.value?.stop()
-		sourceNode.value = null
-	} catch {
-	}
-
-	try {
 		constantSourceNode.value?.stop()
+		sourceNode.value = null
 		constantSourceNode.value = null
 	} catch {
 	}
-	playing.value = false
 }
+
+const analyserNode = shallowRef<AnalyserNode | null>(null)
+const analyserNodeR = shallowRef<AnalyserNode | null>(null)
+
+const {
+	valueL,
+	valueR,
+	start: startAnalysers,
+	stop: stopAnalysers
+} = useStereoVolumeMeter(analyserNode, analyserNodeR, 2048)
 
 
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
-	if (!context || !buffer || playing.value ) {
+	if (!context || !buffer || playing.value) {
 		return
 	}
-
-
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
+
+	const analyser = context.createAnalyser()
+	const analyserR = context.createAnalyser()
+	analyser.fftSize = 2048
+	analyserR.fftSize = 2048
+
+	const splitter = context.createChannelSplitter(2)
+
+	source.connect(splitter)
+	splitter.connect(analyser, 0) // Connect left channel to analyser
+	splitter.connect(analyserR, 1) // Connect right channel to analyserR
+
+	analyserNode.value = analyser
+	analyserNodeR.value = analyserR
+
 	source.connect(context.destination)
 
 	startTime.value = context.currentTime
-
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
 		initializeConstantSourceNode(context)
-		startPlayingScheduled(buffer)
-	} else if (offsetStart >= buffer!.duration) {
-		// initializeConstantSourceNode(context)
+		schedulePlayback(buffer)
+	} else if (offsetStart >= buffer.duration) {
 		startPlaying()
 	} else {
 		source.start(0, offsetStart, buffer.duration - offsetStart)
 		startPlaying()
+		startAnalysers()
 	}
-
-
 }
+
 
 function pause() {
 	const context = unref(audioContext)
 	if (!context) return
-
 	startOffset.value += context.currentTime - startTime.value
-
 	stopPlaying()
+	stopAnalysers()
 }
-
 
 const interacting = shallowRef<boolean>(false)
 const wasPlaying = shallowRef<boolean>(false)
@@ -191,12 +205,16 @@ watch(interacting, async (interacting) => {
 				<DeckPlayPause :disabled="!loaded" :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
 		</div>
-		<div class="border flex w-fit p-2">
+		<div class="border flex flex-nowrap gap-4 w-fit p-2">
 			<VirtualDeck
 				v-model:currentTime="currentTime"
 				v-model:interacting="interacting"
 				:bpm="track?.common.bpm"
 				:duration="track?.format.duration"
+			/>
+			<DeckGainFader
+
+				:channels="[valueL, valueR]"
 			/>
 		</div>
 	</DeckRoot>

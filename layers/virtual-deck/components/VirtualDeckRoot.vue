@@ -1,13 +1,13 @@
 <script lang="ts">
 import type { ComputedRef } from '@vue/reactivity'
 
-export interface VirtualDeckRootProps {
+export type VirtualDeckRootProps = Partial<{
 	currentTime: number
 	duration: number
 	bpm: number
 	pitch: number
 	pitchRange: 8 | 16 | 50
-}
+}>
 
 export interface VirtualDeckRootEmits {
 	'update:currentTime': [payload: number],
@@ -16,8 +16,8 @@ export interface VirtualDeckRootEmits {
 }
 
 export interface VirtualDeckRootContext {
-	currentTime: Ref<number | undefined>
-	duration: Readonly<Ref<number | undefined>>
+	currentTime: Ref<number>
+	duration: Readonly<Ref<number>>
 	pitch: ComputedRef<number>
 	pitchRange: ComputedRef<8 | 16 | 50>
 	interacting: ComputedRef<boolean>
@@ -35,7 +35,7 @@ import { clamp } from '@vueuse/core'
 
 defineSlots<{ default: void }>()
 
-const props = defineProps<Partial<VirtualDeckRootProps>>()
+const props = defineProps<VirtualDeckRootProps>()
 
 const emits = defineEmits<VirtualDeckRootEmits>()
 

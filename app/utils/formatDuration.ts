@@ -34,7 +34,6 @@ type FormatDurationOptions = Partial<{
 function formatDuration(ms: number, options: FormatDurationOptions = {}): string {
 	const leading = computed(() => toValue(options.leading) || false)
 	const showMilliseconds = computed(() => toValue(options.ms) || false)
-	const fractionDigits = computed(() => toValue(options.fractionDigits) || 3)
 
 	const signSymbol = getSignSymbol(ms, showMilliseconds.value)
 	const parsedMilliseconds = parseMilliseconds(ms < 0 ? -ms : ms)
@@ -60,7 +59,6 @@ function formatDuration(ms: number, options: FormatDurationOptions = {}): string
 	}
 
 	if (showMilliseconds.value) {
-		const ms = addZero(parsedMilliseconds.ms, 1)
 		const seconds = addZero(parsedMilliseconds.seconds)
 		const minutes = addZero(parsedMilliseconds.minutes)
 		const hours = addZero(parsedMilliseconds.hours)
@@ -71,9 +69,6 @@ function formatDuration(ms: number, options: FormatDurationOptions = {}): string
 		} else if (parsedMilliseconds.hours) {
 			output = `${signSymbol}${hours}:${minutes}:${seconds}`
 		} else {
-			// const corrMs = Math.floor(parsedMilliseconds.ms / 10)
-			// output = `${signSymbol}${minutes}:${seconds}.${addZero(corrMs)}`
-
 			const oneDigitMs = Math.floor(parsedMilliseconds.ms / 100)
 			output = `${signSymbol}${minutes}:${seconds}.${oneDigitMs}`
 		}
