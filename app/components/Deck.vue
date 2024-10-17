@@ -38,7 +38,6 @@ function resetState() {
 	currentTime.value = 0
 	startOffset.value = 0
 	startTime.value = 0
-	audioContext.value = null
 	audioBuffer.value = null
 	playing.value = false
 	deckStore.eject(deck)
@@ -49,7 +48,7 @@ const { audioContext, getAudioContext } = useSharedAudioContext()
 const trackLoaded = shallowRef<boolean>(false)
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
-	const context = unref(audioContext)
+	const context = await getAudioContext()
 	if (!context) {
 		console.warn('Cannot load track: audio context is not initialized')
 		return
@@ -70,13 +69,11 @@ function updateCurrentTime() {
 		console.warn('Cannot update current time: audio context is not initialized.')
 		return
 	}
-
 	const source = unref(sourceNode)
 	if (!source) {
 		console.warn('Cannot update current time: source node is not initialized.')
 		return
 	}
-
 	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
@@ -84,18 +81,17 @@ let rAF: number | null = null
 
 function renderAnimationFrame() {
 	updateCurrentTime()
-	// .. more rendering logic
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
-function startPlaying(quiet: boolean = false) {
-	if (!quiet) playing.value = true
+function startPlaying() {
+	playing.value = true
 	if (rAF !== null) cancelAnimationFrame(rAF)
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
-function stopPlaying(source: AudioBufferSourceNode, quiet: boolean = false) {
-	if (!quiet) playing.value = false
+function stopPlaying(source: AudioBufferSourceNode) {
+	playing.value = false
 	if (rAF !== null) cancelAnimationFrame(rAF)
 	source.stop()
 }
@@ -107,26 +103,15 @@ function initializeSourceNode(context: AudioContext, buffer: AudioBuffer): Audio
 	return sourceNode.value
 }
 
-async function schedulePlayback(context: AudioContext, buffer: AudioBuffer) {
-
-
-}
-
-async function play(options: { quiet: boolean } = { quiet: false }) {
-	let context = unref(audioContext)
-	let buffer = unref(audioBuffer)
-
+async function play() {
+	const context = await getAudioContext()
+	const buffer = unref(audioBuffer)
 	if (!context || !buffer) {
-		context = await getAudioContext()
-
-		const { url } = track.value
-		buffer = await loadAudioBuffer(context, url)
+		return
 	}
 
 	const isOutOfRange = startOffset.value < 0 || startOffset.value >= buffer.duration
-
 	if (isOutOfRange) {
-		await schedulePlayback(context, buffer)
 		return
 	}
 
@@ -134,10 +119,10 @@ async function play(options: { quiet: boolean } = { quiet: false }) {
 	const source = initializeSourceNode(context, buffer)
 	source.connect(context.destination)
 	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
-	startPlaying(options.quiet)
+	startPlaying()
 }
 
-function pause(options: { quiet: boolean } = { quiet: false }) {
+function pause() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
 
@@ -145,7 +130,7 @@ function pause(options: { quiet: boolean } = { quiet: false }) {
 	if (!playing.value) return
 
 	startOffset.value += context.currentTime - startTime.value
-	stopPlaying(source, options.quiet)
+	stopPlaying(source)
 }
 
 function onPlayPause(playing: boolean) {
@@ -156,18 +141,12 @@ const interacting = shallowRef<boolean>(false)
 const wasPlaying = shallowRef<boolean>(false)
 
 watch(interacting, (interacting) => {
-
-	const context = unref(audioContext)
-
-	if (!context) {
-		return
-	}
-
 	startOffset.value = currentTime.value
 	if (interacting) {
-		pause({ quiet: true })
-	} else if (playing.value) {
-		play({ quiet: true })
+		wasPlaying.value = playing.value
+		pause()
+	} else if (wasPlaying.value) {
+		play()
 	}
 })
 
