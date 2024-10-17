@@ -41,11 +41,15 @@ const loaded = shallowRef<boolean>(false)
 const sourceNode = ref<AudioBufferSourceNode>()
 const constantSourceNode = ref<ConstantSourceNode>()
 
-function startConstantSourceNode(context: AudioContext) {
-	const constantSrc = context.createConstantSource()
-	constantSrc.offset.value = 0
-	constantSrc.start(context.currentTime)
-	constantSourceNode.value = constantSrc
+const playingOutOfBounds = computed(() => {
+	const buffer = unref(audioBuffer) ?? 0
+	return buffer && currentTime.value > buffer.duration || currentTime.value < 0
+})
+
+function initializeConstantSourceNode(context: AudioContext) {
+	constantSourceNode.value = context.createConstantSource()
+	constantSourceNode.value.offset.value = 0
+	constantSourceNode.value.start(context.currentTime)
 }
 
 function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
@@ -59,14 +63,12 @@ function startPlayingWhenReady(context: AudioContext, playbackStart: number) {
 	}
 }
 
-
 function startPlayingScheduled() {
 	const context = unref(audioContext)
 	const source = unref(sourceNode)
 	if (!context || !source) return
 	const playbackStart = context.currentTime + Math.abs(startOffset.value)
 	source.start(playbackStart)
-	startConstantSourceNode(context)
 	startPlayingWhenReady(context, playbackStart)
 	playing.value = true
 }
@@ -104,48 +106,70 @@ function startPlaying() {
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
+
 function stopPlaying() {
-	playing.value = false
+
 	if (rAF !== null) {
 		cancelAnimationFrame(rAF)
 		rAF = null
 	}
-	const constantSrc = unref(constantSourceNode)
-	const source = unref(sourceNode)
-	const ctx = unref(audioContext)
-	source?.stop()
-	constantSrc?.stop()
-	ctx?.suspend()
+
+	const context = unref(audioContext)
+	if (!context) return
+
+	console.log('playing', playing.value)
+	console.log('playingOutOfBounds', playingOutOfBounds.value)
+
+	if (playing.value && !playingOutOfBounds.value) {
+		try {
+			sourceNode.value?.stop()
+			console.log('Stopped sourceNode')
+		} catch (e) {
+			console.warn('Failed to stop default source node')
+			console.error(e)
+		}
+	} else if (playingOutOfBounds.value) {
+		try {
+			constantSourceNode.value?.stop()
+			console.log('Stopped constantSourceNode')
+		} catch (e) {
+			console.warn('Failed to stop constant source node')
+			console.error(e)
+		}
+	}
+
+	playing.value = false
 }
 
-function continuePlaying(context: AudioContext) {
-	startConstantSourceNode(context)
-	startPlaying()
-}
+const busy = shallowRef<boolean>(false)
 
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
-	if (!context || !buffer || playing.value) {
+	if (!context || !buffer || playing.value || busy.value) {
 		return
 	}
+
+	busy.value = true
 
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
-
 	startTime.value = context.currentTime
 
 	const offsetStart = unref(startOffset)
 	if (offsetStart < 0) {
+		initializeConstantSourceNode(context)
 		startPlayingScheduled(buffer)
 	} else if (offsetStart >= buffer!.duration) {
-		startConstantSourceNode(context)
+		initializeConstantSourceNode(context)
 		startPlaying()
 	} else {
 		source.start(0, offsetStart, buffer.duration - offsetStart)
 		startPlaying()
 	}
+
+	busy.value = false
 }
 
 function pause() {
@@ -154,6 +178,7 @@ function pause() {
 	if (!context || !source || !playing.value) return
 
 	startOffset.value += context.currentTime - startTime.value
+
 	stopPlaying(source)
 }
 
@@ -166,13 +191,13 @@ function onPlayPause(playing: boolean) {
 	playing ? play() : pause()
 }
 
-watch(interacting, (interacting) => {
+watch(interacting, async (interacting) => {
 	startOffset.value = currentTime.value
 	if (interacting) {
 		wasPlaying.value = playing.value
 		pause()
 	} else if (wasPlaying.value) {
-		play()
+		await play()
 	}
 })
 </script>
@@ -185,7 +210,7 @@ watch(interacting, (interacting) => {
 					<strong>currentTime</strong>
 					<p class="tabular-nums truncate">{{ currentTime }}</p>
 				</div>
-				<DeckPlayPause :playing="playing" class="rounded" @playPause="onPlayPause" />
+				<DeckPlayPause :disabled="!loaded" :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
 		</div>
 		<div class="border flex w-fit p-2">
