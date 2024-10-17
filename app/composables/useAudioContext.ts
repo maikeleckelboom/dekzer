@@ -34,7 +34,9 @@ export const useSharedAudioContext = createSharedComposable((options: AudioConte
 	}
 
 	onMounted(async () => {
-		await getAudioContext()
+		if (navigator.userActivation.hasBeenActive){
+			await getAudioContext()
+		}
 	})
 
 	onBeforeUnmount(async () => {
