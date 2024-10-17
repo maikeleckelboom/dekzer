@@ -1,38 +1,62 @@
 <script lang="ts" setup>
-const { min, max } = defineProps({
-	min: Number,
-	max: Number
+import { clamp, type UseSwipeDirection } from '@vueuse/core'
+
+// Props
+const { dBMin, dBMax } = defineProps({
+	dBMin: { type: Number, default: -12 },
+	dBMax: { type: Number, default: 12 }
 })
 
+// Model
 const modelValue = defineModel<number>('modelValue', {
 	type: Number,
 	required: true
 })
 
-const parent = useParentElement()
+// Constants
+const CONTAINER_HEIGHT = 214 as const
+const HANDLE_HEIGHT: number = 14 as const
 
-const { height } = useElementSize(parent)
+// Reactive state
+const top = ref<number>(0) // Position of handle in percentage (0-100)
 
-const HANDLE_TOTAL_HEIGHT: number = 14 as const
+// Ref for the handle element
+const target = useTemplateRef<HTMLDivElement>('handle')
+// Use swipe logic with direction handling
+const { distanceY, isSwiping } = usePointerSwipe(target, {
+	disableTextSelect: true,
+	threshold: 0,
+	onSwipe(e: PointerEvent, direction: UseSwipeDirection) {
+		const directionMultiplier = direction === 'down' ? 1 : -1
+		const newTop =  distanceY.value * directionMultiplier / CONTAINER_HEIGHT * 100
+		top.value = clamp(newTop, 0, 100)
+	},
+	onSwipeEnd(e: PointerEvent, direction: UseSwipeDirection) {
 
-const top = computed(() => {
-	const percent = (modelValue.value - min) / (max - min)
-	const h = height.value || 214
-	const heightPercent = 100 * (HANDLE_TOTAL_HEIGHT / h)
-	const offsetY = 100 * percent + heightPercent / 2
-	return 100 - offsetY
+	}
 })
 
 
-const element = useTemplateRef<HTMLDivElement>('handle')
+// Update the handle's position based on modelValue changes
+watch(() => modelValue.value, (newValue) => {
+	// const percentage = (newValue - dBMin) / (dbMax - dBMin) * 100
+	// top.value = percentage
+})
+watch(top, (newValue) => {
 
+	const mv = (newValue / 100) * (dBMax - dBMin) + dBMin
+	console.log('mv', mv)
+	modelValue.value = mv
+}, { deep: true })
+
+// Computed style for the handle position
 const handleStyle = computed(() => ({
 	top: `${top.value}%`
 }))
 
-defineExpose({
-	top
-})
+watch(handleStyle, (newValue) => {
+	console.log('handleStyle', newValue)
+}, { deep: true })
 </script>
 
 <template>
