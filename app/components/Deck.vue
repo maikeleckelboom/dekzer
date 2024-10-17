@@ -26,16 +26,84 @@ async function createAndLoadTrack(file: File) {
 
 const track = deckStore.computedTrack(deck)
 
-const sourceNode = ref<AudioBufferSourceNode | null>(null)
 const audioBuffer = ref<AudioBuffer | null>(null)
 const startTime = ref<number>(0)
 const startOffset = ref<number>(0)
 const currentTime = ref<number>(0)
 const playing = ref<boolean>(false)
+let rAF: number | null = null
 
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
 const loaded = shallowRef<boolean>(false)
+
+const sourceNode = ref<AudioBufferSourceNode | null>(null)
+const constantSourceNode = ref<ConstantSourceNode | null>(null)
+
+function startConstantSourceNode(context: AudioContext) {
+	// Create and start the constant source node for tracking time
+	const constantSrc = context.createConstantSource()
+	constantSrc.offset.value = 0
+	constantSrc.start(context.currentTime)
+	constantSourceNode.value = constantSrc
+}
+
+// Function to check the remaining time before the track starts
+// Function to check the remaining time before the track starts
+function checkTrackStart(scheduledStartTime: number) {
+	const context = unref(audioContext)
+	if (!context) return
+	const timeUntilStart = scheduledStartTime - context.currentTime
+	return timeUntilStart > 0 ? timeUntilStart : 0
+}
+
+// Function to periodically check time remaining using requestAnimationFrame
+
+function trackStartAnimationFrame(scheduledStartTime: number) {
+	const timeRemaining = checkTrackStart(scheduledStartTime)
+
+	if (timeRemaining > 0) {
+		currentTime.value = startOffset.value = timeRemaining * -1
+		rAF = requestAnimationFrame(() => trackStartAnimationFrame(scheduledStartTime))
+		return
+	}
+
+	if (rAF !== null) {
+		cancelAnimationFrame(rAF)
+		rAF = null
+	}
+	const context = unref(audioContext)
+	if (!context) return
+
+	const source = unref(sourceNode)
+	if (!source) return
+
+	startTime.value = context.currentTime
+	console.log('startOffset', startOffset.value, 'context.currentTime', context.currentTime, 'startTime', startTime.value, 'currentTime', currentTime.value)
+	startPlaying()
+}
+
+
+// Schedule track playback and check when it will start
+function scheduleTrackPlayback(audioBuffer: AudioBuffer, startInSeconds: number) {
+	const context = unref(audioContext)
+	if (!context) return
+
+	// Schedule the playback of the track
+	const trackSource = createBufferSourceNode(context, audioBuffer)
+	sourceNode.value = trackSource
+	trackSource.connect(context.destination)
+
+	// Calculate the exact time when the track should start
+	const scheduledStartTime = context.currentTime + Math.abs(startInSeconds)
+	trackSource.start(scheduledStartTime)
+
+	// Start the constant source node to keep track of the time
+	startConstantSourceNode(context)
+
+	// Start the animation frame loop to check the remaining time
+	trackStartAnimationFrame(scheduledStartTime)
+}
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
 	const context = await getAudioContext()
@@ -56,7 +124,6 @@ function updateCurrentTime() {
 	currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
-let rAF: number | null = null
 
 function renderAnimationFrame() {
 	updateCurrentTime()
@@ -75,15 +142,26 @@ function stopPlaying(source: AudioBufferSourceNode) {
 	source.stop()
 }
 
+
 async function play() {
 	const context = await getAudioContext()
 	const buffer = unref(audioBuffer)
-	if (!context || !buffer) {
+	if (!context || !buffer || playing.value) {
 		return
 	}
 
-	const isOutOfRange = startOffset.value < 0 || startOffset.value >= buffer.duration
-	if (isOutOfRange) {
+	const start = unref(startOffset)
+
+	const isBeforeStart = start < 0
+	const isAfterEnd = start >= buffer.duration
+
+	if (isBeforeStart) {
+		// Play silence
+		scheduleTrackPlayback(buffer, start)
+		return
+	}
+	if (isAfterEnd) {
+		// Play silence
 		return
 	}
 
@@ -91,7 +169,7 @@ async function play() {
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
 	source.connect(context.destination)
-	source.start(0, startOffset.value % buffer.duration, buffer.duration - startOffset.value)
+	source.start(0, start % buffer.duration, buffer.duration - start)
 	startPlaying()
 }
 
@@ -104,12 +182,14 @@ function pause() {
 	stopPlaying(source)
 }
 
-function onPlayPause(playing: boolean) {
-	playing ? play() : pause()
-}
 
 const interacting = shallowRef<boolean>(false)
 const wasPlaying = shallowRef<boolean>(false)
+
+function onPlayPause(playing: boolean) {
+	wasPlaying.value = false
+	playing ? play() : pause()
+}
 
 watch(interacting, (interacting) => {
 	startOffset.value = currentTime.value
@@ -128,7 +208,7 @@ watch(interacting, (interacting) => {
 			<TrackOverview class="p-2">
 				<div class="mb-2">
 					<strong>currentTime</strong>
-					<p class="tabular-nums truncate">{{ currentTime.toFixed(2) }}</p>
+					<p class="tabular-nums truncate">{{ currentTime }}</p>
 				</div>
 				<DeckPlayPause :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
