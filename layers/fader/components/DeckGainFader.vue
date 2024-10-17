@@ -11,6 +11,10 @@ const TRACK_GAIN_DEFAULT = 0 as const
 
 const uid = useId()
 const gainValue = useState<number>(`deck-gain-fader-${uid}`, () => TRACK_GAIN_DEFAULT)
+
+watch(gainValue, (value) => {
+	console.log('gainValue', value)
+})
 </script>
 
 <template>
