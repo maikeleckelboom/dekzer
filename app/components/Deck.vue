@@ -41,11 +41,6 @@ const loaded = shallowRef<boolean>(false)
 const sourceNode = ref<AudioBufferSourceNode>()
 const constantSourceNode = ref<ConstantSourceNode>()
 
-const playingOutOfBounds = computed(() => {
-	const buffer = unref(audioBuffer) ?? 0
-	return buffer && currentTime.value > buffer.duration || currentTime.value < 0
-})
-
 function initializeConstantSourceNode(context: AudioContext) {
 	constantSourceNode.value = context.createConstantSource()
 	constantSourceNode.value.offset.value = 0
@@ -108,36 +103,17 @@ function startPlaying() {
 
 
 function stopPlaying() {
-
 	if (rAF !== null) {
 		cancelAnimationFrame(rAF)
 		rAF = null
 	}
-
-	const context = unref(audioContext)
-	if (!context) return
-
-	console.log('playing', playing.value)
-	console.log('playingOutOfBounds', playingOutOfBounds.value)
-
-	if (playing.value && !playingOutOfBounds.value) {
-		try {
-			sourceNode.value?.stop()
-			console.log('Stopped sourceNode')
-		} catch (e) {
-			console.warn('Failed to stop default source node')
-			console.error(e)
-		}
-	} else if (playingOutOfBounds.value) {
-		try {
-			constantSourceNode.value?.stop()
-			console.log('Stopped constantSourceNode')
-		} catch (e) {
-			console.warn('Failed to stop constant source node')
-			console.error(e)
-		}
+	try {
+		sourceNode.value?.stop()
+		constantSourceNode.value?.stop()
+	} catch {
 	}
-
+	sourceNode.value = null
+	constantSourceNode.value = null
 	playing.value = false
 }
 
@@ -161,11 +137,10 @@ async function play() {
 	if (offsetStart < 0) {
 		initializeConstantSourceNode(context)
 		startPlayingScheduled(buffer)
-	} else if (offsetStart >= buffer!.duration) {
-		initializeConstantSourceNode(context)
-		startPlaying()
 	} else {
-		source.start(0, offsetStart, buffer.duration - offsetStart)
+		if (offsetStart < buffer.duration) {
+			source.start(0, offsetStart, buffer.duration - offsetStart)
+		}
 		startPlaying()
 	}
 
@@ -207,8 +182,7 @@ watch(interacting, async (interacting) => {
 		<div class="border flex-col flex w-full">
 			<TrackOverview class="p-2">
 				<div class="mb-2">
-					<strong>currentTime</strong>
-					<p class="tabular-nums truncate">{{ currentTime }}</p>
+
 				</div>
 				<DeckPlayPause :disabled="!loaded" :playing="playing" class="rounded" @playPause="onPlayPause" />
 			</TrackOverview>
