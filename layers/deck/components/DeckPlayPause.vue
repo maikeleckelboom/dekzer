@@ -13,7 +13,3 @@ const emit = defineEmits<{
 		{{ playing ? 'Pause' : 'Play' }}
 	</DeckButton>
 </template>
-
-<style scoped>
-
-</style>

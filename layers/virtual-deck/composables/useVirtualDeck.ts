@@ -4,7 +4,8 @@ import type { MaybeElementRef, MaybeRefOrGetter } from '@vueuse/core'
 export function useVirtualDeck(
 	deck: MaybeElementRef<HTMLElement>,
 	currentTime: Ref<number>,
-	playbackRate: MaybeRefOrGetter<number> = 1
+	playbackRate: MaybeRefOrGetter<number> = 1,
+	disabled: MaybeRefOrGetter<boolean> = false
 ) {
 	let elDeck: HTMLElement | null = null
 	let elStylus: HTMLElement | null = null
@@ -81,6 +82,10 @@ export function useVirtualDeck(
 		}
 
 		pdEvent.preventDefault()
+
+		if(toValue(disabled)) {
+			return
+		}
 
 		startInteract(pdEvent)
 

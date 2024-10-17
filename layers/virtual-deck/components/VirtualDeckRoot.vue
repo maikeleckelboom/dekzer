@@ -7,6 +7,7 @@ export type VirtualDeckRootProps = Partial<{
 	bpm: number
 	pitch: number
 	pitchRange: 8 | 16 | 50
+	disabled: boolean
 }>
 
 export interface VirtualDeckRootEmits {
@@ -48,7 +49,7 @@ const duration = computedEager(() => props.duration)
 
 const virtualDeck = useTemplateRef<HTMLElement>('virtualDeck')
 
-const { interacting, angle } = useVirtualDeck(virtualDeck, currentTime)
+const { interacting, angle } = useVirtualDeck(virtualDeck, currentTime, 1, () => props.disabled)
 
 watch(interacting, (value) => {
 	emits('update:interacting', value)
@@ -85,8 +86,8 @@ provideVirtualDeckRootContext({
 				'grid place-items-center relative overflow-clip m-auto',
 				'bg-muted border border-background/80 rounded-full',
 				'size-36 md:size-48 aspect-square touch-none select-none',
-				'aria-disabled:pointer-events-none aria-disabled:opacity-50 aria-disabled:grayscale',
-				'disabled:pointer-events-none disabled:opacity-50 disabled:grayscale',
+				'aria-disabled:opacity-50 aria-disabled:grayscale',
+				'disabled:opacity-50 disabled:grayscale',
 				$attrs.class ?? '',
 			)
 		">

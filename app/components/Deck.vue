@@ -184,19 +184,18 @@ onBeforeUnmount(() => {
 	deckStore.eject(deck)
 })
 
-function eject(){
+function ejectTrack() {
 	stopPlaying()
 	stopAnalysers()
 	deckStore.eject(deck)
 	currentTime.value = 0
 	audioBuffer.value = null
 	playing.value = false
-
 }
 </script>
 
 <template>
-	<DeckRoot :disabled="!loaded" class="flex even:flex-row-reverse" @load="createAndLoadTrack" >
+	<DeckRoot :disabled="!loaded" class="flex even:flex-row-reverse" @load="createAndLoadTrack">
 		<div class="border flex-col flex w-full">
 			<TrackOverview v-model:current-time="currentTime"
 										 :disabled="!loaded"
@@ -210,7 +209,7 @@ function eject(){
 			/>
 			<DeckButton
 				:disabled="!loaded"
-				@click="eject">
+				@click="ejectTrack">
 				Eject
 			</DeckButton>
 		</div>
@@ -218,6 +217,7 @@ function eject(){
 			<VirtualDeck v-model:currentTime="currentTime"
 									 v-model:interacting="interacting"
 									 :bpm="track?.common?.bpm"
+									 :disabled="!track"
 									 :duration="track?.format.duration"
 			/>
 			<DeckGainFader :channels="[leftVolume, rightVolume]" />
