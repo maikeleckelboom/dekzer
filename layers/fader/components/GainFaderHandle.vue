@@ -17,7 +17,8 @@ const HANDLE_TOTAL_HEIGHT: number = 14 as const
 
 const top = computed(() => {
 	const percent = (modelValue.value - min) / (max - min)
-	const heightPercent = 100 * (HANDLE_TOTAL_HEIGHT / height.value)
+	const h = height.value || 214
+	const heightPercent = 100 * (HANDLE_TOTAL_HEIGHT / h)
 	const offsetY = 100 * percent + heightPercent / 2
 	return 100 - offsetY
 })

@@ -4,22 +4,6 @@ export async function loadAudioBuffer(context: AudioContext, url: string): Promi
 	return await context.decodeAudioData(arrayBuffer)
 }
 
-export function fadeIn(node: AudioBufferSourceNode, duration: number) {
-	const gainNode = audioContext.createGain()
-	gainNode.gain.setValueAtTime(0, audioContext.currentTime)
-	gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration)
-	node.connect(gainNode)
-	gainNode.connect(audioContext.destination)
-}
-
-export function fadeOut(node: AudioBufferSourceNode, duration: number) {
-	const gainNode = audioContext.createGain()
-	node.connect(gainNode)
-	gainNode.connect(audioContext.destination)
-	gainNode.gain.setValueAtTime(1, audioContext.currentTime)
-	gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration)
-}
-
 export function createConstantSourceNode(context: AudioContext, offsetValue: number = 0): ConstantSourceNode {
 	const constantSourceNode = context.createConstantSource()
 	constantSourceNode.offset.value = offsetValue
@@ -60,4 +44,20 @@ export function setupDestination(context: AudioContext, source: AudioBufferSourc
 
 export function canPlay(context: AudioContext | null, buffer: AudioBuffer | null, playing: boolean): boolean {
 	return !!(context && buffer && !playing)
+}
+
+export function fadeIn(node: AudioBufferSourceNode, duration: number) {
+	const gainNode = audioContext.createGain()
+	gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+	gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration)
+	node.connect(gainNode)
+	gainNode.connect(audioContext.destination)
+}
+
+export function fadeOut(node: AudioBufferSourceNode, duration: number) {
+	const gainNode = audioContext.createGain()
+	node.connect(gainNode)
+	gainNode.connect(audioContext.destination)
+	gainNode.gain.setValueAtTime(1, audioContext.currentTime)
+	gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration)
 }

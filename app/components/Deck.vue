@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
-import { createAnalyserNodes, setupDestination } from '~/utils/audioUtils'
 
 interface DeckProps extends DeckRootProps {
 	deck: IDeck
@@ -18,11 +17,12 @@ const startTime = shallowRef<number>(0)
 const startOffset = shallowRef<number>(0)
 const currentTime = shallowRef<number>(0)
 const playing = shallowRef<boolean>(false)
-const loaded = shallowRef<boolean>(false)
 
 const audioBuffer = shallowRef<AudioBuffer | null>(null)
 const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
 const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
+
+const loaded = computed(() => !!track.value && !!audioBuffer.value)
 
 const { audioContext, getAudioContext } = useSharedAudioContext()
 
@@ -112,7 +112,6 @@ async function play() {
 	handlePlayback(context, buffer)
 }
 
-
 function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
 	const source = createBufferSourceNode(context, buffer)
 	sourceNode.value = source
@@ -178,37 +177,45 @@ watch(interacting, async (interacting) => {
 whenever(track, async ({ url }) => {
 	const context = await getAudioContext()
 	audioBuffer.value = await loadAudioBuffer(context, url)
-	loaded.value = true
 })
 
 onBeforeUnmount(() => {
 	if (playing.value) pause()
 	deckStore.eject(deck)
 })
+
+function eject(){
+	stopPlaying()
+	stopAnalysers()
+	deckStore.eject(deck)
+	currentTime.value = 0
+	audioBuffer.value = null
+	playing.value = false
+
+}
 </script>
 
 <template>
-	<DeckRoot :disabled="!loaded" class="flex even:flex-row-reverse" @load="createAndLoadTrack">
+	<DeckRoot :disabled="!loaded" class="flex even:flex-row-reverse" @load="createAndLoadTrack" >
 		<div class="border flex-col flex w-full">
-			<TrackOverview class="p-2">
-				<div class="mb-2">
-
-				</div>
-				<DeckPlayPause :disabled="!loaded" :playing="playing" class="rounded" @playPause="onPlayPause" />
-			</TrackOverview>
+			<TrackOverview v-model:current-time="currentTime"
+										 :disabled="!loaded"
+										 :playing="playing"
+										 :track="track"
+			/>
+			<DeckPlayPause :disabled="!loaded"
+										 :playing="playing"
+										 class="rounded"
+										 @playPause="onPlayPause"
+			/>
 		</div>
-		<div :class="{
-			'flex-row-reverse': deck.index % 2 === 0,
-		}" class="border flex flex-nowrap gap-4 w-fit p-2">
-			<VirtualDeck
-				v-model:currentTime="currentTime"
-				v-model:interacting="interacting"
-				:bpm="track?.common.bpm"
-				:duration="track?.format.duration"
+		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2', {'flex-row-reverse': deck.index % 2 === 0})">
+			<VirtualDeck v-model:currentTime="currentTime"
+									 v-model:interacting="interacting"
+									 :bpm="track?.common?.bpm"
+									 :duration="track?.format.duration"
 			/>
-			<DeckGainFader
-				:channels="[leftVolume, rightVolume]"
-			/>
+			<DeckGainFader :channels="[leftVolume, rightVolume]" />
 		</div>
 	</DeckRoot>
 </template>

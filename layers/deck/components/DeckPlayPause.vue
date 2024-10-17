@@ -9,11 +9,9 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<div>
-		<DeckButton @click="emit('playPause', !playing)">
-			{{ playing ? 'Pause' : 'Play' }}
-		</DeckButton>
-	</div>
+	<DeckButton @click="emit('playPause', !playing)">
+		{{ playing ? 'Pause' : 'Play' }}
+	</DeckButton>
 </template>
 
 <style scoped>

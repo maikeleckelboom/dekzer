@@ -15,7 +15,7 @@ const variant = computed<ButtonVariant>(() => (wide ? 'wide' : 'narrow'))
 		:aria-disabled="disabled"
 		:class="
 			cn(
-				'grid place-items-center',
+				'grid place-items-center w-fit rounded-sm',
 				'py-2.5 text-xs font-semibold tracking-wide',
 				'bg-secondary text-secondary-foreground border',
 				'hover:bg-secondary-foreground hover:text-secondary',
