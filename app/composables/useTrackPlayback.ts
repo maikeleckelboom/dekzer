@@ -1,4 +1,3 @@
-import { useAudioStore } from '#imports'
 import type { Track } from '~~/layers/track/types'
 
 export function useTrackPlayback(track: MaybeRefOrGetter<Track>) {
@@ -23,10 +22,10 @@ export function useTrackPlayback(track: MaybeRefOrGetter<Track>) {
 		return buffer
 	}
 
-	const { getAudioContext } = useAudioStore()
+	const { initializeAudioContext } = useSharedAudioContext()
 
 	whenever(track, async (track) => {
-		const audioContext = await getAudioContext()
+		const audioContext = await initializeAudioContext()
 		const buffer = await initializeAudioBuffer(audioContext, track.url)
 		sourceNode.value = audioContext.createBufferSource()
 		sourceNode.value.buffer = buffer

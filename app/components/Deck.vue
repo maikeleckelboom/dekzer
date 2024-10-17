@@ -54,8 +54,9 @@ function resetState() {
 	deckStore.eject(deck)
 }
 
-const { audioContext, audioContextInit } = useSharedAudioContext()
-onMounted(audioContextInit)
+const { audioContext, initialized, initializeAudioContext } = useSharedAudioContext()
+
+onMounted(initializeAudioContext)
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
 	const context = unref(audioContext)
@@ -115,11 +116,10 @@ async function play() {
 		return
 	}
 
-	const isOutOfRange = context.currentTime > buffer.duration || context.currentTime < 0
+	const isOutOfRange = startOffset.value >= buffer.duration
 
 	if (isOutOfRange) {
 		console.warn('Cannot play audio: startOffset is out of range.', {
-			currentTime: context.currentTime,
 			startOffset: startOffset.value,
 			duration: buffer.duration
 		})
@@ -161,6 +161,8 @@ const wasPlaying = shallowRef<boolean>(false)
 
 watch(interacting, (interacting) => {
 	startOffset.value = currentTime.value
+	if (!initialized.value) return
+
 	if (interacting) {
 		wasPlaying.value = playing.value
 		pause()
@@ -177,7 +179,7 @@ const pitch = ref<number>(0)
 <template>
 	<DeckRoot :active="!!track" class="flex even:flex-row-reverse" @trackLoaded="createAndLoadTrack">
 		<div class="border flex-col flex w-full">
-			<TrackOverview class="p-2" v-if="!!track">
+			<TrackOverview v-if="!!track" class="p-2">
 				<div class="mb-2">
 					<strong>currentTime</strong>
 					<p class="tabular-nums truncate">{{ currentTime }}</p>

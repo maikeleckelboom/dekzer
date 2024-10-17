@@ -1,5 +1,4 @@
 <script lang="ts">
-
 export interface DeckRootProps {
 	active?: boolean
 	browseTrigger?: 'click' | 'dblclick'

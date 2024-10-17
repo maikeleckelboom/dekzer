@@ -1,30 +1,34 @@
-export const useSharedAudioContext = createSharedComposable(() => {
+export const useSharedAudioContext = createSharedComposable((options: AudioContextOptions = {
+	latencyHint: 'interactive'
+}) => {
 	const audioContext = shallowRef<AudioContext | null>(null)
-	const audioContextInitialized = shallowRef(false)
 	const audioContextError = shallowRef<Error | null>(null)
+	const initialized = shallowRef<boolean>(false)
 
-	const audioContextInit = async () => {
-		if (audioContextInitialized.value) {
-			if (audioContext.value!.state === 'suspended') {
-				await audioContext.value!.resume()
-			}
-			return audioContext.value
+	async function initializeAudioContext() {
+		if (initialized.value) {
+			return await resumeAudioContext()
 		}
 		try {
-			audioContext.value = new AudioContext({ latencyHint: 'interactive' })
-			audioContextInitialized.value = true
+			audioContext.value = new AudioContext(options)
+			initialized.value = true
 			return audioContext.value
 		} catch (error) {
-			audioContextError.value = error
+			error.value = error
 		}
 	}
 
-	// onMounted(audioContextInit)
+	async function resumeAudioContext() {
+		if (audioContext.value && audioContext.value.state === 'suspended') {
+			await audioContext.value.resume()
+		}
+		return audioContext.value
+	}
 
 	return {
 		audioContext,
-		audioContextInitialized,
 		audioContextError,
-		audioContextInit
+		initialized,
+		initializeAudioContext
 	}
 })
