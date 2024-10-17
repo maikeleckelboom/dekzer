@@ -42,25 +42,25 @@ const sourceNode = ref<AudioBufferSourceNode>()
 const constantSourceNode = ref<ConstantSourceNode>()
 
 function startConstantSourceNode(context: AudioContext) {
-	// Create and start the constant source node for tracking time
 	const constantSrc = context.createConstantSource()
 	constantSrc.offset.value = 0
 	constantSrc.start(context.currentTime)
 	constantSourceNode.value = constantSrc
 }
 
-function getTimeUntilTrackStarts(playbackStartTime: number) {
-	const context = unref(audioContext)
-	if (!context) return
-	return playbackStartTime - context.currentTime
+function getTimeUntilTrackStarts(context: AudioContext, startPlaybackTime: number) {
+	return startPlaybackTime - context.currentTime
 }
 
-function renderScheduledTime(start: number) {
-	const timeLeft = getTimeUntilTrackStarts(start)
+function updateCurrentTimeUntilStart(startPlaybackTime: number) {
+	const context = unref(audioContext)
+	if (!context) return
 
-	if (timeLeft > 0) {
-		currentTime.value = startOffset.value = (timeLeft * -1)
-		rAF = requestAnimationFrame(() => renderScheduledTime(start))
+	const timeUntilStart = getTimeUntilTrackStarts(context, startPlaybackTime)
+
+	if (timeUntilStart > 0) {
+		currentTime.value = startOffset.value = (timeUntilStart * -1)
+		rAF = requestAnimationFrame(() => updateCurrentTimeUntilStart(startPlaybackTime))
 		return
 	}
 
@@ -69,10 +69,7 @@ function renderScheduledTime(start: number) {
 		rAF = null
 	}
 
-	const context = unref(audioContext)
-	if (!context) return
-
-
+	// Ready to start playback
 	startTime.value = context.currentTime
 	startPlaying()
 }
@@ -84,10 +81,13 @@ function scheduleTrackPlayback() {
 	const source = unref(sourceNode)
 	if (!context || !source) return
 	const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
+	// Start normal playback at the scheduled time
 	source.start(playbackStartTime)
+	// Start the constant source node to track time
 	startConstantSourceNode(context)
+	// Render the current time until the track starts
+	updateCurrentTimeUntilStart(playbackStartTime)
 	playing.value = true
-	renderScheduledTime(playbackStartTime)
 }
 
 whenever(logicAnd(track, () => track.value?.url), async () => {
@@ -121,10 +121,22 @@ function startPlaying() {
 	rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
-function stopPlaying(source: AudioBufferSourceNode) {
+function stopPlaying() {
 	playing.value = false
-	if (rAF !== null) cancelAnimationFrame(rAF)
-	source.stop()
+
+	if (rAF !== null) {
+		cancelAnimationFrame(rAF)
+	}
+
+	if (sourceNode.value) {
+		sourceNode.value.stop()
+		sourceNode.value = null
+	}
+
+	if (constantSourceNode.value) {
+		constantSourceNode.value.stop()
+		constantSourceNode.value = null
+	}
 }
 
 
