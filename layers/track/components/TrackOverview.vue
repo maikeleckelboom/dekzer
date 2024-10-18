@@ -2,15 +2,19 @@
 import type { Track } from '~~/layers/track/types'
 
 interface TrackOverviewRootProps {
-	track: Track
+	track: Track | null
 	currentTime: number
 	playing: boolean
 	disabled: boolean
 }
 
-const { track, currentTime, playing, disabled } = defineProps<Partial<TrackOverviewRootProps>>()
+const {
+	track = null,
+	playing = false,
+	disabled = false
+} = defineProps<Partial<TrackOverviewRootProps>>()
 
-// const { play, pause, seek } = useTrackActions()
+const currentTime = defineModel<number>('currentTime', { type: Number, default: 0 })
 </script>
 
 <template>

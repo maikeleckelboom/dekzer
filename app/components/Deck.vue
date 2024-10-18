@@ -197,32 +197,16 @@ function ejectTrack() {
 <template>
 	<DeckRoot :disabled="!loaded" class="flex md:even:flex-row-reverse bg-muted/30" @load="createAndLoadTrack">
 		<div class="border flex-col flex w-full">
-			<TrackOverview v-model:current-time="currentTime"
-										 :disabled="!loaded"
-										 :playing="playing"
-										 :track="track"
-			/>
-		<div class="flex  flex-wrap gap-2 p-2 md:p-4"
-				 :class="cn('border-t justify-end', {'md:flex-row-reverse': deck.index % 2 === 0})">
-			<DeckPlayPause :disabled="!loaded"
-										 :playing="playing"
-										 class="rounded"
-										 @playPause="onPlayPause"
-			/>
-			<DeckButton
-				:disabled="!loaded"
-				@click="ejectTrack">
-				Eject
-			</DeckButton>
+			<TrackOverview v-model:current-time="currentTime" :disabled="!loaded" :playing="playing" :track="track" />
+			<div
+				:class="cn('flex flex-wrap gap-2 p-2 md:p-4 border-t justify-end', deck.index % 2 === 0 && 'md:flex-row-reverse')">
+				<DeckButton :disabled="!loaded" @click="ejectTrack">Eject</DeckButton>
+				<DeckPlayPause :disabled="!loaded" :playing="playing" @playPause="onPlayPause" />
+			</div>
 		</div>
-		</div>
-		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2 md:p-4', {'md:flex-row-reverse': deck.index % 2 === 0})">
-			<VirtualDeck v-model:currentTime="currentTime"
-									 v-model:interacting="interacting"
-									 :bpm="track?.common?.bpm"
-									 :disabled="!track"
-									 :duration="track?.format.duration"
-			/>
+		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2 md:p-4', deck.index % 2 === 0 && 'md:flex-row-reverse')">
+			<VirtualDeck v-model:currentTime="currentTime" v-model:interacting="interacting" :bpm="track?.common?.bpm"
+									 :disabled="!track" :duration="track?.format.duration" />
 			<DeckGainFader :channels="[leftVolume, rightVolume]" />
 		</div>
 	</DeckRoot>

@@ -13,6 +13,7 @@ const uid = useId()
 const gainValue = useState<number>(`deck-gain-fader-${uid}`, () => TRACK_GAIN_DEFAULT)
 
 const gainNode = shallowRef<GainNode | null>(null)
+
 </script>
 
 <template>
