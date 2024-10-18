@@ -3,7 +3,7 @@ import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
 
 interface DeckProps extends DeckRootProps {
-	deck: IDeck
+  deck: IDeck
 }
 
 const { deck } = defineProps<DeckProps>()
@@ -29,185 +29,221 @@ const { audioContext, getAudioContext } = useSharedAudioContext()
 let rAF: number | null = null
 
 function playScheduledTime(context: AudioContext, playbackStart: number) {
-	const timeUntilStart = playbackStart - context.currentTime
-	if (timeUntilStart > 0) {
-		currentTime.value = startOffset.value = (timeUntilStart * -1)
-		startTime.value = context.currentTime
-		rAF = requestAnimationFrame(() => playScheduledTime(context, playbackStart))
-	} else {
-		startTime.value = context.currentTime
-		startPlaying()
-	}
+  const timeUntilStart = playbackStart - context.currentTime
+  if (timeUntilStart > 0) {
+    currentTime.value = startOffset.value = timeUntilStart * -1
+    startTime.value = context.currentTime
+    rAF = requestAnimationFrame(() => playScheduledTime(context, playbackStart))
+  } else {
+    startTime.value = context.currentTime
+    startPlaying()
+  }
 }
 
 function schedulePlayback() {
-	const context = unref(audioContext)
-	const source = unref(sourceNode)
-	if (!context || !source) return
-	const playbackStart = context.currentTime + Math.abs(startOffset.value)
-	source.start(playbackStart)
-	playScheduledTime(context, playbackStart)
-	playing.value = true
+  const context = unref(audioContext)
+  const source = unref(sourceNode)
+  if (!context || !source) return
+  const playbackStart = context.currentTime + Math.abs(startOffset.value)
+  source.start(playbackStart)
+  playScheduledTime(context, playbackStart)
+  playing.value = true
 }
 
 function updateCurrentTime() {
-	const context = unref(audioContext)
-	const source = unref(sourceNode)
-	if (!source || !context) return
-	currentTime.value = context.currentTime - startTime.value + startOffset.value
+  const context = unref(audioContext)
+  const source = unref(sourceNode)
+  if (!source || !context) return
+  currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
 function renderAnimationFrame() {
-	updateCurrentTime()
-	rAF = requestAnimationFrame(renderAnimationFrame)
+  updateCurrentTime()
+  rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
 function startPlaying() {
-	playing.value = true
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-		rAF = null
-	}
-	rAF = requestAnimationFrame(renderAnimationFrame)
+  playing.value = true
+  if (rAF !== null) {
+    cancelAnimationFrame(rAF)
+    rAF = null
+  }
+  rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
 function stopPlaying() {
-	playing.value = false
-	if (rAF !== null) {
-		cancelAnimationFrame(rAF)
-		rAF = null
-	}
-	try {
-		sourceNode.value?.stop()
-		sourceNode.value = null
-	} catch {
-	}
+  playing.value = false
+  if (rAF !== null) {
+    cancelAnimationFrame(rAF)
+    rAF = null
+  }
+  try {
+    sourceNode.value?.stop()
+    sourceNode.value = null
+  } catch {}
 }
 
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const { leftVolume, rightVolume, start: startAnalysers, stop: stopAnalysers } = useVolumeAnalyzer(
-	analyserNode,
-	analyserNodeR,
-	2048
-)
+const {
+  leftVolume,
+  rightVolume,
+  start: startAnalysers,
+  stop: stopAnalysers
+} = useVolumeAnalyzer(analyserNode, analyserNodeR, 2048)
 
-function setupAnalyserNodes(context: AudioContext, source: AudioBufferSourceNode): [AnalyserNode, AnalyserNode] {
-	const [analyser, analyserR] = createAnalyserNodes(context, source)
-	analyserNode.value = analyser
-	analyserNodeR.value = analyserR
-	return [analyser, analyserR]
+function setupAnalyserNodes(
+  context: AudioContext,
+  source: AudioBufferSourceNode
+): [AnalyserNode, AnalyserNode] {
+  const [analyser, analyserR] = createAnalyserNodes(context, source)
+  analyserNode.value = analyser
+  analyserNodeR.value = analyserR
+  return [analyser, analyserR]
 }
 
 async function play() {
-	const context = await getAudioContext()
-	const buffer = unref(audioBuffer)
-	if (!canPlay(context, buffer)) return
-	const source = setupSourceNode(context, buffer)
-	setupAnalyserNodes(context, source)
-	startAnalysers()
-	setupDestination(context, source)
-	startTime.value = context.currentTime
-	handlePlayback(context, buffer)
+  const context = await getAudioContext()
+  const buffer = unref(audioBuffer)
+  if (!canPlay(context, buffer)) return
+  const source = setupSourceNode(context, buffer)
+  setupAnalyserNodes(context, source)
+  startAnalysers()
+  setupDestination(context, source)
+  startTime.value = context.currentTime
+  handlePlayback(context, buffer)
 }
 
 function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-	const source = createBufferSourceNode(context, buffer)
-	sourceNode.value = source
-	return source
+  const source = createBufferSourceNode(context, buffer)
+  sourceNode.value = source
+  return source
 }
 
 function setupConstantSourceNode(context: AudioContext) {
-	const source = createConstantSourceNode(context)
-	constantSourceNode.value = source
-	return source
+  const source = createConstantSourceNode(context)
+  constantSourceNode.value = source
+  return source
 }
 
 function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
-	const offsetStart = unref(startOffset)
-	if (offsetStart < 0) {
-		setupConstantSourceNode(context)
-		schedulePlayback(buffer)
-	} else if (offsetStart >= buffer.duration) {
-		startPlaying()
-	} else {
-		sourceNode.value.start(0, offsetStart, buffer.duration - offsetStart)
-		startPlaying()
-	}
+  const offsetStart = unref(startOffset)
+  if (offsetStart < 0) {
+    setupConstantSourceNode(context)
+    schedulePlayback(buffer)
+  } else if (offsetStart >= buffer.duration) {
+    startPlaying()
+  } else {
+    sourceNode.value.start(0, offsetStart, buffer.duration - offsetStart)
+    startPlaying()
+  }
 }
 
 function pause() {
-	const context = unref(audioContext)
-	if (!context) return
-	startOffset.value += context.currentTime - startTime.value
-	stopPlaying()
-	stopAnalysers()
+  const context = unref(audioContext)
+  if (!context) return
+  startOffset.value += context.currentTime - startTime.value
+  stopPlaying()
+  stopAnalysers()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
 
 function onPlayPause(playing: boolean) {
-	wasPlaying.value = false
-	if (playing) play()
-	else pause()
+  wasPlaying.value = false
+  if (playing) play()
+  else pause()
 }
 
 async function createAndLoadTrack(file: File) {
-	const url = URL.createObjectURL(file)
-	const response = await fetch(url, { headers: { 'ResponseType': 'stream' } })
-	const metadata = await parseWebStream(response.body, { mimeType: file.type, size: file.size, url })
-	const track = trackStore.createTrack(url, metadata)
-	trackStore.addTrack(track)
-	deckStore.load(deck, track)
+  const url = URL.createObjectURL(file)
+  const response = await fetch(url, { headers: { ResponseType: 'stream' } })
+  const metadata = await parseWebStream(response.body, {
+    mimeType: file.type,
+    size: file.size,
+    url
+  })
+  const track = trackStore.createTrack(url, metadata)
+  trackStore.addTrack(track)
+  deckStore.load(deck, track)
 }
 
 const interacting = shallowRef<boolean>(false)
 
 watch(interacting, async (interacting) => {
-	startOffset.value = currentTime.value
-	if (interacting) {
-		wasPlaying.value = playing.value
-		pause()
-	} else if (wasPlaying.value) {
-		await play()
-	}
+  startOffset.value = currentTime.value
+  if (interacting) {
+    wasPlaying.value = playing.value
+    pause()
+  } else if (wasPlaying.value) {
+    await play()
+  }
 })
 
 whenever(track, async ({ url }) => {
-	const context = await getAudioContext()
-	audioBuffer.value = await loadAudioBuffer(context, url)
+  const context = await getAudioContext()
+  audioBuffer.value = await loadAudioBuffer(context, url)
 })
 
 onBeforeUnmount(() => {
-	if (playing.value) pause()
-	deckStore.eject(deck)
+  if (playing.value) pause()
+  deckStore.eject(deck)
 })
 
 function ejectTrack() {
-	stopPlaying()
-	stopAnalysers()
-	deckStore.eject(deck)
-	currentTime.value = 0
-	audioBuffer.value = null
-	playing.value = false
+  stopPlaying()
+  stopAnalysers()
+  deckStore.eject(deck)
+  currentTime.value = 0
+  audioBuffer.value = null
+  playing.value = false
 }
 </script>
 
 <template>
-	<DeckRoot :disabled="!loaded" class="flex md:even:flex-row-reverse bg-muted/30" @load="createAndLoadTrack">
-		<div class="border flex-col flex w-full">
-			<TrackOverview v-model:current-time="currentTime" :disabled="!loaded" :playing="playing" :track="track" />
-			<div
-				:class="cn('flex flex-wrap gap-2 p-2 md:p-4 border-t justify-end', deck.index % 2 === 0 && 'md:flex-row-reverse')">
-				<DeckButton :disabled="!loaded" @click="ejectTrack">Eject</DeckButton>
-				<DeckPlayPause :disabled="!loaded" :playing="playing" @playPause="onPlayPause" />
-			</div>
-		</div>
-		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2 md:p-4', deck.index % 2 === 0 && 'md:flex-row-reverse')">
-			<VirtualDeck v-model:currentTime="currentTime" v-model:interacting="interacting" :bpm="track?.common?.bpm"
-									 :disabled="!track" :duration="track?.format.duration" />
-			<DeckGainFader :channels="[leftVolume, rightVolume]" />
-		</div>
-	</DeckRoot>
+  <DeckRoot
+    :disabled="!loaded"
+    class="bg-muted/30 flex md:even:flex-row-reverse"
+    @load="createAndLoadTrack">
+    <div class="flex w-full flex-col border">
+      <TrackOverview
+        v-model:current-time="currentTime"
+        :disabled="!loaded"
+        :playing="playing"
+        :track="track" />
+      <div
+        :class="
+          cn(
+            'flex flex-wrap justify-end gap-2 border-t p-2 md:p-4',
+            deck.index % 2 === 0 && 'md:flex-row-reverse'
+          )
+        ">
+        <DeckButton
+          :disabled="!loaded"
+          @click="ejectTrack"
+          >Eject</DeckButton
+        >
+        <DeckPlayPause
+          :disabled="!loaded"
+          :playing="playing"
+          @playPause="onPlayPause" />
+      </div>
+    </div>
+    <div
+      :class="
+        cn(
+          'flex w-fit flex-nowrap gap-4 border p-2 md:p-4',
+          deck.index % 2 === 0 && 'md:flex-row-reverse'
+        )
+      ">
+      <VirtualDeck
+        v-model:currentTime="currentTime"
+        v-model:interacting="interacting"
+        :bpm="track?.common?.bpm"
+        :disabled="!track"
+        :duration="track?.format.duration" />
+      <DeckGainFader :channels="[leftVolume, rightVolume]" />
+    </div>
+  </DeckRoot>
 </template>

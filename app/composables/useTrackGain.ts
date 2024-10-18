@@ -1,3 +1,1 @@
-export function useTrackGain() {
-
-}
+export function useTrackGain() {}

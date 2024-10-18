@@ -17,15 +17,17 @@ const strokeWidth = 12
 </script>
 
 <template>
-	<svg :viewBox="viewBox" class="absolute size-full" data-name="progress-circle">
-		<circle
-			:cx="cx"
-			:cy="cy"
-			:r="r"
-			:stroke-dasharray="strokeDashArray"
-			:stroke-dashoffset="strokeDashoffset"
-			:stroke-width="strokeWidth"
-			class="fill-none transform -rotate-90 origin-center stroke-muted-foreground"
-		/>
-	</svg>
+  <svg
+    :viewBox="viewBox"
+    class="absolute size-full"
+    data-name="progress-circle">
+    <circle
+      :cx="cx"
+      :cy="cy"
+      :r="r"
+      :stroke-dasharray="strokeDashArray"
+      :stroke-dashoffset="strokeDashoffset"
+      :stroke-width="strokeWidth"
+      class="stroke-muted-foreground origin-center -rotate-90 transform fill-none" />
+  </svg>
 </template>

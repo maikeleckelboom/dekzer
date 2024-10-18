@@ -1,85 +1,101 @@
 <script lang="ts" setup>
 import {
-	injectVirtualDeckRootContext,
-	type VirtualDeckRootContext
+  injectVirtualDeckRootContext,
+  type VirtualDeckRootContext
 } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const { currentTime, duration, pitch, pitchRange, bpm } = injectVirtualDeckRootContext() as VirtualDeckRootContext
+const { currentTime, duration, pitch, pitchRange, bpm } =
+  injectVirtualDeckRootContext() as VirtualDeckRootContext
 
 const elapsedTimeDisplay = computed(() => {
-	if (typeof currentTime.value === 'undefined') return ''
-	// const time = currentTime.value < 0 ? formatSeconds(currentTime.value * -1) : formatSeconds(currentTime.value)
-	return formatSeconds(currentTime.value)
+  if (typeof currentTime.value === 'undefined') return ''
+  // const time = currentTime.value < 0 ? formatSeconds(currentTime.value * -1) : formatSeconds(currentTime.value)
+  return formatSeconds(currentTime.value)
 })
 
-const remainingTimeDisplay = computed(() => duration.value ? formatSeconds(duration.value - currentTime.value) : '')
+const remainingTimeDisplay = computed(() =>
+  duration.value ? formatSeconds(duration.value - currentTime.value) : ''
+)
 
 const bpmDisplay = computed(() => {
-	const tempo = unref(bpm)
-	if (typeof tempo === 'undefined') return ''
-	const isRound = tempo % 1 === 0
-	return isRound ? tempo.toString() : tempo.toFixed(2)
+  const tempo = unref(bpm)
+  if (typeof tempo === 'undefined') return ''
+  const isRound = tempo % 1 === 0
+  return isRound ? tempo.toString() : tempo.toFixed(2)
 })
 
-const getSign = (value: number): string => value >= 0 ? '+' : ''
+const getSign = (value: number): string => (value >= 0 ? '+' : '')
 const pitchDisplay = computed(() => {
-	if (typeof pitch.value === 'undefined') return ''
-	return `${getSign(pitch.value)}${pitch.value}%`
+  if (typeof pitch.value === 'undefined') return ''
+  return `${getSign(pitch.value)}${pitch.value}%`
 })
 
 const pitchRangeDisplay = computed(() => {
-	if (typeof pitchRange.value === 'undefined') return ''
-	return `±${pitchRange.value}`
+  if (typeof pitchRange.value === 'undefined') return ''
+  return `±${pitchRange.value}`
 })
 
 const isReady = computed(() => typeof currentTime.value !== 'undefined' && toValue(duration))
 </script>
 
 <template>
-	<div :class="isReady ? 'opacity-100' : 'opacity-0'"
-			 class="absolute inset-0 items-center grid grid-rows-[1fr,auto,1fr] grid-cols-2 mt-4 mb-6 md:my-6">
-		<div class="flex flex-col items-center col-span-2">
-			<template v-if="bpmDisplay">
-				<strong
-					class="capitalize text-xl md:text-3xl font-black whitespace-pre-wrap text-center text-background select-none">
-					{{ bpmDisplay }}
-				</strong>
-				<p class="text-xs text-center text-background">BPM</p>
-			</template>
-		</div>
-		<div class="mb-4">
-			<template v-if="pitchDisplay">
-				<p
-					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
-					{{ pitchDisplay }}
-				</p>
-			</template>
-		</div>
-		<div class="mb-4">
-			<template v-if="pitchRange">
-				<p
-					:class="cn('capitalize text-xs md:text-base tracking-widest font-semibold tabular-nums text-center text-background leading-none select-none')">
-					{{ pitchRangeDisplay }}
-				</p>
-			</template>
-		</div>
-		<template v-if="typeof currentTime !== 'undefined' && typeof duration !== 'undefined'">
-			<div class="flex flex-col items-center col-span-2 ">
-				<strong
-					:class="
-					cn('capitalize text-sm md:text-lg md:leading-none font-semibold tabular-nums text-center text-background leading-none select-none')
-				">
-					{{ elapsedTimeDisplay }}
-				</strong>
-				<strong
-					:class="
-					cn('capitalize text-sm md:text-lg md:leading-none font-semibold tabular-nums text-center text-background leading-none select-none')
-				">
-					<slot name="remainingTime">
-						{{ remainingTimeDisplay }}
-					</slot>
-				</strong>
-			</div>
-		</template>
-	</div>
+  <div
+    :class="isReady ? 'opacity-100' : 'opacity-0'"
+    class="absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <template v-if="bpmDisplay">
+        <strong
+          class="text-background select-none whitespace-pre-wrap text-center text-xl font-black capitalize md:text-3xl">
+          {{ bpmDisplay }}
+        </strong>
+        <p class="text-background text-center text-xs">BPM</p>
+      </template>
+    </div>
+    <div class="mb-4">
+      <template v-if="pitchDisplay">
+        <p
+          :class="
+            cn(
+              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base'
+            )
+          ">
+          {{ pitchDisplay }}
+        </p>
+      </template>
+    </div>
+    <div class="mb-4">
+      <template v-if="pitchRange">
+        <p
+          :class="
+            cn(
+              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base'
+            )
+          ">
+          {{ pitchRangeDisplay }}
+        </p>
+      </template>
+    </div>
+    <template v-if="typeof currentTime !== 'undefined' && typeof duration !== 'undefined'">
+      <div class="col-span-2 flex flex-col items-center">
+        <strong
+          :class="
+            cn(
+              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-none'
+            )
+          ">
+          {{ elapsedTimeDisplay }}
+        </strong>
+        <strong
+          :class="
+            cn(
+              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-none'
+            )
+          ">
+          <slot name="remainingTime">
+            {{ remainingTimeDisplay }}
+          </slot>
+        </strong>
+      </div>
+    </template>
+  </div>
 </template>

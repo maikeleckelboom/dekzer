@@ -4,13 +4,13 @@ import { useDeckStore } from '~~/layers/deck/stores/deck'
 import { useTrackStore } from '~~/layers/track/stores/track'
 
 useHead({
-	title: 'Decks',
-	meta: [
-		{
-			name: 'description',
-			content: 'A new way to experience music.'
-		}
-	]
+  title: 'Decks',
+  meta: [
+    {
+      name: 'description',
+      content: 'A new way to experience music.'
+    }
+  ]
 })
 
 const deckStore = useDeckStore()
@@ -21,7 +21,10 @@ const { tracks } = storeToRefs(trackStore)
 </script>
 
 <template>
-	<div class="grid md:grid-cols-2 md:divide-x">
-		<Deck :deck="deck" v-for="deck in decks" :key="deck.id" />
-	</div>
+  <div class="grid md:grid-cols-2 md:divide-x">
+    <Deck
+      :deck="deck"
+      v-for="deck in decks"
+      :key="deck.id" />
+  </div>
 </template>

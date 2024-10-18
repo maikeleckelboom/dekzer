@@ -2,18 +2,18 @@
 import type { NuxtError } from '#app'
 
 const props = defineProps<{
-	error?: NuxtError<TError>
+  error?: NuxtError<TError>
 }>()
 
 const emit = defineEmits<{
-	refresh: []
+  refresh: []
 }>()
 
 const formattedError = computed(() => useApiError(props.error))
 </script>
 
 <template>
-	<div>
-		<pre>{{ formattedError }}</pre>
-	</div>
+  <div>
+    <pre>{{ formattedError }}</pre>
+  </div>
 </template>

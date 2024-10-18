@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "prettier": "prettier --write --ignore-path .gitignore \"**/*.{js,ts,vue,json,css,scss,less,html}\"",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"

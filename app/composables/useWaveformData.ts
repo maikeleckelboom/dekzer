@@ -1,3 +1,1 @@
-export function useWaveformData() {
-
-}
+export function useWaveformData() {}

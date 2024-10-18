@@ -1,11 +1,11 @@
 <script lang="ts">
 export interface DeckRootProps {
-	disabled?: boolean
-	triggerEvent?: 'click' | 'dblclick'
+  disabled?: boolean
+  triggerEvent?: 'click' | 'dblclick'
 }
 
 export interface DeckRootEmits {
-	load: [file: File],
+  load: [file: File]
 }
 </script>
 
@@ -13,27 +13,35 @@ export interface DeckRootEmits {
 import type { DeckDropzone } from '#components'
 
 const props = withDefaults(defineProps<DeckRootProps>(), {
-	disabled: false,
-	triggerEvent: 'dblclick'
+  disabled: false,
+  triggerEvent: 'dblclick'
 })
 
 const emit = defineEmits<DeckRootEmits>()
 
 const deckDropzone = useTemplateRef<InstanceType<DeckDropzone>>('deckDropzone')
 
-useEventListener(deckDropzone, props.triggerEvent, (event: Event) => {
-	event.preventDefault()
-	if (!props.disabled) return
-	deckDropzone.value!.openFilePicker()
-}, { passive: false, capture: true })
+useEventListener(
+  deckDropzone,
+  props.triggerEvent,
+  (event: Event) => {
+    event.preventDefault()
+    if (!props.disabled) return
+    deckDropzone.value!.openFilePicker()
+  },
+  { passive: false, capture: true }
+)
 
 function onChange([file]: File[]) {
-	emit('load', file)
+  emit('load', file)
 }
 </script>
 
 <template>
-	<DeckDropzone ref="deckDropzone" class="size-full" @change="onChange">
-		<slot />
-	</DeckDropzone>
+  <DeckDropzone
+    ref="deckDropzone"
+    class="size-full"
+    @change="onChange">
+    <slot />
+  </DeckDropzone>
 </template>
