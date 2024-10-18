@@ -12,6 +12,9 @@ module.exports = {
     '../app/layouts/**/*.{vue,js,ts,jsx,tsx}',
     '../app/pages/**/*.{vue,js,ts,jsx,tsx}'
   ],
+  plugins: [
+    animate
+  ],
   theme: {
     container: {
       center: true,
@@ -27,6 +30,7 @@ module.exports = {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        surface: 'hsl(var(--surface))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))'
@@ -53,7 +57,26 @@ module.exports = {
         },
         card: {
           DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))'
+          foreground: 'hsl(var(--card-foreground))',
+          'background-dark-rgb': 'rgb(var(--background-dark-rgb))',
+          'on-background-dark-rgb': 'rgb(var(--on-background-dark-rgb))',
+          'surface-dark-rgb': 'rgb(var(--surface-dark-rgb))',
+          'surface-dim-dark-rgb': 'rgb(var(--surface-dim-dark-rgb))',
+          'surface-bright-dark-rgb': 'rgb(var(--surface-bright-dark-rgb))',
+          'surface-container-lowest-dark-rgb': 'rgb(var(--surface-container-lowest-dark-rgb))',
+          'surface-container-low-dark-rgb': 'rgb(var(--surface-container-low-dark-rgb))',
+          'surface-container-dark-rgb': 'rgb(var(--surface-container-dark-rgb))',
+          'surface-container-high-dark-rgb': 'rgb(var(--surface-container-high-dark-rgb))',
+          'surface-container-highest-dark-rgb': 'rgb(var(--surface-container-highest-dark-rgb))',
+          'on-background-light-rgb': 'rgb(var(--on-background-light-rgb))',
+          'surface-light-rgb': 'rgb(var(--surface-light-rgb))',
+          'surface-dim-light-rgb': 'rgb(var(--surface-dim-light-rgb))',
+          'surface-bright-light-rgb': 'rgb(var(--surface-bright-light-rgb))',
+          'surface-container-lowest-light-rgb': 'rgb(var(--surface-container-lowest-light-rgb))',
+          'surface-container-low-light-rgb': 'rgb(var(--surface-container-low-light-rgb))',
+          'surface-container-light-rgb': 'rgb(var(--surface-container-light-rgb))',
+          'surface-container-high-light-rgb': 'rgb(var(--surface-container-high-light-rgb))',
+          'surface-container-highest-light-rgb': 'rgb(var(--surface-container-highest-light-rgb))'
         }
       },
       borderRadius: {
@@ -88,5 +111,4 @@ module.exports = {
       }
     }
   },
-  plugins: [animate]
 }

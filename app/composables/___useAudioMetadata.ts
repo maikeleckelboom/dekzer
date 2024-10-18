@@ -1,6 +1,6 @@
 import { type IAudioMetadata, parseWebStream } from 'music-metadata'
 
-export function useAudioMetadata(
+export function ___useAudioMetadata(
   file: MaybeRefOrGetter<File | null>,
   options: {
     immediate?: boolean

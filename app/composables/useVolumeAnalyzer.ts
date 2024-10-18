@@ -11,7 +11,7 @@ export function useVolumeAnalyzer(
 
   let rAF: number | null = null
 
-  function start(algorithm: 'rms' | 'peak' = 'rms') {
+  function start(algorithm: 'rms' | 'peak' = 'peak') {
     toValue(analyzer).getFloatTimeDomainData(floatSampleBufferL)
     toValue(analyserR).getFloatTimeDomainData(floatSampleBufferR)
 

@@ -17,7 +17,6 @@ const startTime = shallowRef<number>(0)
 const startOffset = shallowRef<number>(0)
 const currentTime = shallowRef<number>(0)
 const playing = shallowRef<boolean>(false)
-
 const audioBuffer = shallowRef<AudioBuffer | null>(null)
 const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
 const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
@@ -182,6 +181,7 @@ watch(interacting, async (interacting) => {
 })
 
 whenever(track, async ({ url }) => {
+  resetDeck()
   const context = await getAudioContext()
   audioBuffer.value = await loadAudioBuffer(context, url)
 })
@@ -191,20 +191,53 @@ onBeforeUnmount(() => {
   deckStore.eject(deck)
 })
 
-function ejectTrack() {
+function resetDeck() {
   stopPlaying()
   stopAnalysers()
-  deckStore.eject(deck)
   currentTime.value = 0
   audioBuffer.value = null
   playing.value = false
+
+  if (rAF !== null) {
+    cancelAnimationFrame(rAF)
+    rAF = null
+  }
+
+  try {
+    if (sourceNode.value) {
+      sourceNode.value.stop()
+      sourceNode.value = null
+    }
+
+    if (constantSourceNode.value) {
+      constantSourceNode.value.stop()
+      constantSourceNode.value = null
+    }
+
+    if (analyserNode.value) {
+      analyserNode.value.disconnect()
+      analyserNode.value = null
+    }
+
+    if (analyserNodeR.value) {
+      analyserNodeR.value.disconnect()
+      analyserNodeR.value = null
+    }
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
+function ejectTrack() {
+  deckStore.eject(deck)
+  resetDeck()
 }
 </script>
 
 <template>
   <DeckRoot
     :disabled="!loaded"
-    class="bg-muted/30 flex md:even:flex-row-reverse"
+    class="flex bg-black md:even:flex-row-reverse"
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackOverview
@@ -221,9 +254,9 @@ function ejectTrack() {
         ">
         <DeckButton
           :disabled="!loaded"
-          @click="ejectTrack"
-          >Eject</DeckButton
-        >
+          @click="ejectTrack">
+          Eject
+        </DeckButton>
         <DeckPlayPause
           :disabled="!loaded"
           :playing="playing"
