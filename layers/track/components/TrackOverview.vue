@@ -14,7 +14,7 @@ const { track, currentTime, playing, disabled } = defineProps<Partial<TrackOverv
 </script>
 
 <template>
-	<div class="min-w-36 w-full grid flex-grow">
+	<div class="min-w-16 w-full grid flex-grow">
 		<slot>
 
 		</slot>

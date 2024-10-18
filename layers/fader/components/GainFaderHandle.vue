@@ -14,11 +14,11 @@ const modelValue = defineModel<number>('modelValue', {
 const CONTAINER_HEIGHT = 214 as const
 const HANDLE_HEIGHT = 14 as const
 
-function getTopPosition(value: number, min: number, max: number) {
+function getInitialTop(value: number, min: number, max: number) {
 	return (dBMax - value) / (max - min) * 100 - (HANDLE_HEIGHT / CONTAINER_HEIGHT * 100)
 }
 
-const top = ref<number>(getTopPosition(modelValue.value, dBMin, dBMax))
+const top = ref<number>(getInitialTop(modelValue.value, dBMin, dBMax))
 
 const offsetStart = ref<number>(0)
 const target = useTemplateRef<HTMLDivElement>('handle')
@@ -49,8 +49,8 @@ const { distanceY, isSwiping } = usePointerSwipe(target, {
 			touchAction: isSwiping ? 'none' : 'auto'
 		}"
 		class="w-full absolute cursor-grab active:cursor-grabbing top-0 left-0 select-none">
-		<div class="w-full h-[6px] bg-black/60" />
+		<div class="w-full h-[6px]" :class="isSwiping ? 'bg-background/80' : 'bg-background/50'" />
 		<div class="w-full h-[2px] bg-foreground" />
-		<div class="w-full h-[6px] bg-black/60" />
+		<div class="w-full h-[6px]" :class="isSwiping ? 'bg-background/80' : 'bg-background/50'" />
 	</div>
 </template>

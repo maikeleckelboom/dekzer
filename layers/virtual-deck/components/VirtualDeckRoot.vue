@@ -85,7 +85,7 @@ provideVirtualDeckRootContext({
 			cn(
 				'grid place-items-center relative overflow-clip m-auto',
 				'bg-muted border border-background/80 rounded-full',
-				'size-36 md:size-48 aspect-square touch-none select-none',
+				'size-40 md:size-48 aspect-square touch-none select-none',
 				'aria-disabled:opacity-50 aria-disabled:grayscale',
 				'disabled:opacity-50 disabled:grayscale',
 				$attrs.class ?? '',

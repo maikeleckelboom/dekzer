@@ -195,13 +195,15 @@ function ejectTrack() {
 </script>
 
 <template>
-	<DeckRoot :disabled="!loaded" class="flex md:even:flex-row-reverse" @load="createAndLoadTrack">
+	<DeckRoot :disabled="!loaded" class="flex md:even:flex-row-reverse bg-muted/30" @load="createAndLoadTrack">
 		<div class="border flex-col flex w-full">
 			<TrackOverview v-model:current-time="currentTime"
 										 :disabled="!loaded"
 										 :playing="playing"
 										 :track="track"
 			/>
+		<div class="flex  flex-wrap gap-2 p-2 md:p-4"
+				 :class="cn('border-t justify-end', {'md:flex-row-reverse': deck.index % 2 === 0})">
 			<DeckPlayPause :disabled="!loaded"
 										 :playing="playing"
 										 class="rounded"
@@ -213,7 +215,8 @@ function ejectTrack() {
 				Eject
 			</DeckButton>
 		</div>
-		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-3', {'md:flex-row-reverse': deck.index % 2 === 0})">
+		</div>
+		<div :class="cn('border flex flex-nowrap gap-4 w-fit p-2 md:p-4', {'md:flex-row-reverse': deck.index % 2 === 0})">
 			<VirtualDeck v-model:currentTime="currentTime"
 									 v-model:interacting="interacting"
 									 :bpm="track?.common?.bpm"
