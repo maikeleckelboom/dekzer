@@ -42,7 +42,7 @@ const slotText = computed(
 
 function highlightParentheses(match: string | undefined) {
   if (!match) return ''
-  return `<span class="text-muted-foreground font-light text-base">${match}</span>`
+  return `<span class="text-muted-foreground font-light">${match}</span>`
 }
 
 const slots = defineSlots<{
@@ -51,12 +51,12 @@ const slots = defineSlots<{
 </script>
 
 <template>
-  <div class="row-start-1 flex items-end">
+  <div class="row-start-1 flex items-end mr-2">
     <Primitive
       :as="as"
       :as-child="asChild"
       :class="
-        cn('text-foreground truncate text-start text-lg font-semibold leading-4', $attrs.class)
+        cn('text-foreground text- text-start text-lg font-semibold leading-tight max-w-96 truncate', $attrs.class)
       "
       v-html="slotText" />
     <VisuallyHidden>

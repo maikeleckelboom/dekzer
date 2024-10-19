@@ -244,7 +244,7 @@ function ejectTrack() {
     <div
       :class="
         cn(
-          'flex w-fit flex-nowrap gap-4 border p-2 md:p-4',
+          'flex w-fit flex-nowrap gap-4 border p-2 md:p-2',
           deck.index % 2 === 0 && 'md:flex-row-reverse'
         )
       ">

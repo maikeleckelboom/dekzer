@@ -26,7 +26,7 @@ provideTrackTitleBarContext({
 </script>
 
 <template>
-  <div class="grid grid-cols-[auto,auto,1fr] grid-rows-2 gap-x-2">
+  <div class="grid grid-cols-[auto,auto,1fr] grid-rows-2 gap-x-2 py-2">
     <slot />
   </div>
 </template>
