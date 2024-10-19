@@ -224,7 +224,7 @@ function ejectTrack() {
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackTitleBar :track="track" />
-      <WaveformOverviewStatic :track="track" />
+      <WaveformOverviewStatic :track="track" v-model:current-time="currentTime"/>
       <div
         :class="
           cn(
