@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import Deck from '~/components/Deck.vue'
+import Deck from '~~/layers/deck/components/Deck.vue'
 import { useDeckStore } from '~~/layers/deck/stores/deck'
 import { useTrackStore } from '~~/layers/track/stores/track'
 
@@ -22,9 +22,6 @@ const { tracks } = storeToRefs(trackStore)
 
 <template>
   <div class="grid xl:grid-cols-2 md:divide-x">
-    <Deck
-      :deck="deck"
-      v-for="deck in decks"
-      :key="deck.id" />
+    <Deck :deck="deck" v-for="deck in decks" :key="deck.id" />
   </div>
 </template>

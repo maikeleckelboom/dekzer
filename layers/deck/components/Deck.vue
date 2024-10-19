@@ -222,14 +222,11 @@ function ejectTrack() {
     class="flex bg-black"
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
-      <TrackOverview
-        v-model:current-time="currentTime"
-        :playing="playing"
-        :track="track" />
+      <TrackTitleBar :track="track" />
       <div
         :class="
           cn(
-            'flex flex-wrap justify-end gap-2 border-t p-2 md:p-4',
+            'flex flex-wrap justify-end gap-2 border-t p-2',
             deck.index % 2 === 0 && 'md:flex-row-reverse'
           )
         ">
@@ -254,7 +251,7 @@ function ejectTrack() {
       <VirtualDeck
         v-model:currentTime="currentTime"
         v-model:interacting="interacting"
-        :bpm="track?.common?.bpm"
+        :bpm="track?.common.bpm"
         :disabled="!track"
         :duration="track?.format.duration" />
       <DeckGainFader :channels="[leftVolume, rightVolume]" />

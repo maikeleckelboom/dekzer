@@ -10,11 +10,17 @@ export interface IDeck {
 export const useDeckStore = defineStore('deck.store', () => {
   const decks = useState<IDeck[]>('decks', () => [
     {
-      id: 'Deck 1',
-      name: 'Deck 1',
+      id: 1,
       vd: 1,
+      name: 'Deck 1',
       track: null
     },
+    {
+      vd: 2,
+      id: 2,
+      name: 'Deck 2',
+      track: null
+    }
   ])
 
   const tracks = computed(() =>
@@ -40,9 +46,9 @@ export const useDeckStore = defineStore('deck.store', () => {
 
   return {
     decks,
+    tracks,
+    computedTrack: (deck: IDeck) => computed(() => getTrackByById(deck.track?.id)),
     load,
-    eject,
-    loadedTracks: tracks,
-    computedTrack: (deck: IDeck) => computed(() => getTrackByById(deck.track?.id))
+    eject
   }
 })
