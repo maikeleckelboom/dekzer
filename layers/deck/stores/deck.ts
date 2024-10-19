@@ -1,6 +1,6 @@
 import type { Track } from '~~/layers/track/types'
 
-export interface IDeck {
+export interface Deck {
   id: string
   name: string
   vd: number
@@ -8,7 +8,7 @@ export interface IDeck {
 }
 
 export const useDeckStore = defineStore('deck.store', () => {
-  const decks = useState<IDeck[]>('decks', () => [
+  const decks = useState<Deck[]>('decks', () => [
     {
       id: 1,
       vd: 1,
@@ -32,13 +32,13 @@ export const useDeckStore = defineStore('deck.store', () => {
     return tracks.value.find((track) => track?.id === id)
   }
 
-  function load(deck: IDeck, track: Track): void {
+  function load(deck: Deck, track: Track): void {
     const index = decks.value.findIndex((d) => d.id === deck.id)
     if (index === -1) return
     decks.value[index].track = track
   }
 
-  function eject(deck: IDeck): void {
+  function eject(deck: Deck): void {
     const index = decks.value.findIndex((d) => d.id === deck.id)
     if (index === -1) return
     decks.value[index].track = null
@@ -47,7 +47,7 @@ export const useDeckStore = defineStore('deck.store', () => {
   return {
     decks,
     tracks,
-    computedTrack: (deck: IDeck) => computed(() => getTrackByById(deck.track?.id)),
+    computedTrack: (deck: Deck) => computed(() => getTrackByById(deck.track?.id)),
     load,
     eject
   }

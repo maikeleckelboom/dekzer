@@ -11,7 +11,7 @@ import type {
 } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 import { useForwardPropsEmits } from 'radix-vue'
 
-interface VirtualDeckProps extends Partial<VirtualDeckRootProps> {}
+interface VirtualDeckProps extends VirtualDeckRootProps {}
 
 const props = defineProps<VirtualDeckProps>()
 

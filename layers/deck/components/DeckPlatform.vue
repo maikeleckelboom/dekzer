@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
+import type { Deck } from '~~/layers/deck/stores/deck'
 
 interface DeckProps extends DeckRootProps {
-  deck: IDeck
+  deck: Deck
 }
 
 const { deck } = defineProps<DeckProps>()
@@ -223,11 +224,12 @@ function ejectTrack() {
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackTitleBar :track="track" />
+      <WaveformOverviewStatic :track="track" />
       <div
         :class="
           cn(
             'flex flex-wrap justify-end gap-2 border-t p-2',
-            deck.vd % 2 === 0 && 'md:flex-row-reverse'
+            deck.vd % 2 === 0 && 'flex-row-reverse'
           )
         ">
         <DeckButton
@@ -245,7 +247,7 @@ function ejectTrack() {
       :class="
         cn(
           'flex w-fit flex-nowrap gap-4 border p-2 md:p-2',
-          deck.vd % 2 === 0 && 'md:flex-row-reverse'
+          deck.vd % 2 === 0 && 'flex-row-reverse'
         )
       ">
       <VirtualDeck

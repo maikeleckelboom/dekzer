@@ -2,26 +2,28 @@
 import {
   injectTrackTitleBarContext,
   type TrackTitleBarContext
-} from '~~/layers/track/components/TrackTitleBarRoot.vue'
+} from '~~/layers/track/components/TrackTitleBar/TrackTitleBarRoot.vue'
 import { MusicalKeysMap } from '~~/layers/deck/utils/constants'
 
 const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
 const colorClass = computedEager(() => {
   if (!track.value?.common?.key) return
-  return MusicalKeysMap.get(track.value.common.key)?.class
+  const {
+    common: { key }
+  } = track.value
+  return MusicalKeysMap.has(key) ? MusicalKeysMap.get(key) : ''
 })
 </script>
 
 <template>
-  <div class="col-start-3 row-span-full ml-auto flex flex-col mr-2">
+  <div class="col-start-3 row-span-full ml-auto mr-2 flex flex-col">
     <div
       v-if="track?.common"
       class="flex flex-row items-center gap-x-2">
       <span
-        class="font-bold mix-blend-lighten"
         :class="colorClass"
-      >
+        class="font-bold mix-blend-lighten">
         {{ track.common.key }}
       </span>
       <span class="text-foreground w-full text-end text-xl tabular-nums">

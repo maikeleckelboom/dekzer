@@ -2,7 +2,7 @@
 import {
   injectTrackTitleBarContext,
   type TrackTitleBarContext
-} from '~~/layers/track/components/TrackTitleBarRoot.vue'
+} from '~~/layers/track/components/TrackTitleBar/TrackTitleBarRoot.vue'
 
 const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 

@@ -3,7 +3,7 @@ import { Primitive, type PrimitiveProps, VisuallyHidden } from 'radix-vue'
 import {
   injectTrackTitleBarContext,
   type TrackTitleBarContext
-} from '~~/layers/track/components/TrackTitleBarRoot.vue'
+} from '~~/layers/track/components/TrackTitleBar/TrackTitleBarRoot.vue'
 
 const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
@@ -56,7 +56,7 @@ const slots = defineSlots<{
       :as="as"
       :as-child="asChild"
       :class="
-        cn('text-foreground text- text-start text-lg font-semibold leading-tight max-w-96 truncate', $attrs.class)
+        cn('text-foreground text-start text-lg font-semibold leading-tight truncate', $attrs.class)
       "
       v-html="slotText" />
     <VisuallyHidden>
