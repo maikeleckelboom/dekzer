@@ -227,7 +227,7 @@ function ejectTrack() {
         :class="
           cn(
             'flex flex-wrap justify-end gap-2 border-t p-2',
-            deck.index % 2 === 0 && 'md:flex-row-reverse'
+            deck.vd % 2 === 0 && 'md:flex-row-reverse'
           )
         ">
         <DeckButton
@@ -245,7 +245,7 @@ function ejectTrack() {
       :class="
         cn(
           'flex w-fit flex-nowrap gap-4 border p-2 md:p-2',
-          deck.index % 2 === 0 && 'md:flex-row-reverse'
+          deck.vd % 2 === 0 && 'md:flex-row-reverse'
         )
       ">
       <VirtualDeck
