@@ -76,10 +76,9 @@ function stopPlaying() {
     cancelAnimationFrame(rAF)
     rAF = null
   }
-  try {
+  tryWithoutFail(() => {
     sourceNode.value?.stop()
-    sourceNode.value = null
-  } catch {}
+  })
 }
 
 const analyserNode = shallowRef<AnalyserNode | null>(null)
@@ -102,18 +101,6 @@ function setupAnalyserNodes(
   return [analyser, analyserR]
 }
 
-async function play() {
-  const context = await getAudioContext()
-  const buffer = unref(audioBuffer)
-  if (!canPlay(context, buffer)) return
-  const source = setupSourceNode(context, buffer)
-  setupAnalyserNodes(context, source)
-  startAnalysers()
-  setupDestination(context, source)
-  startTime.value = context.currentTime
-  handlePlayback(context, buffer)
-}
-
 function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
   const source = createBufferSourceNode(context, buffer)
   sourceNode.value = source
@@ -124,6 +111,18 @@ function setupConstantSourceNode(context: AudioContext) {
   const source = createConstantSourceNode(context)
   constantSourceNode.value = source
   return source
+}
+
+async function play() {
+  const context = await getAudioContext()
+  const buffer = unref(audioBuffer)
+  if (!canPlay(context, buffer)) return
+  const source = setupSourceNode(context, buffer)
+  setupAnalyserNodes(context, source)
+  startAnalysers()
+  setupDestination(context, source)
+  startTime.value = context.currentTime
+  handlePlayback(context, buffer)
 }
 
 function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
@@ -197,35 +196,17 @@ function resetDeck() {
   currentTime.value = 0
   audioBuffer.value = null
   playing.value = false
+  startTime.value = 0
+  startOffset.value = 0
 
   if (rAF !== null) {
     cancelAnimationFrame(rAF)
     rAF = null
   }
 
-  try {
-    if (sourceNode.value) {
-      sourceNode.value.stop()
-      sourceNode.value = null
-    }
-
-    if (constantSourceNode.value) {
-      constantSourceNode.value.stop()
-      constantSourceNode.value = null
-    }
-
-    if (analyserNode.value) {
-      analyserNode.value.disconnect()
-      analyserNode.value = null
-    }
-
-    if (analyserNodeR.value) {
-      analyserNodeR.value.disconnect()
-      analyserNodeR.value = null
-    }
-  } catch (e) {
-    console.warn(e)
-  }
+  tryWithoutFail(() => {
+    sourceNode.value?.stop()
+  })
 }
 
 function ejectTrack() {
@@ -236,13 +217,13 @@ function ejectTrack() {
 
 <template>
   <DeckRoot
+    :class="cn('even:flex-row-reverse')"
     :disabled="!loaded"
-    class="flex bg-black md:even:flex-row-reverse"
+    class="flex bg-black"
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackOverview
         v-model:current-time="currentTime"
-        :disabled="!loaded"
         :playing="playing"
         :track="track" />
       <div

@@ -1,4 +1,4 @@
-import { type InjectionKey, inject, provide } from 'vue'
+import { inject, type InjectionKey, provide } from 'vue'
 
 /**
  * @param providerComponentName - The name(s) of the component(s) providing the context.
@@ -32,13 +32,13 @@ export function createContext<ContextValue>(
 
     if (context === null) return context as any
 
-    throw new Error(
-      `Injection \`${injectionKey.toString()}\` not found. Component must be used within ${
-        Array.isArray(providerComponentName)
-          ? `one of the following components: ${providerComponentName.join(', ')}`
-          : `\`${providerComponentName}\``
-      }`
-    )
+    const message = `Injection \`${injectionKey.toString()}\` not found. Component must be used within ${
+      Array.isArray(providerComponentName)
+        ? `one of the following components: ${providerComponentName.join(', ')}`
+        : `\`${providerComponentName}\``
+    }`
+
+    console.warn(message)
   }
 
   const provideContext = (contextValue: ContextValue) => {

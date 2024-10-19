@@ -4,12 +4,11 @@ import {
   type VirtualDeckRootContext
 } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const { currentTime, duration, pitch, pitchRange, bpm } =
+const { currentTime, duration, pitchDelta, pitchRange, bpm } =
   injectVirtualDeckRootContext() as VirtualDeckRootContext
 
-const elapsedTimeDisplay = computed(() => {
+const currentTimeDisplay = computed(() => {
   if (typeof currentTime.value === 'undefined') return ''
-  // const time = currentTime.value < 0 ? formatSeconds(currentTime.value * -1) : formatSeconds(currentTime.value)
   return formatSeconds(currentTime.value)
 })
 
@@ -26,8 +25,8 @@ const bpmDisplay = computed(() => {
 
 const getSign = (value: number): string => (value >= 0 ? '+' : '')
 const pitchDisplay = computed(() => {
-  if (typeof pitch.value === 'undefined') return ''
-  return `${getSign(pitch.value)}${pitch.value}%`
+  if (typeof pitchDelta.value === 'undefined') return ''
+  return `${getSign(pitchDelta.value)}${pitchDelta.value}%`
 })
 
 const pitchRangeDisplay = computed(() => {
@@ -83,7 +82,7 @@ const isReady = computed(() => typeof currentTime.value !== 'undefined' && toVal
               'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-none'
             )
           ">
-          {{ elapsedTimeDisplay }}
+          {{ currentTimeDisplay }}
         </strong>
         <strong
           :class="

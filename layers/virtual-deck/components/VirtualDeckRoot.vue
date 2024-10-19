@@ -5,7 +5,7 @@ export type VirtualDeckRootProps = Partial<{
   currentTime: number
   duration: number
   bpm: number
-  pitch: number
+  pitchDelta: number
   pitchRange: 8 | 16 | 50
   disabled: boolean
 }>
@@ -19,7 +19,7 @@ export interface VirtualDeckRootEmits {
 export interface VirtualDeckRootContext {
   currentTime: Ref<number>
   duration: Readonly<Ref<number>>
-  pitch: ComputedRef<number>
+  pitchDelta: ComputedRef<number>
   pitchRange: ComputedRef<8 | 16 | 50>
   interacting: ComputedRef<boolean>
   progress: ComputedRef<number>
@@ -34,22 +34,26 @@ export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext] =
 <script lang="ts" setup>
 import { clamp } from '@vueuse/core'
 
-defineSlots<{ default: void }>()
-
 const props = defineProps<VirtualDeckRootProps>()
-
 const emits = defineEmits<VirtualDeckRootEmits>()
 
 const currentTime = useVModel(props, 'currentTime', emits)
 
-const pitch = computedEager(() => props.pitch)
-const pitchRange = computedEager(() => props.pitchRange)
-const bpm = computedEager(() => props.bpm)
-const duration = computedEager(() => props.duration)
+const pitchDelta = computedEager(() => props?.pitchDelta ?? 0)
+const pitchRange = computedEager(() => props?.pitchRange)
+const bpm = computedEager(() => props?.bpm)
+const duration = computedEager(() => props?.duration)
 
 const virtualDeck = useTemplateRef<HTMLElement>('virtualDeck')
 
-const { interacting, angle } = useVirtualDeck(virtualDeck, currentTime, 1, () => props.disabled)
+const playbackRate = computed(() => 1 + pitchDelta.value)
+
+const { interacting, angle } = useVirtualDeck(
+  virtualDeck,
+  currentTime,
+  playbackRate,
+  () => props.disabled
+)
 
 watch(interacting, (value) => {
   emits('update:interacting', value)
@@ -57,7 +61,7 @@ watch(interacting, (value) => {
 
 const progress = computed(() => {
   const currTime = toValue(currentTime) ?? 0
-  const totalTime = toValue(duration) ?? 10
+  const totalTime = toValue(duration) ?? 1
   return clamp(currTime / totalTime, 0, 1)
 })
 
@@ -69,12 +73,14 @@ provideVirtualDeckRootContext({
   currentTime,
   duration,
   bpm,
-  pitch,
+  pitchDelta,
   pitchRange,
   progress,
   interacting,
   angle
 })
+
+defineSlots<{ default: void }>()
 </script>
 
 <template>

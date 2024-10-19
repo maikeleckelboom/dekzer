@@ -9,7 +9,7 @@ interface SegmentMeterProps {
 }
 
 const {
-  dBMin = -48,
+  dBMin = -60,
   dBMax = 0,
   segments = 40,
   orient = 'vertical'
@@ -38,7 +38,7 @@ const bars = computed(() => {
 const colorMap = new Map([
   [0, '#f44336'],
   [-3, '#ff9800'],
-  [-10, { start: '#02af02', end: '#a9f314' }]
+  [-10, { start: '#129d12', end: '#97ff00' }]
 ])
 
 function interpolateColor(start: string, end: string, normalized: number): string {
@@ -91,6 +91,6 @@ function segmentStyle(segment: number): Record<string, string> {
       v-for="segment in bars"
       :key="segment"
       :style="segmentStyle(segment)"
-      class="bg-muted/75 mb-[2px] h-[3px] w-[14px] last:mb-0" />
+      class="bg-muted/75 mb-[3px] h-[2px] w-[14px] last:mb-0" />
   </div>
 </template>

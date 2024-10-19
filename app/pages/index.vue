@@ -21,7 +21,7 @@ const { tracks } = storeToRefs(trackStore)
 </script>
 
 <template>
-  <div class="grid md:grid-cols-2 md:divide-x">
+  <div class="grid xl:grid-cols-2 md:divide-x">
     <Deck
       :deck="deck"
       v-for="deck in decks"

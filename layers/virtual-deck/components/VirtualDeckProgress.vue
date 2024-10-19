@@ -7,7 +7,6 @@ const { progress } = injectVirtualDeckRootContext() as VirtualDeckRootContext
 const CIRCLE_SIZE = 100
 
 const viewBox = `0 0 ${CIRCLE_SIZE} ${CIRCLE_SIZE}`
-const strokeDashArray = 314
 const cx = computed(() => CIRCLE_SIZE / 2)
 const cy = computed(() => CIRCLE_SIZE / 2)
 const r = computed(() => CIRCLE_SIZE / 2)
@@ -25,7 +24,7 @@ const strokeWidth = 12
       :cx="cx"
       :cy="cy"
       :r="r"
-      :stroke-dasharray="strokeDashArray"
+      :stroke-dasharray="strokeDasharray"
       :stroke-dashoffset="strokeDashoffset"
       :stroke-width="strokeWidth"
       class="stroke-muted-foreground origin-center -rotate-90 transform fill-none" />
