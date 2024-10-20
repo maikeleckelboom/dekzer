@@ -105,16 +105,16 @@ function resetMasterGain() {
 </script>
 
 <template>
-  <div class="mx-auto flex w-full max-w-4xl flex-col gap-4 p-12">
-    <div class="grid grid-cols-4 gap-4">
-      <div class="col-span-full flex flex-col items-center justify-center gap-2">
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-4  p-12">
+    <div class="bg-muted/50 grid grid-cols-4 p-4 gap-x-2 border-2">
+      <div class="col-span-full flex flex-col items-center justify-center gap-2 p-8">
         <div class="flex flex-col items-center gap-1">
           <h2 class="text-center text-lg font-bold">Master Gain</h2>
           <span class="text-muted-foreground leading-none">(default: +3dB)</span>
           <Button
+            :disabled="masterGainValue === DEFAULT_MASTER_GAIN"
             class="mt-4"
             size="xs"
-            :disabled="masterGainValue === DEFAULT_MASTER_GAIN"
             variant="outline"
             @click="resetMasterGain">
             Reset
@@ -141,7 +141,8 @@ function resetMasterGain() {
           </div>
         </div>
       </div>
-      <div class="col-span-full md:col-span-2 flex flex-col items-center gap-2">
+      <div
+        class="bg-muted/50 col-span-full flex flex-col items-center gap-2 border p-8 md:col-span-2">
         <div class="flex flex-col items-center gap-1">
           <h2 class="text-center text-lg font-bold">Deck 1 Gain</h2>
           <span class="text-muted-foreground leading-none">(default: +0dB)</span>
@@ -187,7 +188,8 @@ function resetMasterGain() {
           loop
           src="/assets/audio3.wav" />
       </div>
-      <div class="col-span-full md:col-span-2 flex flex-col items-center gap-2">
+      <div
+        class="bg-muted/50 col-span-full flex flex-col items-center gap-2 border p-8 md:col-span-2">
         <div class="flex flex-col items-center gap-1">
           <h2 class="text-center text-lg font-bold">Deck 2 Gain</h2>
           <span class="text-muted-foreground leading-none">(default: +0dB)</span>

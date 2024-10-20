@@ -119,12 +119,10 @@ async function play() {
   if (!canPlay(context, buffer)) return
   const source = setupSourceNode(context, buffer)
 
-  // const masterGain: GainNode = masterGainNode.value
-  // const deckNode: GainNode = deckGainNodes.value[deck.index]
-  // source.connect(deckNode)
-  // masterGain.connect(context.destination)
 
-
+  setupAnalyserNodes(context, source)
+  source.connect(context.destination)
+  start()
 
   startTime.value = context.currentTime
   handlePlayback(context, buffer)
