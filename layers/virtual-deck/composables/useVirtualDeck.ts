@@ -1,8 +1,6 @@
 import { usePlatterPosition } from './usePlatterPosition'
 import type { MaybeElementRef, MaybeRefOrGetter } from '@vueuse/core'
 
-export const VINYL_RPM: number = 45 as const
-
 export function useVirtualDeck(
   deck: MaybeElementRef<HTMLElement>,
   currentTime: Ref<number>,

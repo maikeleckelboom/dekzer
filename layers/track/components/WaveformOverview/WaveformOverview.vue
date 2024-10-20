@@ -100,7 +100,7 @@ const { getAudioContext } = useSharedAudioContext()
 async function setWaveformData(url: string) {
   const context = await getAudioContext()
   const audioBuffer = await loadAudioBuffer(context, url)
-  const data = await loadWaveformData(context, audioBuffer, 1080)
+  const data = await loadWaveformData(context, audioBuffer, 256)
   waveformData.value = data
   return data
 }
@@ -108,20 +108,6 @@ async function setWaveformData(url: string) {
 const container = useTemplateRef<HTMLDivElement>('container')
 
 const { width, height } = useElementSize(container)
-
-watchDebounced(
-  [width, height],
-  async ([w, h]) => {
-    const uri = unref(url)
-    if (!uri) return
-    waveformData.value ??= await setWaveformData(uri)
-    resampleWaveformData(unref(waveformData), w, h)
-  },
-  {
-    debounce: 80,
-    rejectOnCancel: true
-  }
-)
 
 watch(url, async (uri, prevUri) => {
   if (uri) {
@@ -160,6 +146,25 @@ function onClick({ clientX }: PointerEvent): void {
   })
 }
 
+const percentByTime = computed(() => {
+  return leftPercentFromTime(unref(currentTime))
+})
+
+watchDebounced(
+  [width, height, percentByTime],
+  async ([w, h]) => {
+    const uri = unref(url)
+    if (!uri) return
+    waveformData.value ??= await setWaveformData(uri)
+    resampleWaveformData(unref(waveformData), w, h)
+    // TODO: Correct the marker position after resizing
+  },
+  {
+    debounce: 80,
+    rejectOnCancel: true
+  }
+)
+
 function leftPercentFromTime(time: number): string {
   const elContainer = unref(container)
   const length = unref(duration)
@@ -191,17 +196,60 @@ useEventListener(container, 'click', (e: PointerEvent) => {
 })
 
 const markerStyle = computed(() => ({
-  left: leftPercentFromTime(unref(currentTime))
+  left: percentByTime.value
 }))
+
+const markerCanvas = useTemplateRef<HTMLCanvasElement>('markerCanvas')
+
+watch([width, height], ([w, h]) => {
+  const elCanvas = unref(markerCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')
+  if (!ctx) return
+  const dpr = window.devicePixelRatio || 1
+  elCanvas.width = w * dpr
+  elCanvas.height = h * dpr
+  ctx.scale(dpr, dpr)
+  drawMarker(ctx, h)
+})
+
+function drawMarker(ctx: CanvasRenderingContext2D, height: number) {
+  const elCanvas = unref(markerCanvas)
+  if (!elCanvas) return
+  const length = unref(duration)
+  if (!length) return
+  const x = (unref(currentTime) / length) * elCanvas.width
+  ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
+
+
+  ctx.beginPath()
+  ctx.moveTo(x, 0)
+  ctx.lineTo(x, height)
+  ctx.lineWidth = 2
+  ctx.strokeStyle = '#ff0000'
+  ctx.stroke()
+  ctx.closePath()
+}
+
+watch(currentTime, (time) => {
+  const elCanvas = unref(markerCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')
+  if (!ctx) return
+  drawMarker(ctx, elCanvas.height)
+})
 </script>
 
 <template>
   <div
     ref="container"
     class="relative h-12 w-full overflow-clip border-t py-2">
-    <WaveformOverviewMarker
-      v-if="isDefined(duration)"
-      :style="markerStyle" />
+<!--    <WaveformOverviewMarker-->
+<!--      v-if="isDefined(duration)"-->
+<!--      :style="markerStyle" />-->
+    <canvas
+      ref="markerCanvas"
+      class="absolute inset-0 size-full" />
     <canvas
       ref="waveformCanvas"
       class="size-full" />

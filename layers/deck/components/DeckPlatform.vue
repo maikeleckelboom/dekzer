@@ -143,7 +143,6 @@ function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
 function pause() {
   const context = unref(audioContext)
   if (!context) return
-  // console.log('hit pause')
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
   stopAnalysers()
@@ -236,7 +235,9 @@ const bpm = computedEager(() => track.value?.common.bpm)
       <WaveformOverview
         v-model:current-time="currentTime"
         v-model:interacting="interacting"
+        v-model:start-offset="startOffset"
         :track="track" />
+
       <div
         :class="
           cn(

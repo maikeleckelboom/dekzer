@@ -91,7 +91,7 @@ defineSlots<{ default: void }>()
       cn(
         'relative m-auto grid place-items-center overflow-clip',
         'bg-muted border-background/80 rounded-full border',
-        'aspect-square size-40 touch-none select-none md:size-48',
+        'aspect-square size-48 touch-none select-none md:size-48',
         'aria-disabled:opacity-50 aria-disabled:grayscale',
         'disabled:opacity-50 disabled:grayscale',
         $attrs.class ?? ''
