@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Track } from '~~/layers/track/types'
 import WaveformData from 'waveform-data'
+import { clamp } from '@vueuse/core'
 
 const { track } = defineProps<{ track?: Track }>()
 
@@ -25,7 +26,7 @@ function resampleWaveformData(
   width: number | null = null,
   height: number | null = null
 ) {
-  const elCanvas = getCanvasElement()
+  const elCanvas = unref(waveformCanvas)
   if (!elCanvas) return
 
   const ctx = elCanvas.getContext('2d')
@@ -41,13 +42,7 @@ function resampleWaveformData(
   const channel = waveform.channel(0)
 
   clearCanvas(ctx, canvasWidth, canvasHeight)
-
   drawWaveform(ctx, channel, canvasHeight, waveform.length)
-}
-
-function getCanvasElement() {
-  const elCanvas = unref(waveformCanvas)
-  return elCanvas || null
 }
 
 function setupCanvasDimensions(
@@ -63,9 +58,7 @@ function setupCanvasDimensions(
   elCanvas.height = canvasHeight
 
   const ctx = elCanvas.getContext('2d')
-  if (ctx) {
-    ctx.scale(dpr, dpr)
-  }
+  if (ctx) ctx.scale(dpr, dpr)
 
   return { width: canvasWidth / dpr, height: canvasHeight / dpr, dpr }
 }
@@ -108,7 +101,7 @@ const { getAudioContext } = useSharedAudioContext()
 async function setWaveformData(url: string) {
   const context = await getAudioContext()
   const audioBuffer = await loadAudioBuffer(context, url)
-  const data = await loadWaveformData(context, audioBuffer, 700)
+  const data = await loadWaveformData(context, audioBuffer, 1080)
   waveformData.value = data
   return data
 }
@@ -117,12 +110,19 @@ const container = useTemplateRef<HTMLDivElement>('container')
 
 const { width, height } = useElementSize(container)
 
-watch([width, height], async ([w, _h]) => {
-  const uri = unref(url)
-  if (!uri) return
-  waveformData.value ??= await setWaveformData(uri)
-  resampleWaveformData(unref(waveformData), w)
-})
+watchDebounced(
+  [width, height],
+  async ([w, h]) => {
+    const uri = unref(url)
+    if (!uri) return
+    waveformData.value ??= await setWaveformData(uri)
+    resampleWaveformData(unref(waveformData), w, h)
+  },
+  {
+    debounce: 80,
+    rejectOnCancel: true
+  }
+)
 
 watch(url, async (uri) => {
   if (uri) {
@@ -133,16 +133,6 @@ watch(url, async (uri) => {
     waveformData.value = null
   }
 })
-
-function leftPercentFromTime(time: number): string {
-  const elContainer = unref(container)
-  const length = unref(duration)
-  if (!length || !elContainer) return '0%'
-  const containerWidth = elContainer.clientWidth
-  const left = (time / length) * containerWidth
-  const leftPercent = (left / containerWidth) * 100
-  return `${leftPercent}%`
-}
 
 function pointermove({ clientX }: PointerEvent): void {
   const elContainer = unref(container)
@@ -167,6 +157,16 @@ function onClick({ clientX }: PointerEvent): void {
     currentTime.value = targetTime
     interacting.value = false
   })
+}
+
+function leftPercentFromTime(time: number): string {
+  const elContainer = unref(container)
+  const length = unref(duration)
+  if (!length || !elContainer) return '0%'
+  const containerRect = elContainer.getBoundingClientRect()
+  const containerWidth = containerRect.width
+  return `${clamp((time / length) * containerWidth, 0, containerWidth)}px`
+
 }
 
 let cleanupEnd: (() => void) | null = null
@@ -198,7 +198,7 @@ const markerStyle = computed(() => ({
 <template>
   <div
     ref="container"
-    class="relative h-12 w-full border-t px-1 py-2">
+    class="relative h-12 w-full overflow-clip border-t  py-2">
     <WaveformOverviewMarker
       v-if="isDefined(duration)"
       :style="markerStyle" />

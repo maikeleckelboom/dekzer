@@ -16,6 +16,6 @@ const forward = useForwardPropsEmits(props)
     <TrackTitleBarPicture>
       <TrackTitleBarPictureFallback />
     </TrackTitleBarPicture>
-    <TrackTitleBarMetrics />
+<!--    <TrackTitleBarMetrics />-->
   </TrackTitleBarRoot>
 </template>

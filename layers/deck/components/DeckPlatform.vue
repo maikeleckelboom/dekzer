@@ -172,15 +172,19 @@ async function createAndLoadTrack(file: File) {
 
 const interacting = shallowRef<boolean>(false)
 
-watch(interacting, async (interacting) => {
-  startOffset.value = currentTime.value
-  if (interacting) {
-    wasPlaying.value = playing.value
-    pause()
-  } else if (wasPlaying.value) {
-    await play()
-  }
-},{flush: 'post'})
+watch(
+  interacting,
+  async (interacting) => {
+    startOffset.value = currentTime.value
+    if (interacting) {
+      wasPlaying.value = playing.value
+      pause()
+    } else if (wasPlaying.value) {
+      await play()
+    }
+  },
+  { flush: 'post' }
+)
 
 whenever(track, async ({ url }) => {
   resetDeck()
@@ -216,6 +220,9 @@ function ejectTrack() {
   deckStore.eject(deck)
   resetDeck()
 }
+
+const duration = computedEager(() => track.value?.format.duration)
+const bpm = computedEager(() => track.value?.common.bpm)
 </script>
 
 <template>
@@ -227,8 +234,8 @@ function ejectTrack() {
     <div class="flex w-full flex-col border">
       <TrackTitleBar :track="track" />
       <WaveformOverview
-        v-model:interacting="interacting"
         v-model:current-time="currentTime"
+        v-model:interacting="interacting"
         :track="track" />
       <div
         :class="
@@ -258,9 +265,9 @@ function ejectTrack() {
       <VirtualDeck
         v-model:currentTime="currentTime"
         v-model:interacting="interacting"
-        :bpm="track?.common.bpm"
+        :bpm="bpm"
         :disabled="!track"
-        :duration="track?.format.duration" />
+        :duration="duration" />
       <DeckGainFader :channels="[leftVolume, rightVolume]" />
     </div>
   </DeckRoot>
