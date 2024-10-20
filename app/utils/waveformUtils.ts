@@ -23,10 +23,10 @@ export const scaleY = (amplitude: number, height: number, bits: 8 | 16 = 8) => {
   return height - ((amplitude + offset) * height) / range
 }
 
-export const loopForward = (fn: (x: number) => void, length: number) => {
+export const loopForward = (length: number, fn: (x: number) => void) => {
   for (let x = 0; x < length; x++) fn(x)
 }
 
-export const loopBackward = (fn: (x: number) => void, length: number) => {
+export const loopBackward = (length: number, fn: (x: number) => void) => {
   for (let x = length - 1; x >= 0; x--) fn(x)
 }

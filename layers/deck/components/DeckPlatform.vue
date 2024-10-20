@@ -226,10 +226,9 @@ function ejectTrack() {
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackTitleBar :track="track" />
-      <WaveformOverviewStatic
+      <WaveformOverview
         v-model:interacting="interacting"
         v-model:current-time="currentTime"
-        v-model:start-offset="startOffset"
         :track="track" />
       <div
         :class="
