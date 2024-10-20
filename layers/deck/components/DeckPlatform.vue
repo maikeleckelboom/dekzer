@@ -118,6 +118,7 @@ async function play() {
   const context = await getAudioContext()
   const buffer = unref(audioBuffer)
   if (!canPlay(context, buffer)) return
+  // console.log('hit play')
   const source = setupSourceNode(context, buffer)
   setupAnalyserNodes(context, source)
   startAnalysers()
@@ -142,6 +143,7 @@ function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
 function pause() {
   const context = unref(audioContext)
   if (!context) return
+  // console.log('hit pause')
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
   stopAnalysers()
@@ -178,7 +180,7 @@ watch(interacting, async (interacting) => {
   } else if (wasPlaying.value) {
     await play()
   }
-})
+},{flush: 'post'})
 
 whenever(track, async ({ url }) => {
   resetDeck()
@@ -224,7 +226,11 @@ function ejectTrack() {
     @load="createAndLoadTrack">
     <div class="flex w-full flex-col border">
       <TrackTitleBar :track="track" />
-      <WaveformOverviewStatic :track="track" v-model:current-time="currentTime"/>
+      <WaveformOverviewStatic
+        v-model:interacting="interacting"
+        v-model:current-time="currentTime"
+        v-model:start-offset="startOffset"
+        :track="track" />
       <div
         :class="
           cn(

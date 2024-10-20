@@ -9,7 +9,7 @@ const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
 <template>
   <div class="row-start-2 flex items-start">
-    <p class="leading-normal">
+    <p class="leading-normal text-sm">
       {{track?.common.artist}}
     </p>
   </div>

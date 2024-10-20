@@ -5,6 +5,11 @@ import { clamp } from '@vueuse/core'
 
 const { track } = defineProps<{ track?: Track }>()
 
+const interacting = defineModel<boolean>('interacting', {
+  type: Boolean,
+  default: false
+})
+
 const { getAudioContext } = useSharedAudioContext()
 const waveformData = shallowRef<WaveformData | null>(null)
 const waveformCanvas = useTemplateRef<HTMLCanvasElement>('waveformCanvas')
@@ -16,6 +21,7 @@ function resampleWaveformData(
 ) {
   const elCanvas = unref(waveformCanvas)
   if (!elCanvas) return
+
   const ctx = elCanvas.getContext('2d')
 
   width ??= elCanvas.clientWidth
@@ -29,7 +35,7 @@ function resampleWaveformData(
   ctx.scale(dpr, dpr)
 
   const waveform = data.resample({
-    width: elCanvas.width / dpr // Use logical width for resampling
+    width: elCanvas.width / dpr
   })
 
   const channel = waveform.channel(0)
@@ -54,7 +60,7 @@ function resampleWaveformData(
     clamp(Math.floor(width), 0, elCanvas.width - 1)
   )
 
-  ctx.lineWidth = 3
+  ctx.lineWidth = 1
   ctx.fillStyle = '#dae2ef'
   ctx.fill()
   ctx.closePath()
@@ -80,20 +86,17 @@ async function setWaveformData(url: string) {
 watch(
   () => track?.url,
   async (url) => {
-    console.log('track.url', url)
     if (url) {
       const data = await setWaveformData(url)
       resampleWaveformData(data)
-      console.log('resampled waveform data', data)
     }
   }
 )
 
 whenever(waveformData, resampleWaveformData)
 
-// const parentElement = useParentElement()
 const container = useTemplateRef<HTMLDivElement>('containerRef')
-const { width, height } = useElementSize(container)
+const { width } = useElementSize(container)
 
 watch(width, async (w) => {
   if (!track?.url) return
@@ -115,6 +118,18 @@ function leftPercentFromTime(time: number) {
   const leftPercent = (left / containerWidth) * 100
   return `${leftPercent}%`
 }
+
+function onClick(e: MouseEvent) {
+  if (!container.value) return
+  interacting.value = true
+  const containerRect = container.value.getBoundingClientRect()
+  const left = e.clientX - containerRect.left
+  const containerWidth = containerRect.width
+  requestAnimationFrame(() => {
+    currentTime.value = (left / containerWidth) * track.format.duration
+    interacting.value = false
+  })
+}
 </script>
 
 <template>
@@ -125,7 +140,7 @@ function leftPercentFromTime(time: number) {
       :style="{
         left: leftPercentFromTime(currentTime)
       }"
-      class="absolute left-0 top-[6px] h-[24px] w-[20px] -translate-x-1/2 -translate-y-1/2 rotate-180 text-red-500">
+      class="absolute left-0 top-[8px] h-[24px] w-[20px] -translate-x-1/2 -translate-y-1/2 rotate-180 text-red-700 shadow-current drop-shadow-sm">
       <svg
         fill="currentColor"
         viewBox="0 2 24 20"
@@ -134,9 +149,8 @@ function leftPercentFromTime(time: number) {
       </svg>
     </div>
     <canvas
+      @click="onClick"
       ref="waveformCanvas"
       class="h-full w-full" />
   </div>
 </template>
-
-<style scoped></style>
