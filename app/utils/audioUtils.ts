@@ -14,6 +14,15 @@ export function createConstantSourceNode(
   return constantSourceNode
 }
 
+async function playAudio(deckIndex: number, audioBuffer: AudioBuffer, context: AudioContext) {
+  // Create an audio buffer source node
+  const source = context.createBufferSource()
+  source.buffer = audioBuffer // Set the buffer you loaded
+  // Connect the source to the corresponding deck gain node
+  source.connect(deckGainNodes.value[deckIndex]) // Connect source to deck gain node
+  source.start() // Start playback
+}
+
 export function createBufferSourceNode(
   context: AudioContext,
   buffer: AudioBuffer

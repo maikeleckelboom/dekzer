@@ -24,7 +24,7 @@ const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
 
 const loaded = computed(() => !!track.value && !!audioBuffer.value)
 
-const { audioContext, getAudioContext } = useSharedAudioContext()
+const { audioContext, getAudioContext} = useSharedAudioContext()
 
 let rAF: number | null = null
 
@@ -85,12 +85,11 @@ function stopPlaying() {
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const {
-  leftVolume,
-  rightVolume,
-  start: startAnalysers,
-  stop: stopAnalysers
-} = useVolumeAnalyzer(analyserNode, analyserNodeR, 2048)
+const { leftVolume, rightVolume, start, stop } = useVolumeAnalyzer(
+  analyserNode,
+  analyserNodeR,
+  2048
+)
 
 function setupAnalyserNodes(
   context: AudioContext,
@@ -118,11 +117,15 @@ async function play() {
   const context = await getAudioContext()
   const buffer = unref(audioBuffer)
   if (!canPlay(context, buffer)) return
-  // console.log('hit play')
   const source = setupSourceNode(context, buffer)
-  setupAnalyserNodes(context, source)
-  startAnalysers()
-  setupDestination(context, source)
+
+  // const masterGain: GainNode = masterGainNode.value
+  // const deckNode: GainNode = deckGainNodes.value[deck.index]
+  // source.connect(deckNode)
+  // masterGain.connect(context.destination)
+
+
+
   startTime.value = context.currentTime
   handlePlayback(context, buffer)
 }
@@ -145,7 +148,7 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stopAnalysers()
+  stop()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -182,13 +185,23 @@ watch(
       await play()
     }
   },
-  { flush: 'post' }
+  { flush: 'sync' }
 )
 
 whenever(track, async ({ url }) => {
   resetDeck()
   const context = await getAudioContext()
   audioBuffer.value = await loadAudioBuffer(context, url)
+})
+
+onMounted(async () => {
+  const context = await getAudioContext()
+
+  // const gain = new GainNode(context)
+  // deckGainNodes.value.push(gain)
+  // gain.connect(masterGainNode.value)
+  // console.log(deckGainNodes.value, 'Deck Gain Nodes')
+  // console.log(masterGainNode.value, 'Master Gain Node')
 })
 
 onBeforeUnmount(() => {
@@ -198,7 +211,7 @@ onBeforeUnmount(() => {
 
 function resetDeck() {
   stopPlaying()
-  stopAnalysers()
+  stop()
   currentTime.value = 0
   audioBuffer.value = null
   playing.value = false
@@ -240,7 +253,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
 
       <div
         :class="
-          cn('flex flex-wrap justify-end gap-2 p-2', deck.vd % 2 === 0 && 'flex-row-reverse')
+          cn('flex flex-wrap justify-end gap-2 p-2', deck.index % 2 === 0 && 'flex-row-reverse')
         ">
         <DeckButton
           :disabled="!loaded"
@@ -255,7 +268,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
     </div>
     <div
       :class="
-        cn('flex w-fit flex-nowrap gap-4 p-2 md:p-2', deck.vd % 2 === 0 && 'flex-row-reverse')
+        cn('flex w-fit flex-nowrap gap-4 p-2 md:p-2', deck.index % 2 === 0 && 'flex-row-reverse')
       ">
       <VirtualDeck
         v-model:currentTime="currentTime"

@@ -22,26 +22,20 @@ const interacting = defineModel<boolean>('interacting', {
 
 function resampleWaveformData(
   data: WaveformData,
-  width: number | null = null,
-  height: number | null = null
+  canvasWidth: number | null = null,
+  canvasHeight: number | null = null
 ) {
   const elCanvas = unref(waveformCanvas)
   if (!elCanvas) return
 
-  const ctx = elCanvas.getContext('2d')
-  const {
-    width: canvasWidth,
-    height: canvasHeight,
-    dpr
-  } = setupCanvasDimensions(elCanvas, width, height)
-
-  if (!ctx) return
+  const ctx = elCanvas.getContext('2d')!
+  const { width, height } = setupCanvasDimensions(elCanvas, canvasWidth, canvasHeight)
 
   const waveform = resampleWaveform(data, canvasWidth)
   const channel = waveform.channel(0)
 
-  clearCanvas(ctx, canvasWidth, canvasHeight)
-  drawWaveform(ctx, channel, canvasHeight, waveform.length)
+  ctx.clearRect(0, 0, width, height)
+  drawWaveform(ctx, channel, height, waveform.length)
 }
 
 function setupCanvasDimensions(
@@ -63,6 +57,7 @@ function setupCanvasDimensions(
 }
 
 function resampleWaveform(data: WaveformData, canvasWidth: number) {
+  if(!canvasWidth) return data
   return data.resample({ width: canvasWidth })
 }
 
@@ -90,10 +85,6 @@ function drawWaveform(
   ctx.closePath()
 }
 
-function clearCanvas(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  ctx.clearRect(0, 0, width, height)
-}
-
 const { getAudioContext } = useSharedAudioContext()
 
 async function setWaveformData(url: string) {
@@ -115,7 +106,7 @@ watch(url, async (uri, prevUri) => {
   } else if (prevUri) {
     const elCanvas = unref(waveformCanvas)!
     const ctx = elCanvas.getContext('2d')!
-    clearCanvas(ctx, elCanvas.width, elCanvas.height)
+    ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
     waveformData.value = null
   }
 })
@@ -152,40 +143,20 @@ watchDebounced(
     if (!uri) return
     waveformData.value ??= await setWaveformData(uri)
     resampleWaveformData(unref(waveformData), w, h)
-
-    // marker
-    const elCanvas = unref(markerCanvas)
-    if (!elCanvas) return
-    const ctx = elCanvas.getContext('2d')
-    if (!ctx) return
-    const dpr = window.devicePixelRatio || 1
-    elCanvas.width = w * dpr
-    elCanvas.height = h * dpr
-    ctx.scale(dpr, dpr)
-
-    const length = unref(duration)
-    if (!length) return
-    drawMarker(ctx, currentTime.value, length, elCanvas.height, elCanvas.width)
   },
   {
-    debounce: 80,
+    debounce: 100,
     rejectOnCancel: true
   }
 )
-
-let cleanupEnd: (() => void) | null = null
 
 useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
   const cleanupMove = useEventListener(container, 'pointermove', (e: PointerEvent) => {
     interacting.value = true
     pointermove(e)
   })
-  cleanupEnd = useEventListener(container, ['pointerup', 'pointerleave'], () => {
+  useEventListener(container, ['pointerup', 'pointerleave'], () => {
     cleanupMove()
-    if (cleanupEnd) {
-      cleanupEnd()
-      cleanupEnd = null
-    }
     interacting.value = false
   })
 })
@@ -207,22 +178,20 @@ watch([width, height], ([w, h]) => {
   ctx.scale(dpr, dpr)
 })
 
-watch(currentTime, (time) => {
+watch(currentTime, drawMarker)
+
+function drawMarker() {
   const elCanvas = unref(markerCanvas)
   if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')
+  const time = unref(currentTime)
   const length = unref(duration)
-  if (!ctx || !length) return
-  drawMarker(ctx, time, length, elCanvas.height, elCanvas.width)
-})
+  drawTriangle(elCanvas, time, length)
+}
 
-function drawMarker(
-  ctx: CanvasRenderingContext2D,
-  time: number,
-  length: number,
-  height: number,
-  width: number
-) {
+function drawTriangle(canvas: HTMLCanvasElement, time: number, length: number) {
+  const ctx = canvas.getContext('2d')!
+  const { width, height } = canvas
+
   const x = (time / length) * width
   ctx.clearRect(0, 0, width, height)
 
@@ -250,14 +219,7 @@ function drawMarker(
 watch(
   () => track?.url,
   () => {
-    const length = unref(duration)
-    if (!length) return
-    const canvas = unref(markerCanvas)
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const { width, height } = canvas
-    drawMarker(ctx, currentTime.value, length, height, width)
+    drawMarker()
   }
 )
 </script>
@@ -266,9 +228,6 @@ watch(
   <div
     ref="container"
     class="relative my-2 h-8 w-full overflow-clip">
-    <!--    <WaveformOverviewMarker-->
-    <!--      v-if="isDefined(duration)"-->
-    <!--      :style="markerStyle" />-->
     <canvas
       ref="markerCanvas"
       class="absolute inset-0 size-full" />

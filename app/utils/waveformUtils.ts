@@ -1,4 +1,4 @@
-import WaveformData from 'waveform-data'
+import WaveformData, { type WaveformDataAudioBufferOptions, type WaveformDataAudioContextOptions } from 'waveform-data'
 
 export async function loadWaveformData(
   audioContext: AudioContext,
@@ -8,8 +8,9 @@ export async function loadWaveformData(
   const options = {
     audio_context: audioContext,
     audio_buffer: audioBuffer,
+    amplitude_scale: 0.9,
     scale
-  }
+  } as WaveformDataAudioContextOptions & WaveformDataAudioBufferOptions
   return new Promise((resolve, reject) => {
     WaveformData.createFromAudio(options, (err, waveform) => {
       err ? reject(err) : resolve(waveform)

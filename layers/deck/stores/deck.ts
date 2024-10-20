@@ -3,7 +3,7 @@ import type { Track } from '~~/layers/track/types'
 export interface Deck {
   id: string
   name: string
-  vd: number
+  index: number
   track: Track | null
 }
 
@@ -11,13 +11,13 @@ export const useDeckStore = defineStore('deck.store', () => {
   const decks = useState<Deck[]>('decks', () => [
     {
       id: 1,
-      vd: 1,
+      index: 1,
       name: 'Deck 1',
       track: null
     },
     {
-      vd: 2,
       id: 2,
+      index: 2,
       name: 'Deck 2',
       track: null
     }

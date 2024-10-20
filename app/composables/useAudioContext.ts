@@ -44,14 +44,14 @@ export const useSharedAudioContext = createSharedComposable(
       }
     })
 
-    onBeforeUnmount(async () => {
+    onUnmounted(async () => {
       await closeAudioContext()
     })
 
     return {
       audioContext,
       getAudioContext,
-      closeAudioContext
+      closeAudioContext,
     }
   }
 )

@@ -1,13 +1,13 @@
 import type { Track } from '~~/layers/track/types'
 
-export function useTrackAttributes(track: MaybeRefOrGetter<Track>, currentTime:MaybeRefOrGetter<number>) {
+export function useTrackProperties(track: MaybeRefOrGetter<Track>) {
   const title = computed(() => toValue(track)?.common.title)
   const artist = computed(() => toValue(track)?.common.artist)
   const picture = computed(() => toValue(track)?.pictureUrl)
   const bpm = computed(() => toValue(track)?.common.bpm)
   const key = computed(() => toValue(track)?.common.key)
   const duration = computed(() => toValue(track)?.format.duration)
-  const remaining = computed(() => toValue(currentTime) - toValue(duration))
+  const genre = computed(() => toValue(track)?.common.genre)
   return {
     title,
     artist,
@@ -15,6 +15,6 @@ export function useTrackAttributes(track: MaybeRefOrGetter<Track>, currentTime:M
     bpm,
     key,
     duration,
-    remaining,
+    genre,
   }
 }
