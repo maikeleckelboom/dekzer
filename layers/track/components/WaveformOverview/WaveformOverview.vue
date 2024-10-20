@@ -10,6 +10,35 @@ const duration = computedEager(() => track?.format?.duration)
 const waveformData = shallowRef<WaveformData | null>(null)
 const waveformCanvas = useTemplateRef<HTMLCanvasElement>('waveformCanvas')
 
+const currentTime = defineModel<number>('currentTime', {
+  type: Number,
+  default: 0
+})
+
+const interacting = defineModel<boolean>('interacting', {
+  type: Boolean,
+  default: false
+})
+
+const container = useTemplateRef<HTMLDivElement>('container')
+const { width, height } = useElementSize(container)
+
+watch([width, height], async ([w, _h]) => {
+  const uri = unref(url)
+  if (!uri) return
+  waveformData.value ??= await setWaveformData(uri)
+  resampleWaveformData(unref(waveformData), w)
+})
+
+watch(url, async (uri) => {
+  if (uri) {
+    waveformData.value ??= await setWaveformData(uri)
+    resampleWaveformData(unref(waveformData))
+  } else {
+    clearCanvas()
+    waveformData.value = null
+  }
+})
 function resampleWaveformData(
   data: WaveformData,
   width: number | null = null,
@@ -74,53 +103,6 @@ async function setWaveformData(url: string) {
   return data
 }
 
-watch(url, async (uri) => {
-  if (uri) {
-    const data = await setWaveformData(uri)
-    resampleWaveformData(data)
-  } else {
-    clearCanvas()
-  }
-})
-
-const container = useTemplateRef<HTMLDivElement>('container')
-const { width, height } = useElementSize(container)
-
-watch([width, height], async ([w, _h]) => {
-  const uri = unref(url)
-  if (!uri) return
-  let data = unref(waveformData)
-  if (!data) {
-    data = await setWaveformData(uri)
-  }
-  resampleWaveformData(data, w)
-})
-
-const currentTime = defineModel<number>('currentTime', {
-  type: Number,
-  default: 0
-})
-
-const interacting = defineModel<boolean>('interacting', {
-  type: Boolean,
-  default: false
-})
-
-function onClick({ clientX }: PointerEvent): void {
-  const elContainer = unref(container)
-  const length = unref(duration)
-  if (!elContainer || !length) return
-  interacting.value = true
-  const containerRect = elContainer.getBoundingClientRect()
-  const left = clientX - containerRect.left
-  const containerWidth = containerRect.width
-  const targetTime = (left / containerWidth) * length
-  requestAnimationFrame(() => {
-    currentTime.value = targetTime
-    interacting.value = false
-  })
-}
-
 function leftPercentFromTime(time: number): string {
   const elContainer = unref(container)
   const length = unref(duration)
@@ -147,18 +129,52 @@ function pointerup(): void {
 
 function pointerdown(e: PointerEvent): void {
   interacting.value = true
-  pointermove(e)
 }
 
-useEventListener(container, 'pointermove', pointermove)
-useEventListener(container, 'pointerup', pointerup)
-useEventListener(container, 'pointerdown', pointerdown)
-useEventListener(container, 'pointerleave', pointerup)
 
+useEventListener(container, 'pointerdown', (e)=>{
+  pointerdown(e)
+
+  const cleanupPm = useEventListener(container, 'pointermove', (e)=>{
+    pointermove(e)
+  })
+
+  const cleanupPu = useEventListener(container, 'pointerup', (e)=>{
+    cleanupPm()
+    cleanupPu()
+    pointerup()
+  })
+
+  const cleanupPl = useEventListener(container, 'pointerleave', (e)=>{
+    cleanupPm()
+    cleanupPu()
+    pointerup()
+  })
+
+})
+
+useEventListener(container,'click', (e)=>{
+  onClick(e)
+})
 
 const markerStyle = computed(() => ({
   left: leftPercentFromTime(unref(currentTime))
 }))
+
+function onClick({ clientX }: PointerEvent): void {
+  const elContainer = unref(container)
+  const length = unref(duration)
+  if (!elContainer || !length) return
+  interacting.value = true
+  const containerRect = elContainer.getBoundingClientRect()
+  const left = clientX - containerRect.left
+  const containerWidth = containerRect.width
+  const targetTime = (left / containerWidth) * length
+  requestAnimationFrame(() => {
+    currentTime.value = targetTime
+    interacting.value = false
+  })
+}
 </script>
 
 <template>
