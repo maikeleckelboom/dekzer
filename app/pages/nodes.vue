@@ -3,12 +3,20 @@ const masterGainNode = ref<GainNode>()
 const deck1GainNode = ref<GainNode>()
 const deck2GainNode = ref<GainNode>()
 
-const masterGainValue = ref<number>(0.5)
-const deck1GainValue = ref<number>(0.75)
-const deck2GainValue = ref<number>(0.75)
+const DEFAULT_MASTER_GAIN: number = 0.625 as const /* +3dB */
+const DEFAULT_DECK_GAIN: number = 0.5 as const /* 0dB */
+
+const masterGainValue = ref<number>(DEFAULT_MASTER_GAIN)
+const deck1GainValue = ref<number>(DEFAULT_DECK_GAIN)
+const deck2GainValue = ref<number>(DEFAULT_DECK_GAIN)
+const audioCtx = shallowRef<AudioContext>()
+const deck1AudioEl = useTemplateRef<HTMLAudioElement>('deck1AudioEl')
+const deck2AudioEl = useTemplateRef<HTMLAudioElement>('deck2AudioEl')
 
 onMounted(() => {
   const audioContext = new AudioContext()
+  audioCtx.value = audioContext
+
   masterGainNode.value = audioContext.createGain()
   deck1GainNode.value = audioContext.createGain()
   deck2GainNode.value = audioContext.createGain()
@@ -24,6 +32,18 @@ onMounted(() => {
   masterGain.connect(audioContext.destination)
   deck1Gain.connect(masterGain)
   deck2Gain.connect(masterGain)
+
+  const deck1AudioElement = deck1AudioEl.value
+  if (deck1AudioElement) {
+    const source = audioContext.createMediaElementSource(deck1AudioElement)
+    source.connect(deck1Gain)
+  }
+
+  const deck2AudioElement = deck2AudioEl.value
+  if (deck2AudioElement) {
+    const source = audioContext.createMediaElementSource(deck2AudioElement)
+    source.connect(deck2Gain)
+  }
 })
 
 function faderToDB(value: number, minDB: number, maxDB: number): number {
@@ -31,83 +51,197 @@ function faderToDB(value: number, minDB: number, maxDB: number): number {
   return (normalizedValue * (maxDB - minDB)) / 2
 }
 
-function dBToFader(dBValue: number, minDB: number, maxDB: number): number {
-  const normalizedValue = dBValue / (maxDB - minDB)
-  return (normalizedValue / 2) + 0.5
+function getDbBounds(el: HTMLInputElement): [number, number] {
+  const minDB = parseFloat(el.dataset.minDb)
+  const maxDB = parseFloat(el.dataset.maxDb)
+  return [minDB, maxDB]
 }
 
-watch(masterGainValue, (inputValue: number) => {
-  if (!masterGainNode.value) return
-  const dBValue = faderToDB(inputValue, -12, 12)
-  const gainValue = dBToFader(dBValue, -12, 12)
-  console.log('inputValue', inputValue, 'gainValue', gainValue, 'dBValue', dBValue)
-  masterGainNode.value.gain.value = inputValue
-})
+function dbToLinearGain(db: number): number {
+  return Math.pow(10, db / 20)
+}
 
-watch(deck1GainValue, (inputValue: number) => {
-  if (!deck1GainNode.value) return
-  const dBValue = faderToDB(inputValue, -24, 24)
-  const gainValue = dBToFader(dBValue, -24, 24)
-  console.log('inputValue', inputValue, 'gainValue', gainValue, 'dBValue', dBValue)
-  deck1GainNode.value.gain.value = gainValue
-})
+const setVolume = (node: GainNode, db: number) => {
+  const audioContext = audioCtx.value!
+  const gainValue = dbToLinearGain(db)
+  node.gain.setValueAtTime(gainValue, audioContext.currentTime)
+}
 
-watch(deck2GainValue, (inputValue: number) => {
-  if (!deck2GainNode.value) return
-  const dBValue = faderToDB(inputValue, -24, 24)
-  const gainValue = dBToFader(dBValue, -24, 24)
-  console.log('inputValue', inputValue, 'gainValue', gainValue, 'dBValue', dBValue)
-  deck2GainNode.value.gain.value = gainValue
-})
+function onGainChange(event: InputEvent) {
+  const el = event.target as HTMLInputElement
+  const value = parseFloat(el.value)
+  const [minDB, maxDB] = getDbBounds(el)
+  const db = faderToDB(value, minDB, maxDB)
+  if (el.dataset.deck === '1') {
+    deck1GainValue.value = value
+    setVolume(deck1GainNode.value!, db)
+  } else if (el.dataset.deck === '2') {
+    deck2GainValue.value = value
+    setVolume(deck2GainNode.value!, db)
+  } else {
+    masterGainValue.value = value
+    setVolume(masterGainNode.value!, db)
+  }
+}
+
+const masterGainDB = computed(() => faderToDB(masterGainValue.value, -12, 12).toFixed())
+const deck1GainDB = computed(() => faderToDB(deck1GainValue.value, -24, 24).toFixed())
+const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFixed())
+
+function resetDeckGain(deck: number) {
+  if (deck === 1) {
+    deck1GainValue.value = DEFAULT_DECK_GAIN
+    setVolume(deck1GainNode.value!, 0)
+  } else {
+    deck2GainValue.value = DEFAULT_DECK_GAIN
+    setVolume(deck2GainNode.value!, 0)
+  }
+}
+
+function resetMasterGain() {
+  masterGainValue.value = DEFAULT_MASTER_GAIN
+  setVolume(masterGainNode.value!, 0)
+}
 </script>
 
 <template>
-  <div class="mx-auto flex w-full max-w-md flex-col gap-4">
-    <div class="space-y-2">
-      <h1 class="text-2xl font-bold">Nodes Test Ground</h1>
-    </div>
-    <div class="grid grid-cols-3 grid-rows-3 gap-4">
-      <div class="col-span-full flex flex-col gap-2">
-        <h2 class="text-lg font-bold">Master Gain Node</h2>
-        <div>
-          <label for="masterGain">Master Gain</label>
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-4 p-12">
+    <div class="grid grid-cols-4 gap-4">
+      <div class="col-span-full flex flex-col items-center justify-center gap-2">
+        <div class="flex flex-col items-center gap-1">
+          <h2 class="text-center text-lg font-bold">Master Gain</h2>
+          <span class="text-muted-foreground leading-none">(default: +3dB)</span>
+          <Button
+            class="mt-4"
+            size="xs"
+            :disabled="masterGainValue === DEFAULT_MASTER_GAIN"
+            variant="outline"
+            @click="resetMasterGain">
+            Reset
+          </Button>
+        </div>
+        <div class="space-x-2">
+          <output>{{ masterGainDB }}dB</output>
+        </div>
+        <div class="relative flex w-full flex-col gap-2">
           <input
-            id="masterGain"
-            v-model.number="masterGainValue"
+            ref="masterGain"
+            :value="masterGainValue"
+            class="w-full"
+            data-max-db="12"
+            data-min-db="-12"
             max="1"
             min="0"
             step="0.01"
-            type="range" />
+            type="range"
+            @input="onGainChange" />
+          <div class="flex justify-between">
+            <span class="whitespace-nowrap text-sm font-semibold tabular-nums"> -12dB </span>
+            <span class="whitespace-nowrap text-sm font-semibold tabular-nums"> +12dB </span>
+          </div>
         </div>
       </div>
-      <div class="flex flex-col gap-2">
-        <h2 class="text-lg font-bold">Deck 1 Gain Node</h2>
-        <div>
-          <label for="deck1Gain">Deck 1 Gain</label>
+      <div class="col-span-full md:col-span-2 flex flex-col items-center gap-2">
+        <div class="flex flex-col items-center gap-1">
+          <h2 class="text-center text-lg font-bold">Deck 1 Gain</h2>
+          <span class="text-muted-foreground leading-none">(default: +0dB)</span>
+          <Button
+            :disabled="deck1GainValue === DEFAULT_DECK_GAIN"
+            class="mt-4"
+            size="xs"
+            variant="outline"
+            @click="resetDeckGain(1)">
+            Reset
+          </Button>
+        </div>
+        <div class="space-x-2">
+          <output>{{ deck1GainDB }}dB</output>
+        </div>
+        <div class="relative flex flex-col items-center gap-2">
+          <span
+            class="absolute left-8 top-0 whitespace-nowrap text-sm font-semibold tabular-nums">
+            -24dB
+          </span>
           <input
-            id="deck1Gain"
-            v-model.number="deck1GainValue"
+            ref="deckGain"
+            :value="deck1GainValue"
+            aria-orientation="vertical"
+            data-deck="1"
+            data-max-db="24"
+            data-min-db="-24"
             max="1"
             min="0"
             step="0.01"
-            type="range" />
+            type="range"
+            @input="onGainChange" />
+          <span
+            class="absolute bottom-0 left-8 whitespace-nowrap text-sm font-semibold tabular-nums">
+            +24dB
+          </span>
         </div>
+        <audio
+          id="deck1"
+          ref="deck1AudioEl"
+          controls
+          data-deck="1"
+          loop
+          src="/assets/audio3.wav" />
       </div>
-      <div class="flex flex-col gap-2">
-        <h2 class="text-lg font-bold">Deck 2 Gain Node</h2>
-        <div>
-          <label for="deck2Gain">Deck 2 Gain</label>
-          <input
-            id="deck2Gain"
-            v-model.number="deck2GainValue"
-            max="24"
-            min="-24"
-            step="0.01"
-            type="range" />
+      <div class="col-span-full md:col-span-2 flex flex-col items-center gap-2">
+        <div class="flex flex-col items-center gap-1">
+          <h2 class="text-center text-lg font-bold">Deck 2 Gain</h2>
+          <span class="text-muted-foreground leading-none">(default: +0dB)</span>
+          <Button
+            :disabled="deck2GainValue === DEFAULT_DECK_GAIN"
+            class="mt-4"
+            size="xs"
+            variant="outline"
+            @click="resetDeckGain(2)">
+            Reset
+          </Button>
         </div>
+        <div class="space-x-2">
+          <output>{{ deck2GainDB }}dB</output>
+        </div>
+        <div class="relative">
+          <span
+            class="absolute left-8 top-0 whitespace-nowrap text-sm font-semibold tabular-nums">
+            -24dB
+          </span>
+          <input
+            ref="deckGain"
+            :value="deck2GainValue"
+            aria-orientation="vertical"
+            data-deck="2"
+            data-max-db="24"
+            data-min-db="-24"
+            max="1"
+            min="0"
+            step="0.01"
+            type="range"
+            @input="onGainChange" />
+          <span
+            class="absolute bottom-0 left-8 whitespace-nowrap text-sm font-semibold tabular-nums">
+            +24dB
+          </span>
+        </div>
+        <audio
+          ref="deck2AudioEl"
+          controls
+          data-deck="2"
+          loop
+          src="/assets/audio.wav" />
       </div>
     </div>
+    <div></div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+input[type='range'][aria-orientation='vertical'] {
+  writing-mode: bt-lr;
+  -webkit-appearance: slider-vertical;
+  width: 12px;
+  height: 180px;
+}
+</style>
