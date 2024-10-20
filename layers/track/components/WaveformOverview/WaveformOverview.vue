@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { Track } from '~~/layers/track/types'
 import WaveformData from 'waveform-data'
-import { clamp } from '@vueuse/core'
 
 const { track } = defineProps<{ track?: Track }>()
 
@@ -153,22 +152,26 @@ watchDebounced(
     if (!uri) return
     waveformData.value ??= await setWaveformData(uri)
     resampleWaveformData(unref(waveformData), w, h)
-    // TODO: Correct the marker position after resizing
+
+    // marker
+    const elCanvas = unref(markerCanvas)
+    if (!elCanvas) return
+    const ctx = elCanvas.getContext('2d')
+    if (!ctx) return
+    const dpr = window.devicePixelRatio || 1
+    elCanvas.width = w * dpr
+    elCanvas.height = h * dpr
+    ctx.scale(dpr, dpr)
+
+    const length = unref(duration)
+    if (!length) return
+    drawMarker(ctx, currentTime.value, length, elCanvas.height, elCanvas.width)
   },
   {
     debounce: 80,
     rejectOnCancel: true
   }
 )
-
-function leftPercentFromTime(time: number): string {
-  const elContainer = unref(container)
-  const length = unref(duration)
-  if (!length || !elContainer) return '0%'
-  const containerRect = elContainer.getBoundingClientRect()
-  const containerWidth = containerRect.width
-  return `${clamp((time / length) * containerWidth, 0, containerWidth)}px`
-}
 
 let cleanupEnd: (() => void) | null = null
 
@@ -202,24 +205,26 @@ watch([width, height], ([w, h]) => {
   elCanvas.width = w * dpr
   elCanvas.height = h * dpr
   ctx.scale(dpr, dpr)
-  drawMarker(ctx, h)
 })
 
 watch(currentTime, (time) => {
   const elCanvas = unref(markerCanvas)
   if (!elCanvas) return
   const ctx = elCanvas.getContext('2d')
-  if (!ctx) return
-  drawMarker(ctx, elCanvas.height)
+  const length = unref(duration)
+  if (!ctx || !length) return
+  drawMarker(ctx, time, length, elCanvas.height, elCanvas.width)
 })
 
-function drawMarker(ctx: CanvasRenderingContext2D, height: number) {
-  const elCanvas = unref(markerCanvas)
-  if (!elCanvas) return
-  const length = unref(duration)
-  if (!length) return
-  const x = (unref(currentTime) / length) * elCanvas.width
-  ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
+function drawMarker(
+  ctx: CanvasRenderingContext2D,
+  time: number,
+  length: number,
+  height: number,
+  width: number
+) {
+  const x = (time / length) * width
+  ctx.clearRect(0, 0, width, height)
 
   ctx.beginPath()
   ctx.moveTo(x, 0)
@@ -242,16 +247,25 @@ function drawMarker(ctx: CanvasRenderingContext2D, height: number) {
   ctx.fill()
 }
 
-
-const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-
-}
+watch(
+  () => track?.url,
+  () => {
+    const length = unref(duration)
+    if (!length) return
+    const canvas = unref(markerCanvas)
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const { width, height } = canvas
+    drawMarker(ctx, currentTime.value, length, height, width)
+  }
+)
 </script>
 
 <template>
   <div
     ref="container"
-    class="relative h-8 my-2 w-full overflow-clip">
+    class="relative my-2 h-8 w-full overflow-clip">
     <!--    <WaveformOverviewMarker-->
     <!--      v-if="isDefined(duration)"-->
     <!--      :style="markerStyle" />-->
