@@ -20,7 +20,101 @@ const interacting = defineModel<boolean>('interacting', {
   default: false
 })
 
+function resampleWaveformData(
+  data: WaveformData,
+  width: number | null = null,
+  height: number | null = null
+) {
+  const elCanvas = getCanvasElement()
+  if (!elCanvas) return
+
+  const ctx = elCanvas.getContext('2d')
+  const {
+    width: canvasWidth,
+    height: canvasHeight,
+    dpr
+  } = setupCanvasDimensions(elCanvas, width, height)
+
+  if (!ctx) return
+
+  const waveform = resampleWaveform(data, canvasWidth)
+  const channel = waveform.channel(0)
+
+  clearCanvas(ctx, canvasWidth, canvasHeight)
+
+  drawWaveform(ctx, channel, canvasHeight, waveform.length)
+}
+
+function getCanvasElement() {
+  const elCanvas = unref(waveformCanvas)
+  return elCanvas || null
+}
+
+function setupCanvasDimensions(
+  elCanvas: HTMLCanvasElement,
+  width: number | null,
+  height: number | null
+) {
+  const dpr = window.devicePixelRatio || 1
+  const canvasWidth = (width ?? elCanvas.clientWidth) * dpr
+  const canvasHeight = (height ?? elCanvas.clientHeight) * dpr
+
+  elCanvas.width = canvasWidth
+  elCanvas.height = canvasHeight
+
+  const ctx = elCanvas.getContext('2d')
+  if (ctx) {
+    ctx.scale(dpr, dpr)
+  }
+
+  return { width: canvasWidth / dpr, height: canvasHeight / dpr, dpr }
+}
+
+function resampleWaveform(data: WaveformData, canvasWidth: number) {
+  return data.resample({ width: canvasWidth })
+}
+
+function drawWaveform(
+  ctx: CanvasRenderingContext2D,
+  channel: WaveformChannel,
+  height: number,
+  length: number
+) {
+  ctx.beginPath()
+
+  loopForward(length, (x) => {
+    const max = channel.max_sample(x)
+    ctx.lineTo(x + 0.5, scaleY(max, height) + 0.5)
+  })
+
+  loopBackward(length, (x) => {
+    const min = channel.min_sample(x)
+    ctx.lineTo(x + 0.5, scaleY(min, height) + 0.5)
+  })
+
+  ctx.lineWidth = 1
+  ctx.fillStyle = '#ffffff'
+  ctx.fill()
+  ctx.closePath()
+}
+
+function clearCanvas(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  waveformData.value = null
+  ctx.clearRect(0, 0, width, height)
+}
+
+const { getAudioContext } = useSharedAudioContext()
+
+async function setWaveformData(url: string) {
+  const context = await getAudioContext()
+  const audioBuffer = await loadAudioBuffer(context, url)
+  const data = await loadWaveformData(context, audioBuffer, 700)
+  waveformData.value = data
+  return data
+}
+
 const container = useTemplateRef<HTMLDivElement>('container')
+
 const { width, height } = useElementSize(container)
 
 watch([width, height], async ([w, _h]) => {
@@ -39,69 +133,6 @@ watch(url, async (uri) => {
     waveformData.value = null
   }
 })
-function resampleWaveformData(
-  data: WaveformData,
-  width: number | null = null,
-  height: number | null = null
-) {
-  const elCanvas = unref(waveformCanvas)
-  if (!elCanvas) return
-
-  const ctx = elCanvas.getContext('2d')
-
-  width ??= elCanvas.clientWidth
-  height ??= elCanvas.clientHeight
-
-  const dpr = window.devicePixelRatio || 1
-  elCanvas.width = width * dpr
-  elCanvas.height = height * dpr
-  ctx.scale(dpr, dpr)
-
-  const waveform = data.resample({
-    width: elCanvas.width / dpr
-  })
-
-  const channel = waveform.channel(0)
-
-  ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
-  ctx.beginPath()
-
-  const { length } = waveform.toJSON()
-
-  loopForward(length, (x) => {
-    const max = channel.max_sample(x)
-    ctx.lineTo(x + 0.5, scaleY(max, height) + 0.5)
-  })
-
-  loopBackward(length, (x) => {
-    const min = channel.min_sample(x)
-    ctx.lineTo(x + 0.5, scaleY(min, height) + 0.5)
-  })
-
-  ctx.lineWidth = 1
-  ctx.fillStyle = '#ffffff'
-
-  ctx.fill()
-  ctx.closePath()
-}
-
-function clearCanvas() {
-  waveformData.value = null
-  const elCanvas = unref(waveformCanvas)
-  if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')
-  ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
-}
-
-const { getAudioContext } = useSharedAudioContext()
-
-async function setWaveformData(url: string) {
-  const context = await getAudioContext()
-  const audioBuffer = await loadAudioBuffer(context, url)
-  const data = await loadWaveformData(context, audioBuffer, 700)
-  waveformData.value = data
-  return data
-}
 
 function leftPercentFromTime(time: number): string {
   const elContainer = unref(container)
@@ -123,40 +154,6 @@ function pointermove({ clientX }: PointerEvent): void {
   currentTime.value = (left / containerWidth) * length
 }
 
-function pointerup(): void {
-  interacting.value = false
-}
-
-function pointerdown(e: PointerEvent): void {
-  interacting.value = true
-}
-
-useEventListener(container, 'pointerdown', (e) => {
-
-  const handlePointerMove = (e) => {
-    pointerdown(e);
-    pointermove(e);
-  };
-
-  const cleanupMove = useEventListener(container, 'pointermove', handlePointerMove);
-
-  const cleanupEnd = useEventListener(container, ['pointerup', 'pointerleave'], () => {
-    cleanupMove();
-    cleanupEnd();
-    pointerup();
-  });
-
-});
-
-
-useEventListener(container,'click', (e)=>{
-  onClick(e)
-})
-
-const markerStyle = computed(() => ({
-  left: leftPercentFromTime(unref(currentTime))
-}))
-
 function onClick({ clientX }: PointerEvent): void {
   const elContainer = unref(container)
   const length = unref(duration)
@@ -171,12 +168,37 @@ function onClick({ clientX }: PointerEvent): void {
     interacting.value = false
   })
 }
+
+let cleanupEnd: (() => void) | null = null
+
+useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
+  const cleanupMove = useEventListener(container, 'pointermove', (e: PointerEvent) => {
+    interacting.value = true
+    pointermove(e)
+  })
+  cleanupEnd = useEventListener(container, ['pointerup', 'pointerleave'], () => {
+    cleanupMove()
+    if (cleanupEnd) {
+      cleanupEnd()
+      cleanupEnd = null
+    }
+    interacting.value = false
+  })
+})
+
+useEventListener(container, 'click', (e: PointerEvent) => {
+  onClick(e)
+})
+
+const markerStyle = computed(() => ({
+  left: leftPercentFromTime(unref(currentTime))
+}))
 </script>
 
 <template>
   <div
     ref="container"
-    class="relative h-12 w-full overflow-clip border-t px-1 py-2">
+    class="relative h-12 w-full border-t px-1 py-2">
     <WaveformOverviewMarker
       v-if="isDefined(duration)"
       :style="markerStyle" />
