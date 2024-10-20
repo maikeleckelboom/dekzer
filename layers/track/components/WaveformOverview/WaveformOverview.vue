@@ -146,12 +146,8 @@ function onClick({ clientX }: PointerEvent): void {
   })
 }
 
-const percentByTime = computed(() => {
-  return leftPercentFromTime(unref(currentTime))
-})
-
 watchDebounced(
-  [width, height, percentByTime],
+  [width, height],
   async ([w, h]) => {
     const uri = unref(url)
     if (!uri) return
@@ -195,10 +191,6 @@ useEventListener(container, 'click', (e: PointerEvent) => {
   onClick(e)
 })
 
-const markerStyle = computed(() => ({
-  left: percentByTime.value
-}))
-
 const markerCanvas = useTemplateRef<HTMLCanvasElement>('markerCanvas')
 
 watch([width, height], ([w, h]) => {
@@ -213,6 +205,14 @@ watch([width, height], ([w, h]) => {
   drawMarker(ctx, h)
 })
 
+watch(currentTime, (time) => {
+  const elCanvas = unref(markerCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')
+  if (!ctx) return
+  drawMarker(ctx, elCanvas.height)
+})
+
 function drawMarker(ctx: CanvasRenderingContext2D, height: number) {
   const elCanvas = unref(markerCanvas)
   if (!elCanvas) return
@@ -221,32 +221,40 @@ function drawMarker(ctx: CanvasRenderingContext2D, height: number) {
   const x = (unref(currentTime) / length) * elCanvas.width
   ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
 
-
   ctx.beginPath()
   ctx.moveTo(x, 0)
   ctx.lineTo(x, height)
   ctx.lineWidth = 2
-  ctx.strokeStyle = '#ff0000'
+  ctx.strokeStyle = '#00000000'
   ctx.stroke()
+
+  const offsetFromCenter = 1
+  const h = height / 2 - offsetFromCenter
+  const w = h * 1.5
+
+  ctx.beginPath()
+  ctx.moveTo(x - w / 2, 0)
+  ctx.lineTo(x + w / 2, 0)
+  ctx.lineTo(x, h)
   ctx.closePath()
+
+  ctx.fillStyle = '#cb1d1d'
+  ctx.fill()
 }
 
-watch(currentTime, (time) => {
-  const elCanvas = unref(markerCanvas)
-  if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')
-  if (!ctx) return
-  drawMarker(ctx, elCanvas.height)
-})
+
+const drawTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+
+}
 </script>
 
 <template>
   <div
     ref="container"
-    class="relative h-12 w-full overflow-clip border-t py-2">
-<!--    <WaveformOverviewMarker-->
-<!--      v-if="isDefined(duration)"-->
-<!--      :style="markerStyle" />-->
+    class="relative h-8 my-2 w-full overflow-clip">
+    <!--    <WaveformOverviewMarker-->
+    <!--      v-if="isDefined(duration)"-->
+    <!--      :style="markerStyle" />-->
     <canvas
       ref="markerCanvas"
       class="absolute inset-0 size-full" />
