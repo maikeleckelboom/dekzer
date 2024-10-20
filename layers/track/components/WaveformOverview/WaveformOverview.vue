@@ -92,7 +92,6 @@ function drawWaveform(
 }
 
 function clearCanvas(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  waveformData.value = null
   ctx.clearRect(0, 0, width, height)
 }
 
@@ -124,12 +123,14 @@ watchDebounced(
   }
 )
 
-watch(url, async (uri) => {
+watch(url, async (uri, prevUri) => {
   if (uri) {
     waveformData.value ??= await setWaveformData(uri)
     resampleWaveformData(unref(waveformData))
-  } else {
-    clearCanvas()
+  } else if (prevUri) {
+    const elCanvas = unref(waveformCanvas)!
+    const ctx = elCanvas.getContext('2d')!
+    clearCanvas(ctx, elCanvas.width, elCanvas.height)
     waveformData.value = null
   }
 })
@@ -166,7 +167,6 @@ function leftPercentFromTime(time: number): string {
   const containerRect = elContainer.getBoundingClientRect()
   const containerWidth = containerRect.width
   return `${clamp((time / length) * containerWidth, 0, containerWidth)}px`
-
 }
 
 let cleanupEnd: (() => void) | null = null
@@ -198,7 +198,7 @@ const markerStyle = computed(() => ({
 <template>
   <div
     ref="container"
-    class="relative h-12 w-full overflow-clip border-t  py-2">
+    class="relative h-12 w-full overflow-clip border-t py-2">
     <WaveformOverviewMarker
       v-if="isDefined(duration)"
       :style="markerStyle" />
