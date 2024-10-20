@@ -131,27 +131,23 @@ function pointerdown(e: PointerEvent): void {
   interacting.value = true
 }
 
+useEventListener(container, 'pointerdown', (e) => {
 
-useEventListener(container, 'pointerdown', (e)=>{
-  pointerdown(e)
+  const handlePointerMove = (e) => {
+    pointerdown(e);
+    pointermove(e);
+  };
 
-  const cleanupPm = useEventListener(container, 'pointermove', (e)=>{
-    pointermove(e)
-  })
+  const cleanupMove = useEventListener(container, 'pointermove', handlePointerMove);
 
-  const cleanupPu = useEventListener(container, 'pointerup', (e)=>{
-    cleanupPm()
-    cleanupPu()
-    pointerup()
-  })
+  const cleanupEnd = useEventListener(container, ['pointerup', 'pointerleave'], () => {
+    cleanupMove();
+    cleanupEnd();
+    pointerup();
+  });
 
-  const cleanupPl = useEventListener(container, 'pointerleave', (e)=>{
-    cleanupPm()
-    cleanupPu()
-    pointerup()
-  })
+});
 
-})
 
 useEventListener(container,'click', (e)=>{
   onClick(e)
