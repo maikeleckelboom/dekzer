@@ -42,8 +42,8 @@ function resampleWaveformData(
 
 function setupCanvasDimensions(
   elCanvas: HTMLCanvasElement,
-  width: number | null,
-  height: number | null
+  width: number | null = null,
+  height: number | null = null
 ) {
   const dpr = window.devicePixelRatio || 1
   const canvasWidth = (width ?? elCanvas.clientWidth) * dpr
@@ -155,7 +155,7 @@ watchDebounced(
     drawMarker()
   },
   {
-    debounce: 20,
+    debounce: 80,
     rejectOnCancel: true
   }
 )
@@ -199,11 +199,20 @@ function onHoverPointerMove({ clientX }: PointerEvent): void {
   const containerWidth = containerRect.width
   const time = (left / containerWidth) * length
 
-  drawHoverFill(time)
+  drawHoverCursor(time)
 }
 
-const stopPm = useEventListener(container, 'pointermove', onHoverPointerMove)
-const stopPl = useEventListener(container, 'pointerleave', () => {
+const stopPm = useEventListener(container, 'mousemove', onHoverPointerMove)
+const stopPl = useEventListener(container, 'mouseleave', () => {
+  const elCanvas = unref(hoverCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')!
+  const { width, height } = elCanvas
+  ctx.clearRect(0, 0, width, height)
+})
+useEventListener(container, 'mousedown', () => {
+  stopPm()
+  stopPl()
   const elCanvas = unref(hoverCanvas)
   if (!elCanvas) return
   const ctx = elCanvas.getContext('2d')!
@@ -211,24 +220,25 @@ const stopPl = useEventListener(container, 'pointerleave', () => {
   ctx.clearRect(0, 0, width, height)
 })
 
-function drawHoverFill(time: number) {
+function drawHoverCursor(time: number) {
   const elCanvas = unref(hoverCanvas)
-  if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')!
-  const { width, height } = elCanvas
+  const ctx = elCanvas?.getContext('2d')
+  if (!elCanvas || !ctx) return
+
+  const { width, height } = setupCanvasDimensions(elCanvas)
 
   const x = (time / unref(duration)) * width
-  ctx.clearRect(0, 0, width, height)
+
+  const offsetFromCenter = 1
+  const h = height / 2 - offsetFromCenter
+  const w = h * 1.5
 
   ctx.beginPath()
-  ctx.moveTo(x, 0)
-  ctx.lineTo(x, height)
-  ctx.lineWidth = 2
-  ctx.strokeStyle = '#00000000'
-  ctx.stroke()
-
-  ctx.fillStyle = 'rgba(120,186,255,0.6)'
-  ctx.fillRect(0, 0, x, height)
+  ctx.moveTo(x - w / 2, 0)
+  ctx.lineTo(x + w / 2, 0)
+  ctx.lineTo(x, h)
+  ctx.fillStyle = '#494949'
+  ctx.fill()
   ctx.closePath()
 }
 
@@ -242,7 +252,7 @@ function drawMarker() {
 function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   const ctx = canvas.getContext('2d')!
 
-  const { width, height } = setupCanvasDimensions(canvas, null, null)
+  const { width, height } = setupCanvasDimensions(canvas)
 
   const time = currentTime.value
 

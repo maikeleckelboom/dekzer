@@ -4,10 +4,14 @@ import { clamp, type UseSwipeDirection } from '@vueuse/core'
 const {
   dBMin = -12,
   dBMax = 12,
+  min = 0,
+  max = 1,
   orientation = 'vertical'
 } = defineProps<{
   dBMin: number
   dBMax: number
+  min?: number
+  max?: number
   orientation?: 'horizontal' | 'vertical'
 }>()
 
@@ -17,7 +21,6 @@ const modelValue = defineModel<number>('modelValue', {
 })
 
 const isHorizontal = computed(() => orientation === 'horizontal')
-
 const orientationMultiplier = computedEager(() => (isHorizontal.value ? 1 : -1))
 
 const INITIAL_CONTAINER_SIZE = 214 as const
@@ -57,26 +60,26 @@ const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
     ref="handle"
     :class="
       cn(
-        orientation === 'horizontal'
+        isHorizontal
           ? `w-[${HANDLE_SIZE}px] top-0 flex h-full flex-row`
           : `h-[${HANDLE_SIZE}px] left-0 flex w-full flex-col`
       )
     "
     :style="{
-      [orientation === 'horizontal' ? 'left' : 'top']: `${offset}%`
+      [isHorizontal ? 'left' : 'top']: `${offset}%`
     }"
     class="absolute flex cursor-grab touch-none select-none active:cursor-grabbing">
     <div
       :class="
-        cn('bg-background', orientation === 'horizontal' ? 'h-full w-[6px]' : 'h-[6px] w-full')
+        cn('bg-background', isHorizontal ? 'h-full w-[6px]' : 'h-[6px] w-full')
       " />
     <div
       :class="
-        cn('bg-foreground', orientation === 'horizontal' ? 'h-full w-[2px]' : 'h-[2px] w-full')
+        cn('bg-foreground', isHorizontal ? 'h-full w-[2px]' : 'h-[2px] w-full')
       " />
     <div
       :class="
-        cn('bg-background', orientation === 'horizontal' ? 'h-full w-[6px]' : 'h-[6px] w-full')
+        cn('bg-background', isHorizontal ? 'h-full w-[6px]' : 'h-[6px] w-full')
       " />
   </div>
 </template>
