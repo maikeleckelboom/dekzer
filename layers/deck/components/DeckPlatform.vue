@@ -222,7 +222,25 @@ function resetDeck() {
   }
 
   tryWithoutFail(() => {
+    sourceNode.value?.disconnect()
     sourceNode.value?.stop()
+    sourceNode.value = null
+  })
+
+  tryWithoutFail(() => {
+    constantSourceNode.value?.disconnect()
+    constantSourceNode.value?.stop()
+    constantSourceNode.value = null
+  })
+
+  tryWithoutFail(() => {
+    analyserNode.value?.disconnect()
+    analyserNode.value = null
+  })
+
+  tryWithoutFail(() => {
+    analyserNodeR.value?.disconnect()
+    analyserNodeR.value = null
   })
 }
 
