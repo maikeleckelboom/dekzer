@@ -114,9 +114,14 @@ watch(url, async (uri, prevUri) => {
     resampleWaveformData(waveformData.value, width.value, height.value)
     drawMarker()
   } else if (prevUri) {
-    const elCanvas = unref(waveformCanvas)!
-    const ctx = elCanvas.getContext('2d')!
-    ctx.clearRect(0, 0, elCanvas.width, elCanvas.height)
+    const waveformCanvases = unref(waveformCanvas)!
+    const markerCanvases = unref(markerCanvas)!
+    const hoverCanvases = unref(hoverCanvas)!
+
+    for (const canvas of [waveformCanvases, markerCanvases, hoverCanvases]) {
+      clearCanvas(canvas)
+    }
+
     waveformData.value = null
   }
 })
@@ -160,15 +165,16 @@ watchDebounced(
   }
 )
 
-useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
-  pdEvent.preventDefault()
+useEventListener(container, 'pointerdown', (startEvent: PointerEvent) => {
+  startEvent.preventDefault()
 
   if (container.value?.setPointerCapture) {
-    container.value?.setPointerCapture(pdEvent.pointerId)
+    container.value?.setPointerCapture(startEvent.pointerId)
   }
-  const cleanupMove = useEventListener(container, 'pointermove', (e: PointerEvent) => {
+
+  const cleanupMove = useEventListener(container, 'pointermove', (event: PointerEvent) => {
     interacting.value = true
-    pointermove(e)
+    pointermove(event)
   })
 
   useEventListener(container, ['pointerup', 'pointercancel'], () => {
@@ -176,7 +182,7 @@ useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
     interacting.value = false
 
     if (container.value?.releasePointerCapture) {
-      container.value?.releasePointerCapture(pdEvent.pointerId)
+      container.value?.releasePointerCapture(startEvent.pointerId)
     }
   })
 })
@@ -199,6 +205,7 @@ function onMousemove({ clientX }: MouseEvent): void {
   const time = (left / containerWidth) * length
   drawHoverCursor(time)
 }
+
 function clearCanvas(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d')!
   const { width, height } = setupCanvasDimensions(canvas)
@@ -207,7 +214,7 @@ function clearCanvas(canvas: HTMLCanvasElement) {
 
 useEventListener(container, 'mousemove', onMousemove)
 
-useEventListener(container, ['mouseleave','pointermove'], () => {
+useEventListener(container, ['mouseleave', 'pointermove'], () => {
   const elCanvas = unref(hoverCanvas)
   if (!elCanvas) return
   clearCanvas(elCanvas)
@@ -238,8 +245,8 @@ function drawHoverCursor(time: number) {
 function drawMarker() {
   const elCanvas = unref(markerCanvas)
   if (!elCanvas) return
-  const duration = unref(track).format.duration
-  drawTriangle(elCanvas, duration)
+  const length = unref(duration)
+  drawTriangle(elCanvas, length)
 }
 
 function drawTriangle(canvas: HTMLCanvasElement, length: number) {
@@ -254,7 +261,7 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
 
   const offsetFromCenter = 1
   const h = height / 2 - offsetFromCenter
-  const w = h * 1.5
+  const w = h * 1.3
 
   ctx.beginPath()
   ctx.moveTo(x - w / 2, 0)
@@ -262,7 +269,7 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   ctx.lineTo(x, h)
   ctx.closePath()
 
-  ctx.fillStyle = '#c02424'
+  ctx.fillStyle = '#c53636'
   ctx.fill()
 }
 </script>

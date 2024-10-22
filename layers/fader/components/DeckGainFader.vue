@@ -17,20 +17,12 @@ const gainNode = shallowRef<GainNode | null>(null)
 
 <template>
   <GainFaderRoot>
-    <GainFaderOutputChannel
-      :dBMax="TRACK_GAIN_MAX"
-      :dBMin="TRACK_GAIN_MIN"
-      :model-value="channels.at(0)"
-      :title="channels.at(0)" />
+    <GainFaderOutputChannel :model-value="channels.at(0)" />
     <GainFaderHandle
       v-model="gainValue"
       :dBMax="TRACK_GAIN_MAX"
       :dBMin="TRACK_GAIN_MIN"
       :title="gainValue" />
-    <GainFaderOutputChannel
-      :dBMax="TRACK_GAIN_MAX"
-      :dBMin="TRACK_GAIN_MIN"
-      :model-value="channels.at(1)"
-      :title="channels.at(1)" />
+    <GainFaderOutputChannel :model-value="channels.at(1)" />
   </GainFaderRoot>
 </template>

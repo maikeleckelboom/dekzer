@@ -18,8 +18,6 @@ const gainValue = useState<number>(`master-gain-fader-${uid}`, () => MASTER_GAIN
 <template>
   <GainFaderRoot orientation="horizontal">
     <GainFaderOutputChannel
-      :dBMax="MASTER_GAIN_MAX"
-      :dBMin="MASTER_GAIN_MIN"
       :model-value="channels.at(0)"
       :orientation="MASTER_GAIN_ORIENTATION" />
     <GainFaderHandle
@@ -29,8 +27,6 @@ const gainValue = useState<number>(`master-gain-fader-${uid}`, () => MASTER_GAIN
       :orientation="MASTER_GAIN_ORIENTATION"
       :title="gainValue" />
     <GainFaderOutputChannel
-      :dBMax="MASTER_GAIN_MAX"
-      :dBMin="MASTER_GAIN_MIN"
       :model-value="channels.at(1)"
       :orientation="MASTER_GAIN_ORIENTATION" />
   </GainFaderRoot>

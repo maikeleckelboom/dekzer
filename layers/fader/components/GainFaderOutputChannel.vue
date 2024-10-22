@@ -9,7 +9,7 @@ interface SegmentMeterProps {
 }
 
 const {
-  dBMin = -48,
+  dBMin = -38,
   dBMax = 0,
   segments = 40,
   orientation = 'vertical'
@@ -71,22 +71,23 @@ function getClosestColor(value: number): string {
     return color
   }
 
+  const normalized = normalize(value)
+
   if (color && color.start && color.end) {
-    return interpolateColor(color.start, color.end, normalize(value))
+    return interpolateColor(color.start, color.end, normalized)
   }
 
   return ''
 }
 
 function segmentStyle(segment: number): Record<string, string> {
-  return modelValue.value >= segment ? { backgroundColor: getClosestColor(segment) } : {}
+	return modelValue.value >= segment ? { backgroundColor: getClosestColor(segment) } : {}
 }
 </script>
 
 <template>
   <div
-    :class="cn(orientation === 'horizontal' ? 'flex-row' : 'flex-col')"
-    class="flex size-fit">
+    :class="cn('flex', orientation === 'horizontal' ? 'flex-row' : 'flex-col')">
     <div
       v-for="segment in bars"
       :key="segment"
@@ -96,6 +97,6 @@ function segmentStyle(segment: number): Record<string, string> {
         )
       "
       :style="segmentStyle(segment)"
-      class="bg-muted/75 last:mb-0 last:mr-0" />
+      class="bg-muted/80 last:mb-0 last:mr-0" />
   </div>
 </template>

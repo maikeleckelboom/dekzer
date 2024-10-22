@@ -12,7 +12,7 @@ const modelValue = defineModel<FaderProps, 'modelValue'>({ type: Number })
 <template>
   <div
     :class="cn(orientation === 'horizontal' ? 'flex-col' : 'flex-row')"
-    class="relative flex size-fit select-none gap-0.5 touch-none">
+    class="relative flex size-fit touch-none select-none gap-0.5">
     <slot />
   </div>
 </template>
