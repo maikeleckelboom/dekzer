@@ -139,8 +139,8 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
 </script>
 
 <template>
-  <div class="grid w-full max-w-7xl grid-cols-[1fr,auto] gap-8">
-    <div class=" flex  flex-col gap-4 p-2 md:p-8">
+  <div class="grid w-full max-w-7xl p-2 md:p-4 grid-cols-[1fr,auto,auto] mx-auto gap-8">
+    <div class=" flex  flex-col gap-4 ">
       <fieldset class="flex flex-col border-4 p-2 md:p-8">
         <legend class="text-3xl font-bold tracking-tight">Gain Nodes</legend>
         <!-- Master Gain -->
@@ -366,7 +366,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
       </fieldset>
     </div>
-    <div class=" flex  flex-col gap-4 p-2 md:p-8">
+    <div class=" flex  flex-col gap-4 ">
 
       <fieldset class="flex flex-col border-4 p-4 ">
         <legend class="text-2xl font-bold tracking-tight">
@@ -405,6 +405,8 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
       </fieldset>
     </div>
+    <AudioGraphMarkdown />
+
   </div>
 </template>
 
