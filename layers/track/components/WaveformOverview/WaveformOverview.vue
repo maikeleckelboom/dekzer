@@ -189,35 +189,28 @@ watch(currentTime, drawMarker, { immediate: true })
 
 const hoverCanvas = useTemplateRef<HTMLCanvasElement>('hoverCanvas')
 
-function onHoverPointerMove({ clientX }: PointerEvent): void {
+function onMousemove({ clientX }: MouseEvent): void {
   const elContainer = unref(container)
   const length = unref(duration)
   if (!elContainer || !length) return
   const containerRect = elContainer.getBoundingClientRect()
-  // a fill from start to current time
   const left = clientX - containerRect.left
   const containerWidth = containerRect.width
   const time = (left / containerWidth) * length
-
   drawHoverCursor(time)
 }
+function clearCanvas(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d')!
+  const { width, height } = setupCanvasDimensions(canvas)
+  ctx.clearRect(0, 0, width, height)
+}
 
-const stopPm = useEventListener(container, 'mousemove', onHoverPointerMove)
-const stopPl = useEventListener(container, 'mouseleave', () => {
+useEventListener(container, 'mousemove', onMousemove)
+
+useEventListener(container, ['mouseleave','pointermove'], () => {
   const elCanvas = unref(hoverCanvas)
   if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')!
-  const { width, height } = elCanvas
-  ctx.clearRect(0, 0, width, height)
-})
-useEventListener(container, 'mousedown', () => {
-  stopPm()
-  stopPl()
-  const elCanvas = unref(hoverCanvas)
-  if (!elCanvas) return
-  const ctx = elCanvas.getContext('2d')!
-  const { width, height } = elCanvas
-  ctx.clearRect(0, 0, width, height)
+  clearCanvas(elCanvas)
 })
 
 function drawHoverCursor(time: number) {
@@ -237,7 +230,7 @@ function drawHoverCursor(time: number) {
   ctx.moveTo(x - w / 2, 0)
   ctx.lineTo(x + w / 2, 0)
   ctx.lineTo(x, h)
-  ctx.fillStyle = '#494949'
+  ctx.fillStyle = '#222125'
   ctx.fill()
   ctx.closePath()
 }
@@ -259,13 +252,6 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   const x = (time / length) * width
   ctx.clearRect(0, 0, width, height)
 
-  ctx.beginPath()
-  ctx.moveTo(x, 0)
-  ctx.lineTo(x, height)
-  ctx.lineWidth = 1
-  ctx.strokeStyle = '#00000000'
-  ctx.stroke()
-
   const offsetFromCenter = 1
   const h = height / 2 - offsetFromCenter
   const w = h * 1.5
@@ -276,7 +262,7 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   ctx.lineTo(x, h)
   ctx.closePath()
 
-  ctx.fillStyle = '#e32e2e'
+  ctx.fillStyle = '#c02424'
   ctx.fill()
 }
 </script>
