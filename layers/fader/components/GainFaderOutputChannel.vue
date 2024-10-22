@@ -71,10 +71,8 @@ function getClosestColor(value: number): string {
     return color
   }
 
-  const normalized = normalize(value)
-
   if (color && color.start && color.end) {
-    return interpolateColor(color.start, color.end, normalized)
+    return interpolateColor(color.start, color.end, normalize(value))
   }
 
   return ''

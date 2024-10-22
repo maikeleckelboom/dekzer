@@ -1,7 +1,5 @@
 
-## Dekzer Audio 🎚 🎛
-
-![speakers.svg](public/assets/speakers.svg)
+## Dekzer 🎛 🎚
 
 ### Key Components
 - **Master Gain Fader**: Controls the overall output level for all connected decks. Range: -24dB to +24dB.
