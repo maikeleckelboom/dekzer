@@ -55,7 +55,6 @@ export const useSharedAudioGraph = createSharedComposable(
       connections.value = [...connections.value, destination]
     }
 
-
     return {
       connections,
       source,

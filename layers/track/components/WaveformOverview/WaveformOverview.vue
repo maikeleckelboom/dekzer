@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { Track } from '~~/layers/track/types'
 import WaveformData from 'waveform-data'
+import { calculateScaleFromPixelsPerSecond, calculateWaveformScale } from '~/utils/waveformUtils'
 
 const { track } = defineProps<{ track?: Track }>()
 
@@ -31,6 +32,8 @@ function resampleWaveformData(
   const ctx = elCanvas.getContext('2d')!
   const { width, height } = setupCanvasDimensions(elCanvas, canvasWidth, canvasHeight)
 
+  canvasWidth ??= width
+  console.log('canvasWidth', canvasWidth, data.toJSON())
   const waveform = resampleWaveform(data, canvasWidth)
   const channel = waveform.channel(0)
 
@@ -57,7 +60,7 @@ function setupCanvasDimensions(
 }
 
 function resampleWaveform(data: WaveformData, canvasWidth: number) {
-  if(!canvasWidth) return data
+  if (!canvasWidth) return data
   return data.resample({ width: canvasWidth })
 }
 
@@ -88,9 +91,14 @@ function drawWaveform(
 const { getAudioContext } = useSharedAudioContext()
 
 async function setWaveformData(url: string) {
+  if(!track?.format?.duration) return
   const context = await getAudioContext()
+  const canvasWidth = unref(waveformCanvas)?.clientWidth
   const audioBuffer = await loadAudioBuffer(context, url)
-  const data = await loadWaveformData(context, audioBuffer, 256)
+ const pixelsPerSecond = canvasWidth / audioBuffer.length
+  const sampleRate = audioBuffer.sampleRate
+  const s = calculateScaleFromPixelsPerSecond(pixelsPerSecond, sampleRate)
+  const data = await loadWaveformData(context, audioBuffer, s)
   waveformData.value = data
   return data
 }
@@ -102,7 +110,7 @@ const { width, height } = useElementSize(container)
 watch(url, async (uri, prevUri) => {
   if (uri) {
     waveformData.value ??= await setWaveformData(uri)
-    resampleWaveformData(unref(waveformData))
+    resampleWaveformData(waveformData.value!, width.value, height.value)
   } else if (prevUri) {
     const elCanvas = unref(waveformCanvas)!
     const ctx = elCanvas.getContext('2d')!
@@ -142,7 +150,7 @@ watchDebounced(
     const uri = unref(url)
     if (!uri) return
     waveformData.value ??= await setWaveformData(uri)
-    resampleWaveformData(unref(waveformData), w, h)
+    resampleWaveformData(waveformData.value, w, h)
   },
   {
     debounce: 100,
@@ -151,13 +159,23 @@ watchDebounced(
 )
 
 useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
+  pdEvent.preventDefault()
+
+  if(container.value?.setPointerCapture) {
+    container.value?.setPointerCapture(pdEvent.pointerId)
+  }
   const cleanupMove = useEventListener(container, 'pointermove', (e: PointerEvent) => {
     interacting.value = true
     pointermove(e)
   })
-  useEventListener(container, ['pointerup', 'pointerleave'], () => {
+
+  useEventListener(container, ['pointerup', 'pointercancel'], () => {
     cleanupMove()
     interacting.value = false
+
+    if(container.value?.releasePointerCapture) {
+      container.value?.releasePointerCapture(pdEvent.pointerId)
+    }
   })
 })
 
@@ -179,6 +197,51 @@ watch([width, height], ([w, h]) => {
 })
 
 watch(currentTime, drawMarker)
+
+const hoverCanvas = useTemplateRef<HTMLCanvasElement>('hoverCanvas')
+
+function onHoverPointerMove({ clientX }: PointerEvent): void {
+  const elContainer = unref(container)
+  const length = unref(duration)
+  if (!elContainer || !length) return
+  const containerRect = elContainer.getBoundingClientRect()
+  // a fill from start to current time
+  const left = clientX - containerRect.left
+  const containerWidth = containerRect.width
+  const time = (left / containerWidth) * length
+
+  drawHoverFill(time)
+}
+
+const stopPm = useEventListener(container, 'pointermove', onHoverPointerMove)
+const stopPl = useEventListener(container, 'pointerleave', () => {
+  const elCanvas = unref(hoverCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')!
+  const { width, height } = elCanvas
+  ctx.clearRect(0, 0, width, height)
+})
+
+function drawHoverFill(time: number) {
+  const elCanvas = unref(hoverCanvas)
+  if (!elCanvas) return
+  const ctx = elCanvas.getContext('2d')!
+  const { width, height } = elCanvas
+
+  const x = (time / unref(duration)) * width
+  ctx.clearRect(0, 0, width, height)
+
+  ctx.beginPath()
+  ctx.moveTo(x, 0)
+  ctx.lineTo(x, height)
+  ctx.lineWidth = 2
+  ctx.strokeStyle = '#00000000'
+  ctx.stroke()
+
+  ctx.fillStyle = 'rgba(120,186,255,0.6)'
+  ctx.fillRect(0, 0, x, height)
+  ctx.closePath()
+}
 
 function drawMarker() {
   const elCanvas = unref(markerCanvas)
@@ -204,7 +267,7 @@ function drawTriangle(canvas: HTMLCanvasElement, time: number, length: number) {
 
   const offsetFromCenter = 1
   const h = height / 2 - offsetFromCenter
-  const w = h * 1.5
+  const w = h * 1.25
 
   ctx.beginPath()
   ctx.moveTo(x - w / 2, 0)
@@ -220,7 +283,8 @@ watch(
   () => track?.url,
   () => {
     drawMarker()
-  }
+  },
+  { immediate: true }
 )
 </script>
 
@@ -228,6 +292,9 @@ watch(
   <div
     ref="container"
     class="relative my-2 h-8 w-full overflow-clip">
+    <canvas
+      ref="hoverCanvas"
+      class="absolute inset-0 size-full" />
     <canvas
       ref="markerCanvas"
       class="absolute inset-0 size-full" />
