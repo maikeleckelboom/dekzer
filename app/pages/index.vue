@@ -31,6 +31,8 @@ const { tracks } = storeToRefs(trackStore)
     </div>
     <div class="flex flex-col">
       <!-- Tracks Table/List -->
+
+      <FaderDemo/>
     </div>
   </div>
 </template>

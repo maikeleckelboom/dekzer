@@ -193,8 +193,7 @@ whenever(track, async ({ url }) => {
 })
 
 onMounted(async () => {
-  const context = await getAudioContext()
-
+  // const context = await getAudioContext()
   // const gain = new GainNode(context)
   // deckGainNodes.value.push(gain)
   // gain.connect(masterGainNode.value)
@@ -210,6 +209,7 @@ onBeforeUnmount(() => {
 function resetDeck() {
   stopPlaying()
   stop()
+
   currentTime.value = 0
   audioBuffer.value = null
   playing.value = false
