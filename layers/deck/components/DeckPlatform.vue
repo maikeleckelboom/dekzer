@@ -254,7 +254,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
           cn('flex flex-wrap justify-end gap-2 p-2', deck.index % 2 === 0 && 'md:flex-row-reverse')
         ">
         <DeckButton
-          :disabled="!loaded"
+         v-if="track"
           @click="ejectTrack">
           Eject
         </DeckButton>

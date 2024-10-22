@@ -9,7 +9,7 @@ interface SegmentMeterProps {
 }
 
 const {
-  dBMin = -60,
+  dBMin = -48,
   dBMax = 0,
   segments = 40,
   orientation = 'vertical'
@@ -98,6 +98,6 @@ function segmentStyle(segment: number): Record<string, string> {
         )
       "
       :style="segmentStyle(segment)"
-      class="bg-muted/75 last:mb-0" />
+      class="bg-muted/75 last:mb-0 last:mr-0" />
   </div>
 </template>

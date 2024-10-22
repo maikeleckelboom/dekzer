@@ -27,7 +27,7 @@ const offset = ref<number>(getInitialOffset(modelValue.value, dBMin, dBMax))
 
 const offsetStart = ref<number>(0)
 const target = useTemplateRef<HTMLDivElement>('handle')
-const { distanceY, isSwiping } = usePointerSwipe(target, {
+const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
   disableTextSelect: true,
   threshold: 0,
   onSwipeStart(event: PointerEvent) {
@@ -35,12 +35,15 @@ const { distanceY, isSwiping } = usePointerSwipe(target, {
     offsetStart.value = offset.value
   },
   onSwipe(_: PointerEvent, direction: UseSwipeDirection) {
-    const multiplier = direction === 'down' ? 1 : -1
-    const progress = offsetStart.value + ((multiplier * distanceY.value) / CONTAINER_SIZE) * 100
+    const side = orientation === 'horizontal' ? 'x' : 'y'
+    const multiplier = direction === 'up' || direction === 'left' ? 1 : -1
+    const sideValue = side === 'x' ? distanceX.value : distanceY.value
+    const progress = offsetStart.value + ((multiplier * sideValue) / CONTAINER_SIZE) * 100
     const delta = (HANDLE_SIZE / CONTAINER_SIZE) * 100
     const converted = convertRange(0, 100 - HANDLE_SIZE, dBMin, dBMax, offset.value)
     offset.value = clamp(progress, 0, 100 - delta)
-    modelValue.value = clamp(converted * -1, dBMin, dBMax)
+    const modelValueMultiplier = orientation === 'vertical' ? -1 : 1
+    modelValue.value = clamp(converted * modelValueMultiplier, dBMin, dBMax)
   }
 })
 </script>
@@ -48,31 +51,35 @@ const { distanceY, isSwiping } = usePointerSwipe(target, {
 <template>
   <div
     ref="handle"
+    :class="
+      cn(
+        orientation === 'horizontal'
+          ? `w-[${HANDLE_SIZE}px] top-0 flex h-full flex-row`
+          : `h-[${HANDLE_SIZE}px] left-0 flex w-full flex-col`
+      )
+    "
     :style="{
-      [orientation === 'horizontal' ? 'left' : 'top']: `${clamp(offset, 0, 100)}%`,
-      [orientation === 'horizontal' ? 'top' : 'left']: '0',
-      [orientation === 'horizontal' ? 'transform' : '']: `translate(-50%, -50%)`
+      [orientation === 'horizontal' ? 'left' : 'top']: `${offset}%`
     }"
-    class="absolute left-0 top-0 w-full cursor-grab touch-none select-none active:cursor-grabbing">
+    class="absolute flex cursor-grab touch-none select-none active:cursor-grabbing">
     <div
       :class="
         cn(
-          isSwiping ? 'bg-background/80' : 'bg-background/50',
-          orientation === 'horizontal' ? 'w-[6px] h-full' : 'h-[6px] w-full'
+          isSwiping ? 'bg-background/80' : 'bg-background/60',
+          orientation === 'horizontal' ? 'h-full w-[6px]' : 'h-[6px] w-full'
         )
       " />
     <div
       :class="
         cn(
           orientation === 'horizontal' ? 'h-full w-[2px]' : 'h-[2px] w-full',
-          isSwiping ? 'bg-foreground/80' : 'bg-foreground/50'
+          isSwiping ? 'bg-foreground/80' : 'bg-foreground/60'
         )
-      "
-      class="bg-foreground" />
+      " />
     <div
       :class="
         cn(
-          isSwiping ? 'bg-background/80' : 'bg-background/50',
+          isSwiping ? 'bg-background/80' : 'bg-background/60',
           orientation === 'horizontal' ? 'h-full w-[6px]' : 'h-[6px] w-full'
         )
       " />
