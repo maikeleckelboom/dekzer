@@ -18,7 +18,7 @@ function getInitialTop(value: number, min: number, max: number) {
   return ((dBMax - value) / (max - min)) * 100 - (HANDLE_HEIGHT / CONTAINER_HEIGHT) * 100
 }
 
-const top = shallowRef<number>(getInitialTop(modelValue.value, dBMin, dBMax))
+const offset = shallowRef<number>(getInitialTop(modelValue.value, dBMin, dBMax))
 
 const offsetStart = shallowRef<number>(0)
 const target = useTemplateRef<HTMLDivElement>('handle')

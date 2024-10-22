@@ -1,13 +1,8 @@
-import WaveformData, { type WaveformDataAudioBufferOptions, type WaveformDataAudioContextOptions } from 'waveform-data'
+import WaveformData, {
+  type WaveformDataAudioBufferOptions,
+  type WaveformDataAudioContextOptions
+} from 'waveform-data'
 
-/**
- * Generate waveform data from an audio buffer.
- *
- * @param audioContext
- * @param audioBuffer
- * @param scale
- * @param amplitudeScale
- */
 export async function loadWaveformData(
   audioContext: AudioContext,
   audioBuffer: AudioBuffer,
@@ -27,13 +22,6 @@ export async function loadWaveformData(
   })
 }
 
-/**
- * Calculate the waveform scale using pixels_per_second.
- *
- * @param sampleRate - The sample rate of the audio (e.g., 44100 for 44.1kHz).
- * @param pixelsPerSecond - The number of pixels representing one second of audio.
- * @returns The calculated scale (number of samples per output waveform data point).
- */
 export function calculateScaleFromPixelsPerSecond(
   sampleRate: number,
   pixelsPerSecond: number

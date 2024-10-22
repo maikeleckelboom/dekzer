@@ -4,7 +4,7 @@ import { clamp } from '@vueuse/core'
 interface SegmentMeterProps {
   dBMin?: number
   dBMax?: number
-  orient?: 'horizontal' | 'vertical'
+  orientation?: 'horizontal' | 'vertical'
   segments?: number
 }
 
@@ -12,7 +12,7 @@ const {
   dBMin = -60,
   dBMax = 0,
   segments = 40,
-  orient = 'vertical'
+  orientation = 'vertical'
 } = defineProps<SegmentMeterProps>()
 
 const modelValue = defineModel<number>('modelValue', {
@@ -86,11 +86,18 @@ function segmentStyle(segment: number): Record<string, string> {
 </script>
 
 <template>
-  <div class="flex size-fit flex-col">
+  <div
+    :class="cn(orientation === 'horizontal' ? 'flex-row' : 'flex-col')"
+    class="flex size-fit">
     <div
       v-for="segment in bars"
       :key="segment"
+      :class="
+        cn(
+          orientation === 'horizontal' ? 'mr-[3px] h-[14px] w-[2px]' : 'mb-[3px] h-[2px] w-[14px]'
+        )
+      "
       :style="segmentStyle(segment)"
-      class="bg-muted/75 mb-[3px] h-[2px] w-[14px] last:mb-0" />
+      class="bg-muted/75 last:mb-0" />
   </div>
 </template>

@@ -3,7 +3,7 @@ interface Props {
   channels: [number, number]
 }
 
-const { channels = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY] } = defineProps<Props>()
+const { channels  } = defineProps<Props>()
 
 const MASTER_GAIN_DEFAULT = 3 as const
 const MASTER_GAIN_MIN: number = -12 as const
@@ -15,12 +15,21 @@ const gainValue = useState<number>(`master-gain-fader-${uid}`, () => MASTER_GAIN
 
 <template>
   <GainFaderRoot orientation="horizontal">
-    <GainFaderOutputChannel :model-value="channels.at(0)" />
+    <GainFaderOutputChannel
+      :dBMax="MASTER_GAIN_MAX"
+      :dBMin="MASTER_GAIN_MIN"
+      :model-value="channels.at(0)"
+      orientation="horizontal" />
     <GainFaderHandle
       v-model="gainValue"
-      :max="MASTER_GAIN_MAX"
-      :min="MASTER_GAIN_MIN"
+      :dBMax="MASTER_GAIN_MAX"
+      :dBMin="MASTER_GAIN_MIN"
+      orientation="horizontal"
       :title="gainValue" />
-    <GainFaderOutputChannel :model-value="channels.at(1)" />
+    <GainFaderOutputChannel
+      :dBMax="MASTER_GAIN_MAX"
+      :dBMin="MASTER_GAIN_MIN"
+      :model-value="channels.at(1)"
+      orientation="horizontal" />
   </GainFaderRoot>
 </template>

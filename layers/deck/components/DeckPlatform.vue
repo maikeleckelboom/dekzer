@@ -237,11 +237,11 @@ const bpm = computedEager(() => track.value?.common.bpm)
 
 <template>
   <DeckRoot
-    :class="cn('even:flex-row-reverse')"
+    :class="cn('md:even:flex-row-reverse')"
     :disabled="!loaded"
     class="flex bg-black"
     @load="createAndLoadTrack">
-    <div class="flex w-full flex-col">
+    <div class="flex w-full flex-col overflow-hidden relative">
       <TrackTitleBar :track="track" />
       <WaveformOverview
         v-model:current-time="currentTime"
@@ -251,7 +251,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
 
       <div
         :class="
-          cn('flex flex-wrap justify-end gap-2 p-2', deck.index % 2 === 0 && 'flex-row-reverse')
+          cn('flex flex-wrap justify-end gap-2 p-2', deck.index % 2 === 0 && 'md:flex-row-reverse')
         ">
         <DeckButton
           :disabled="!loaded"
@@ -266,7 +266,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
     </div>
     <div
       :class="
-        cn('flex w-fit flex-nowrap gap-4 p-2 md:p-2', deck.index % 2 === 0 && 'flex-row-reverse')
+        cn('flex w-fit flex-nowrap gap-4 p-2 md:p-2', deck.index % 2 === 0 && 'md:flex-row-reverse')
       ">
       <VirtualDeck
         v-model:currentTime="currentTime"

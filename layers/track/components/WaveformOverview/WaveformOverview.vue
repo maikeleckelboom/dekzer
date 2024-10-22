@@ -112,6 +112,7 @@ watch(url, async (uri, prevUri) => {
   if (uri) {
     waveformData.value = await setWaveformData(uri)
     resampleWaveformData(waveformData.value, width.value, height.value)
+    drawMarker()
   } else if (prevUri) {
     const elCanvas = unref(waveformCanvas)!
     const ctx = elCanvas.getContext('2d')!
@@ -180,12 +181,9 @@ useEventListener(container, 'pointerdown', (pdEvent: PointerEvent) => {
   })
 })
 
-useEventListener(container, 'click', (e: PointerEvent) => {
-  onClick(e)
-})
+useEventListener(container, 'click', onClick)
 
 const markerCanvas = useTemplateRef<HTMLCanvasElement>('markerCanvas')
-
 
 watch(currentTime, drawMarker, { immediate: true })
 
@@ -244,9 +242,7 @@ function drawMarker() {
 function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   const ctx = canvas.getContext('2d')!
 
-  // scale dpr
   const { width, height } = setupCanvasDimensions(canvas, null, null)
-
 
   const time = currentTime.value
 
@@ -270,9 +266,8 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
   ctx.lineTo(x, h)
   ctx.closePath()
 
-  ctx.fillStyle = '#cb1d1d'
+  ctx.fillStyle = '#e32e2e'
   ctx.fill()
-
 }
 </script>
 
