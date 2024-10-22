@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 interface Props {
-  channels?: [number, number]
+  channels: [number, number]
 }
 
 const { channels = [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY] } = defineProps<Props>()
@@ -20,8 +20,8 @@ const gainNode = shallowRef<GainNode | null>(null)
     <GainFaderOutputChannel :model-value="channels.at(0)" />
     <GainFaderHandle
       v-model="gainValue"
-      :dBMax="TRACK_GAIN_MAX"
-      :dBMin="TRACK_GAIN_MIN"
+      :dbMax="TRACK_GAIN_MAX"
+      :dbMin="TRACK_GAIN_MIN"
       :title="gainValue" />
     <GainFaderOutputChannel :model-value="channels.at(1)" />
   </GainFaderRoot>

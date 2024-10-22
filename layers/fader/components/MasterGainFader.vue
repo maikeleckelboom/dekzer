@@ -1,15 +1,16 @@
 <script lang="ts" setup>
+import {
+  MASTER_GAIN_DEFAULT,
+  MASTER_GAIN_MAX,
+  MASTER_GAIN_MIN,
+  MASTER_GAIN_ORIENTATION
+} from '~~/layers/fader/components/utils/constants'
+
 interface Props {
   channels: [number, number]
 }
 
 const { channels } = defineProps<Props>()
-
-const MASTER_GAIN_DEFAULT = 3 as const
-const MASTER_GAIN_MIN: number = -12 as const
-const MASTER_GAIN_MAX: number = 12 as const
-
-const MASTER_GAIN_ORIENTATION = 'horizontal' as const
 
 const uid = useId()
 const gainValue = useState<number>(`master-gain-fader-${uid}`, () => MASTER_GAIN_DEFAULT)
@@ -22,8 +23,8 @@ const gainValue = useState<number>(`master-gain-fader-${uid}`, () => MASTER_GAIN
       :orientation="MASTER_GAIN_ORIENTATION" />
     <GainFaderHandle
       v-model="gainValue"
-      :dBMax="MASTER_GAIN_MAX"
-      :dBMin="MASTER_GAIN_MIN"
+      :dbMax="MASTER_GAIN_MAX"
+      :dbMin="MASTER_GAIN_MIN"
       :orientation="MASTER_GAIN_ORIENTATION"
       :title="gainValue" />
     <GainFaderOutputChannel

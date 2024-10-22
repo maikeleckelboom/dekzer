@@ -9,7 +9,7 @@ interface SegmentMeterProps {
 }
 
 const {
-  dBMin = -38,
+  dBMin = -48,
   dBMax = 0,
   segments = 40,
   orientation = 'vertical'
@@ -37,8 +37,8 @@ const bars = computed(() => {
 // 2 red, 4 orange, 34 green
 const colorMap = new Map([
   [0, '#f44336'],
-  [-3, '#ff9800'],
-  [-10, { start: '#129d12', end: '#97ff00' }]
+  [-3, { start: '#ffae00', end: '#ff9800' }],
+  [-10, { start: '#009600', end: '#bfff00' }]
 ])
 
 function interpolateColor(start: string, end: string, normalized: number): string {
@@ -71,10 +71,8 @@ function getClosestColor(value: number): string {
     return color
   }
 
-  const normalized = normalize(value)
-
   if (color && color.start && color.end) {
-    return interpolateColor(color.start, color.end, normalized)
+    return interpolateColor(color.start, color.end, normalize(value))
   }
 
   return ''
@@ -93,10 +91,10 @@ function segmentStyle(segment: number): Record<string, string> {
       :key="segment"
       :class="
         cn(
-          orientation === 'horizontal' ? 'mr-[3px] h-[14px] w-[2px]' : 'mb-[3px] h-[2px] w-[14px]'
+          'bg-muted/80',
+          orientation === 'horizontal' ? 'mr-[3px] h-[14px] w-[2px] last:mr-0' : 'mb-[3px] h-[2px] w-[14px] last:mb-0'
         )
       "
-      :style="segmentStyle(segment)"
-      class="bg-muted/80 last:mb-0 last:mr-0" />
+      :style="segmentStyle(segment)" />
   </div>
 </template>

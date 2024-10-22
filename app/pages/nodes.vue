@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-const MASTER_GAIN_DEFAULT: number = /* +3dB */ 0.625 as const
-const DECK_GAIN_DEFAULT: number = /* 0dB */ 0.5 as const
-const VOLUME_FADER_DEFAULT: number = /* 100% */ 1 as const
+import {
+  DECK_GAIN_DEFAULT_VALUE,
+  DECK_VOLUME_DEFAULT_VALUE,
+  MASTER_GAIN_DEFAULT_VALUE
+} from '~~/layers/fader/components/utils/constants'
 
 const masterGainNode = shallowRef<GainNode>()
 const deck1GainNode = shallowRef<GainNode>()
@@ -10,13 +12,13 @@ const deck2GainNode = shallowRef<GainNode>()
 const deck1VolumeNode = shallowRef<GainNode>()
 const deck2VolumeNode = shallowRef<GainNode>()
 
-const masterGainValue = shallowRef<number>(MASTER_GAIN_DEFAULT)
+const masterGainValue = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
 
-const deck1GainValue = shallowRef<number>(DECK_GAIN_DEFAULT)
-const deck2GainValue = shallowRef<number>(DECK_GAIN_DEFAULT)
+const deck1GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
+const deck2GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 
-const deck1VolumeValue = shallowRef<number>(VOLUME_FADER_DEFAULT)
-const deck2VolumeValue = shallowRef<number>(VOLUME_FADER_DEFAULT)
+const deck1VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const deck2VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 
 const audioCtx = shallowRef<AudioContext>()
 
@@ -110,12 +112,12 @@ function resetDeckGain(deckNum: number) {
   switch (deckNum) {
     case 1:
       const deck1Gain = unref(deck1GainNode)!
-      deck1GainValue.value = DECK_GAIN_DEFAULT
+      deck1GainValue.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(deck1Gain, 0)
       break
     case 2:
       const deck2Gain = unref(deck2GainNode)!
-      deck2GainValue.value = DECK_GAIN_DEFAULT
+      deck2GainValue.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(deck2Gain, 0)
       break
   }
@@ -139,8 +141,8 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
 </script>
 
 <template>
-  <div class="grid w-full max-w-7xl p-2 md:p-4 grid-cols-[1fr,auto,auto] mx-auto gap-8">
-    <div class=" flex  flex-col gap-4 ">
+  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr,auto,auto] gap-8 p-2 md:p-4">
+    <div class="flex flex-col gap-4">
       <fieldset class="flex flex-col border-4 p-2 md:p-8">
         <legend class="text-3xl font-bold tracking-tight">Gain Nodes</legend>
         <!-- Master Gain -->
@@ -164,22 +166,22 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 type="range"
                 @input="onGainChange" />
               <div class="flex justify-between">
-              <span
-                class="text-muted-foreground whitespace-nowrap text-xs font-semibold tabular-nums">
-                -12dB
-              </span>
                 <span
                   class="text-muted-foreground whitespace-nowrap text-xs font-semibold tabular-nums">
-                +12dB
-              </span>
+                  -12dB
+                </span>
+                <span
+                  class="text-muted-foreground whitespace-nowrap text-xs font-semibold tabular-nums">
+                  +12dB
+                </span>
               </div>
             </div>
             <Button
-              :disabled="masterGainValue === MASTER_GAIN_DEFAULT"
+              :disabled="masterGainValue === MASTER_GAIN_DEFAULT_VALUE"
               class="w-fit"
               size="xs"
               variant="outline"
-              @click="masterGainValue = MASTER_GAIN_DEFAULT">
+              @click="masterGainValue = MASTER_GAIN_DEFAULT_VALUE">
               Reset
             </Button>
           </div>
@@ -191,7 +193,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
           <!-- Deck 1 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border-2 bg-gray-400/10 p-2">
             <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
-            <div class="col-span-full flex flex-col  gap-2">
+            <div class="col-span-full flex flex-col gap-2">
               <audio
                 ref="deck1Audio"
                 controls
@@ -202,16 +204,16 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
             <section
               class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
               <div class="flex items-center justify-between gap-2">
-                <div class="flex w-full items-center justify-between gap-2 ">
+                <div class="flex w-full items-center justify-between gap-2">
                   <h4 class="text-center text-lg font-semibold">Gain</h4>
                   <output>{{ deckGainDisplay > 0 ? '+' : '' }}{{ deckGainDisplay }}dB</output>
                 </div>
               </div>
               <div class="relative m-auto w-fit">
-              <span
-                class="text-muted-foreground absolute top-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                +24dB
-              </span>
+                <span
+                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
+                  +24dB
+                </span>
                 <input
                   :value="deck1GainValue"
                   aria-orientation="vertical"
@@ -225,12 +227,12 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                   @input="onGainChange" />
                 <span
                   class="text-muted-foreground absolute bottom-2 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                -24dB
-              </span>
+                  -24dB
+                </span>
               </div>
               <div class="flex flex-col items-center">
                 <Button
-                  :disabled="deck1GainValue === DECK_GAIN_DEFAULT"
+                  :disabled="deck1GainValue === DECK_GAIN_DEFAULT_VALUE"
                   class="mr-auto"
                   size="xs"
                   variant="outline"
@@ -247,10 +249,10 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
               </div>
               <div class="grid place-items-center gap-4">
                 <div class="relative flex flex-col items-center gap-2">
-                <span
-                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  1
-                </span>
+                  <span
+                    class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
+                    1
+                  </span>
                   <input
                     :value="deck1VolumeValue"
                     aria-orientation="vertical"
@@ -262,10 +264,10 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                     @input="onDeckVolumeChange" />
                   <span
                     class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  0
-                </span>
+                    0
+                  </span>
                 </div>
-                <div class="flex flex-col items-start w-full  ">
+                <div class="flex w-full flex-col items-start">
                   <Button
                     :disabled="deck1VolumeValue === VOLUME_FADER_DEFAULT"
                     size="xs"
@@ -290,15 +292,15 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
             </div>
             <section
               class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
-              <div class="flex w-full items-center justify-between gap-2 ">
+              <div class="flex w-full items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Gain</h4>
                 <output>{{ deck2GainDB > 0 ? '+' : '' }}{{ deck2GainDB }}dB</output>
               </div>
               <div class="relative m-auto w-fit">
-              <span
-                class="text-muted-foreground absolute top-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                +24dB
-              </span>
+                <span
+                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
+                  +24dB
+                </span>
                 <input
                   :value="deck2GainValue"
                   aria-orientation="vertical"
@@ -312,12 +314,12 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                   @input="onGainChange" />
                 <span
                   class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                -24dB
-              </span>
+                  -24dB
+                </span>
               </div>
-              <div class="flex flex-col items-start w-full">
+              <div class="flex w-full flex-col items-start">
                 <Button
-                  :disabled="deck2GainValue === DECK_GAIN_DEFAULT"
+                  :disabled="deck2GainValue === DECK_GAIN_DEFAULT_VALUE"
                   size="xs"
                   variant="outline"
                   @click="resetDeckGain(2)">
@@ -327,16 +329,16 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
             </section>
             <section
               class="bg-background/35 row-start-3 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
-              <div class="flex w-full items-center justify-between gap-2 ">
+              <div class="flex w-full items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Volume</h4>
                 <output>{{ deck2VolumeValue }}</output>
               </div>
               <div class="grid place-items-center gap-4">
                 <div class="relative flex flex-col items-center gap-2">
-                <span
-                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  1
-                </span>
+                  <span
+                    class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
+                    1
+                  </span>
                   <input
                     :value="deck2VolumeValue"
                     aria-orientation="vertical"
@@ -348,10 +350,10 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                     @input="onDeckVolumeChange" />
                   <span
                     class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  0
-                </span>
+                    0
+                  </span>
                 </div>
-                <div class="flex flex-col items-start w-full">
+                <div class="flex w-full flex-col items-start">
                   <Button
                     :disabled="deck2VolumeValue === VOLUME_FADER_DEFAULT"
                     size="xs"
@@ -366,32 +368,27 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
       </fieldset>
     </div>
-    <div class=" flex  flex-col gap-4 ">
-
-      <fieldset class="flex flex-col border-4 p-4 ">
-        <legend class="text-2xl font-bold tracking-tight">
-          Values
-        </legend>
+    <div class="flex flex-col gap-4">
+      <fieldset class="flex flex-col border-4 p-4">
+        <legend class="text-2xl font-bold tracking-tight">Values</legend>
         <!-- Master Gain -->
         <!-- Deck Gain 1 & 2 -->
         <!-- Deck Volume 1 & 2 -->
         <section>
           <!-- boring small list -->
-          <ul class="grid gap-4  md:grid-cols-2">
-            <li class="flex flex-col  col-span-full">
+          <ul class="grid gap-4 md:grid-cols-2">
+            <li class="col-span-full flex flex-col">
               <h2 class="text-sm font-bold">Master Gain</h2>
-              <output>
-                {{ masterGainDisplay >= 0 ? '+' : '' }}{{ masterGainDisplay }}dB
-              </output>
+              <output> {{ masterGainDisplay >= 0 ? '+' : '' }}{{ masterGainDisplay }}dB</output>
             </li>
             <li class="flex flex-col gap-2">
               <h2 class="text-sm font-bold">Deck 1 Gain</h2>
-              <output>{{  deckGainDisplay >= 0 ? '+' : '' }}{{ deckGainDisplay }}dB</output>
+              <output>{{ deckGainDisplay >= 0 ? '+' : '' }}{{ deckGainDisplay }}dB</output>
             </li>
 
             <li class="flex flex-col gap-2">
               <h2 class="text-sm font-bold">Deck 1 Volume</h2>
-              <output>{{ deck1VolumeValue * 100 }}</output>
+              <output>{{ deck1VolumeValue }}</output>
             </li>
             <li class="flex flex-col gap-2">
               <h2 class="text-sm font-bold">Deck 2 Gain</h2>
@@ -399,14 +396,13 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
             </li>
             <li class="flex flex-col gap-2">
               <h2 class="text-sm font-bold">Deck 2 Volume</h2>
-              <output>{{ deck2VolumeValue * 100 }}</output>
+              <output>{{ deck2VolumeValue }}</output>
             </li>
           </ul>
         </section>
       </fieldset>
     </div>
     <AudioGraphMarkdown />
-
   </div>
 </template>
 
