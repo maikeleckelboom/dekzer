@@ -62,7 +62,7 @@ export function useVolumeAnalyzer(
   return {
     leftVolume: readonly(returnValueL),
     rightVolume: readonly(returnValueR),
-    start,
-    stop
+    startVolumeAnalyser: start,
+    stopVolumeAnalyser: stop
   }
 }

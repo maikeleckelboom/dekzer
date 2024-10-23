@@ -1,7 +1,7 @@
-import { useSharedAudioContext } from './useAudioContext'
+import { useAudioContext } from './useAudioContext'
 
 export function useGainNodes(deckCount: number) {
-  const { getAudioContext } = useSharedAudioContext()
+  const { getAudioContext } = useAudioContext()
   const masterGainNode = ref<GainNode | null>(null)
   const deckGainNodes = ref<GainNode[]>([])
 

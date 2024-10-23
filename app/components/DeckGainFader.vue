@@ -2,7 +2,7 @@
 import { DECK_GAIN_MAX, DECK_GAIN_MIN } from '~~/layers/fader/utils/constants'
 
 const { channels } = defineProps<{ channels: number[] }>()
-const modelValue = ref<number>(0)
+const modelValue = useState<number>(`deck-gain-fader`, () => 0)
 </script>
 
 <template>

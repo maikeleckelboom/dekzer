@@ -58,7 +58,8 @@ const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
     :aria-valuenow="modelValue"
     :class="
       cn(
-        'opacity-50 hover:opacity-100 active:opacity-100 transition-opacity ease-in-out duration-75',
+        'absolute flex cursor-grab touch-none select-none active:cursor-grabbing',
+        'opacity-50 hover:opacity-75 active:opacity-100 transition-opacity ease-in-out duration-75',
         isHorizontal
           ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full flex-row`
           : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full flex-col`
@@ -69,7 +70,6 @@ const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
       [isHorizontal ? 'left' : 'top']: `${offset}%`
     }"
     :tabindex="disabled ? -1 : 0"
-    class="absolute flex cursor-grab touch-none select-none active:cursor-grabbing"
     role="slider">
     <div :class="cn('bg-background', isHorizontal ? 'h-full w-[6px]' : 'h-[6px] w-full')" />
     <div :class="cn('bg-foreground', isHorizontal ? 'h-full w-[2px]' : 'h-[2px] w-full')" />

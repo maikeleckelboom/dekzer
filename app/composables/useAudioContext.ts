@@ -12,7 +12,7 @@ async function stopAudioContext(context: AudioContext): Promise<void> {
   }
 }
 
-export const useSharedAudioContext = createSharedComposable(
+export const useAudioContext = createSharedComposable(
   (
     options: AudioContextOptions = {
       latencyHint: 'interactive'
@@ -55,3 +55,5 @@ export const useSharedAudioContext = createSharedComposable(
     }
   }
 )
+
+export const useSharedAudioContext = useAudioContext

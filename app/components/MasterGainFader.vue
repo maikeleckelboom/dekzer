@@ -5,6 +5,7 @@ import {
   MASTER_GAIN_MIN,
   MASTER_GAIN_ORIENTATION
 } from '~~/layers/fader/utils/constants'
+import { useGainNode } from '~/composables/useGainNode'
 
 interface Props {
   channels: [number, number]
@@ -13,6 +14,7 @@ interface Props {
 const { channels } = defineProps<Props>()
 
 const modelValue = useState<number>(`master-gain-fader`, () => MASTER_GAIN_DEFAULT)
+
 </script>
 
 <template>
@@ -21,6 +23,6 @@ const modelValue = useState<number>(`master-gain-fader`, () => MASTER_GAIN_DEFAU
     :channels="channels"
     :max="MASTER_GAIN_MAX"
     :min="MASTER_GAIN_MIN"
-    :segments="30"
-    :orientation="MASTER_GAIN_ORIENTATION" />
+    :orientation="MASTER_GAIN_ORIENTATION"
+    :segments="30" />
 </template>

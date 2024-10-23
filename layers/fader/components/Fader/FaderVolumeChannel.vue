@@ -12,7 +12,7 @@ const { disabled, orientation } = injectFaderRootContext({
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 
-const { value, segments = 40 } = defineProps<{ value: number, segments?:number }>()
+const { value, segments = 40 } = defineProps<{ value: number; segments?: number }>()
 
 const dBMin = -60
 const dBMax = 0
@@ -84,18 +84,13 @@ const id = useId()
 <template>
   <div
     :id="id"
-    :class="cn('flex size-fit', isHorizontal ? 'flex-row-reverse gap-x-[3px]' : 'flex-col gap-y-[3px]')">
+    :class="
+      cn('flex size-fit', isHorizontal ? 'flex-row-reverse gap-x-[3px]' : 'flex-col gap-y-[3px]')
+    ">
     <div
       v-for="bar in bars"
       :key="bar"
-      :class="
-        cn(
-          'bg-muted/80',
-          isHorizontal
-            ? 'h-[14px] w-[2px]'
-            : 'h-[2px] w-[14px]'
-        )
-      "
+      :class="cn('bg-muted/80', isHorizontal ? 'h-[14px] w-[2px]' : 'h-[2px] w-[14px]')"
       :style="getBarStyle(bar)" />
   </div>
 </template>

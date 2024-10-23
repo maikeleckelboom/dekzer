@@ -2,6 +2,7 @@
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
 import type { Deck } from '~~/layers/deck/stores/deck'
+import DeckGainFader from '~/components/DeckGainFader.vue'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -85,7 +86,7 @@ function stopPlaying() {
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const { leftVolume, rightVolume, start, stop } = useVolumeAnalyzer(
+const { leftVolume, rightVolume, startVolumeAnalyser, stopVolumeAnalyser } = useVolumeAnalyzer(
   analyserNode,
   analyserNodeR,
   2048
@@ -122,7 +123,7 @@ async function play() {
 
   setupAnalyserNodes(context, source)
   source.connect(context.destination)
-  start()
+  startVolumeAnalyser()
 
   startTime.value = context.currentTime
   handlePlayback(context, buffer)
@@ -251,6 +252,9 @@ function ejectTrack() {
 
 const duration = computedEager(() => track.value?.format.duration)
 const bpm = computedEager(() => track.value?.common.bpm)
+
+const demoBpm = shallowRef(150)
+const tempo = shallowRef<number>(0)
 </script>
 
 <template>
@@ -259,6 +263,11 @@ const bpm = computedEager(() => track.value?.common.bpm)
     :disabled="!loaded"
     class="flex bg-black"
     @load="createAndLoadTrack">
+    <DeckTempoFader
+      :bpm="demoBpm"
+      v-model:tempo="tempo"
+      :disabled="!track"
+      class="flex flex-col gap-2 p-2" />
     <div class="flex w-full flex-col overflow-hidden relative">
       <TrackTitleBar :track="track" />
       <WaveformOverview
@@ -292,7 +301,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
         :bpm="bpm"
         :disabled="!track"
         :duration="duration" />
-      <TrackGainFader :channels="[leftVolume, rightVolume]" />
+      <DeckGainFader :channels="[leftVolume, rightVolume]" />
     </div>
   </DeckRoot>
 </template>

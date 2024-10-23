@@ -21,7 +21,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <FaderRoot v-bind="forwarded">
     <FaderTrack>
-      <FaderHandle />
+      <slot />
     </FaderTrack>
+    <FaderHandle />
   </FaderRoot>
 </template>
