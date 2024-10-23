@@ -292,7 +292,7 @@ const bpm = computedEager(() => track.value?.common.bpm)
         :bpm="bpm"
         :disabled="!track"
         :duration="duration" />
-      <DeckGainFader :channels="[leftVolume, rightVolume]" />
+      <TrackGainFader :channels="[leftVolume, rightVolume]" />
     </div>
   </DeckRoot>
 </template>

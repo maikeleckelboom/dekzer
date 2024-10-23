@@ -3,7 +3,7 @@ import {
   DECK_GAIN_DEFAULT_VALUE,
   DECK_VOLUME_DEFAULT_VALUE,
   MASTER_GAIN_DEFAULT_VALUE
-} from '~~/layers/fader/components/utils/constants'
+} from '~~/layers/fader/utils/constants'
 
 const masterGainNode = shallowRef<GainNode>()
 const deck1GainNode = shallowRef<GainNode>()
@@ -269,10 +269,10 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 </div>
                 <div class="flex w-full flex-col items-start">
                   <Button
-                    :disabled="deck1VolumeValue === VOLUME_FADER_DEFAULT"
+                    :disabled="deck1VolumeValue === DECK_VOLUME_DEFAULT_VALUE"
                     size="xs"
                     variant="outline"
-                    @click="deck1VolumeValue = VOLUME_FADER_DEFAULT">
+                    @click="deck1VolumeValue = DECK_VOLUME_DEFAULT_VALUE">
                     Reset
                   </Button>
                 </div>
@@ -355,10 +355,10 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 </div>
                 <div class="flex w-full flex-col items-start">
                   <Button
-                    :disabled="deck2VolumeValue === VOLUME_FADER_DEFAULT"
+                    :disabled="deck2VolumeValue === DECK_VOLUME_DEFAULT_VALUE"
                     size="xs"
                     variant="outline"
-                    @click="deck2VolumeValue = VOLUME_FADER_DEFAULT">
+                    @click="deck2VolumeValue = DECK_VOLUME_DEFAULT_VALUE">
                     Reset
                   </Button>
                 </div>
@@ -402,7 +402,6 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
       </fieldset>
     </div>
-    <AudioGraphMarkdown />
   </div>
 </template>
 

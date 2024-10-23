@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { Track } from '~~/layers/track/types'
 import WaveformData from 'waveform-data'
-import { calculateScaleFromPixelsPerSecond } from '~/utils/waveformUtils'
 
 const { track } = defineProps<{ track?: Track }>()
 

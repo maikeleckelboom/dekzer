@@ -4,12 +4,8 @@ export interface FaderRootProps {
   min?: number
   max?: number
   step?: number
-  inverted?: boolean
   disabled?: boolean
-  dbValues?: number[]
-  dbMin?: number
-  dbMax?: number
-  modelValue: numbe
+  modelValue: number
 }
 
 export interface FaderContext {
@@ -20,9 +16,6 @@ export interface FaderContext {
   step: Ref<number>
   disabled: Ref<boolean>
   offset: Ref<number>
-  dbValues: Ref<number[]>
-  dbMin: Ref<number>
-  dbMax: Ref<number>
   width: Ref<number>
   height: Ref<number>
 }
@@ -38,10 +31,7 @@ export const [injectFaderRootContext, provideFaderRootContext] = createContext<F
 </script>
 
 <script lang="ts" setup>
-import {
-  FADER_CONTAINER_SIZE,
-  FADER_HANDLE_SIZE
-} from '~~/layers/fader/components/utils/constants'
+import { FADER_DEFAULT_SIZE, FADER_DEFAULT_HANDLE_SIZE } from '~~/layers/fader/utils/constants'
 
 const props = withDefaults(defineProps<FaderRootProps>(), {
   orientation: 'horizontal',
@@ -49,14 +39,10 @@ const props = withDefaults(defineProps<FaderRootProps>(), {
   max: 1,
   step: 0.01,
   modelValue: 0,
-  dbValues: [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY],
-  dbMin: -12,
-  dbMax: 12,
-  disabled: false,
-  asChild: false
+  disabled: false
 })
 
-const { orientation, min, max, step, disabled, dbValues, dbMin, dbMax } = toRefs(props)
+const { orientation, min, max, step, disabled } = toRefs(props)
 
 const emits = defineEmits<FaderRootEmits>()
 const modelValue = useVModel(props, 'modelValue', emits)
@@ -69,12 +55,12 @@ if (orientation.value === 'horizontal') {
 } else {
   offset.value =
     ((max.value - modelValue.value) / (max.value - min.value)) * 100 -
-    (FADER_HANDLE_SIZE / FADER_CONTAINER_SIZE) * 100
+    (FADER_DEFAULT_HANDLE_SIZE / FADER_DEFAULT_SIZE) * 100
 }
 
-const rootDiv = useTemplateRef<HTMLDivElement>('rootDiv')
+const root = useTemplateRef<HTMLDivElement>('root')
 
-const { width, height } = useElementSize(rootDiv)
+const { width, height } = useElementSize(root)
 
 provideFaderRootContext({
   modelValue,
@@ -84,9 +70,6 @@ provideFaderRootContext({
   max,
   step,
   disabled,
-  dbValues,
-  dbMin,
-  dbMax,
   width,
   height
 })
@@ -94,16 +77,13 @@ provideFaderRootContext({
 
 <template>
   <div
-    ref="rootDiv"
+    ref="root"
     :class="
       cn(
         'relative flex size-fit touch-none select-none gap-0.5',
-        orientation === 'horizontal' ? `flex-col` : `flex-row`
+        orientation === 'horizontal' ? `flex-col max-h-fit` : `max-w-fit flex-row`
       )
-    "
-    :style="{
-      [orientation === 'horizontal' ? 'width' : 'height']: `${FADER_CONTAINER_SIZE}px`
-    }">
+    ">
     <slot />
   </div>
 </template>

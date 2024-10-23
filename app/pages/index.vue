@@ -18,21 +18,31 @@ const { decks } = storeToRefs(deckStore)
 
 const trackStore = useTrackStore()
 const { tracks } = storeToRefs(trackStore)
+
+const pannerValue = ref(0)
 </script>
 
 <template>
   <div class="flex flex-col">
-    <TopBar/>
-    <div class="grid md:divide-x md:grid-cols-2">
+    <TopBar />
+    <div class="grid md:grid-cols-2 md:divide-x">
       <DeckPlatform
         v-for="deck in decks"
         :key="deck.id"
         :deck="deck" />
     </div>
+    <div class="flex flex-row justify-center gap-2">
+      <!-- Panner -->
+      <input
+        type="range"
+        min="-1"
+        max="1"
+        step="0.01"
+        v-model="pannerValue" />
+
+    </div>
     <div class="flex flex-col">
       <!-- Tracks Table/List -->
-
-      <FaderDemo/>
     </div>
   </div>
 </template>

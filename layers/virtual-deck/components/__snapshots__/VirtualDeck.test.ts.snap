@@ -1,0 +1,111 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`VirtualDeck > renders 1`] = `
+"<div aria-disabled="true" class="relative m-auto grid place-items-center overflow-clip bg-muted border-background/80 rounded-full border aspect-square size-48 touch-none select-none md:size-48 aria-disabled:opacity-50 aria-disabled:grayscale disabled:opacity-50 disabled:grayscale"><svg viewBox="0 0 100 100" class="absolute size-full" data-name="progress-circle">
+    <circle cx="50" cy="50" r="50" stroke-dasharray="314.1592653589793" stroke-dashoffset="314.1592653589793" stroke-width="12" class="stroke-muted-foreground origin-center -rotate-90 transform fill-none"></circle>
+  </svg>
+  <div class="grid place-items-center bg-foreground z-0 size-[calc(100%-22px)] rounded-full md:size-[calc(100%-22px)] after:bg-muted-foreground after:pointer-events-none after:absolute after:size-4 after:rounded-full md:after:size-5 after:left-1/2 after:top-1/2 after:z-30 after:-translate-x-1/2 after:-translate-y-1/2" data-name="platter">
+    <div class="stylus bg-background absolute top-0 aspect-[1/8] h-1/2 w-auto origin-[50%_100%] md:aspect-[1/8]" style="transform: rotate(0deg);" data-name="stylus"></div>
+  </div>
+  <div class="opacity-0 absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <!--v-if-->
+    </div>
+    <div class="mb-4">
+      <p class="text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base">+0%</p>
+    </div>
+    <div class="mb-4">
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;
+
+exports[`VirtualDeck > renders correctly 1`] = `
+"<div aria-disabled="true" class="relative m-auto grid place-items-center overflow-clip bg-muted border-background/80 rounded-full border aspect-square size-48 touch-none select-none md:size-48 aria-disabled:opacity-50 aria-disabled:grayscale disabled:opacity-50 disabled:grayscale"><svg viewBox="0 0 100 100" class="absolute size-full" data-name="progress-circle">
+    <circle cx="50" cy="50" r="50" stroke-dasharray="314.1592653589793" stroke-dashoffset="314.1592653589793" stroke-width="12" class="stroke-muted-foreground origin-center -rotate-90 transform fill-none"></circle>
+  </svg>
+  <div class="grid place-items-center bg-foreground z-0 size-[calc(100%-22px)] rounded-full md:size-[calc(100%-22px)] after:bg-muted-foreground after:pointer-events-none after:absolute after:size-4 after:rounded-full md:after:size-5 after:left-1/2 after:top-1/2 after:z-30 after:-translate-x-1/2 after:-translate-y-1/2" data-name="platter">
+    <div class="stylus bg-background absolute top-0 aspect-[1/8] h-1/2 w-auto origin-[50%_100%] md:aspect-[1/8]" style="transform: rotate(0deg);" data-name="stylus"></div>
+  </div>
+  <div class="opacity-0 absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <!--v-if-->
+    </div>
+    <div class="mb-4">
+      <p class="text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base">+0%</p>
+    </div>
+    <div class="mb-4">
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;
+
+exports[`VirtualDeck > renders correctly with props 1`] = `
+"<div aria-disabled="true" class="relative m-auto grid place-items-center overflow-clip bg-muted border-background/80 rounded-full border aspect-square size-48 touch-none select-none md:size-48 aria-disabled:opacity-50 aria-disabled:grayscale disabled:opacity-50 disabled:grayscale" cards="[object Object],[object Object],[object Object]"><svg viewBox="0 0 100 100" class="absolute size-full" data-name="progress-circle">
+    <circle cx="50" cy="50" r="50" stroke-dasharray="314.1592653589793" stroke-dashoffset="314.1592653589793" stroke-width="12" class="stroke-muted-foreground origin-center -rotate-90 transform fill-none"></circle>
+  </svg>
+  <div class="grid place-items-center bg-foreground z-0 size-[calc(100%-22px)] rounded-full md:size-[calc(100%-22px)] after:bg-muted-foreground after:pointer-events-none after:absolute after:size-4 after:rounded-full md:after:size-5 after:left-1/2 after:top-1/2 after:z-30 after:-translate-x-1/2 after:-translate-y-1/2" data-name="platter">
+    <div class="stylus bg-background absolute top-0 aspect-[1/8] h-1/2 w-auto origin-[50%_100%] md:aspect-[1/8]" style="transform: rotate(0deg);" data-name="stylus"></div>
+  </div>
+  <div class="opacity-0 absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <!--v-if-->
+    </div>
+    <div class="mb-4">
+      <p class="text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base">+0%</p>
+    </div>
+    <div class="mb-4">
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;
+
+exports[`VirtualDeck > should render 1`] = `
+"<div aria-disabled="true" class="relative m-auto grid place-items-center overflow-clip bg-muted border-background/80 rounded-full border aspect-square size-48 touch-none select-none md:size-48 aria-disabled:opacity-50 aria-disabled:grayscale disabled:opacity-50 disabled:grayscale"><svg viewBox="0 0 100 100" class="absolute size-full" data-name="progress-circle">
+    <circle cx="50" cy="50" r="50" stroke-dasharray="314.1592653589793" stroke-dashoffset="314.1592653589793" stroke-width="12" class="stroke-muted-foreground origin-center -rotate-90 transform fill-none"></circle>
+  </svg>
+  <div class="grid place-items-center bg-foreground z-0 size-[calc(100%-22px)] rounded-full md:size-[calc(100%-22px)] after:bg-muted-foreground after:pointer-events-none after:absolute after:size-4 after:rounded-full md:after:size-5 after:left-1/2 after:top-1/2 after:z-30 after:-translate-x-1/2 after:-translate-y-1/2" data-name="platter">
+    <div class="stylus bg-background absolute top-0 aspect-[1/8] h-1/2 w-auto origin-[50%_100%] md:aspect-[1/8]" style="transform: rotate(0deg);" data-name="stylus"></div>
+  </div>
+  <div class="opacity-0 absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <!--v-if-->
+    </div>
+    <div class="mb-4">
+      <p class="text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base">+0%</p>
+    </div>
+    <div class="mb-4">
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;
+
+exports[`VirtualDeck > should render with slots 1`] = `
+"<div aria-disabled="true" class="relative m-auto grid place-items-center overflow-clip bg-muted border-background/80 rounded-full border aspect-square size-48 touch-none select-none md:size-48 aria-disabled:opacity-50 aria-disabled:grayscale disabled:opacity-50 disabled:grayscale"><svg viewBox="0 0 100 100" class="absolute size-full" data-name="progress-circle">
+    <circle cx="50" cy="50" r="50" stroke-dasharray="314.1592653589793" stroke-dashoffset="314.1592653589793" stroke-width="12" class="stroke-muted-foreground origin-center -rotate-90 transform fill-none"></circle>
+  </svg>
+  <div class="grid place-items-center bg-foreground z-0 size-[calc(100%-22px)] rounded-full md:size-[calc(100%-22px)] after:bg-muted-foreground after:pointer-events-none after:absolute after:size-4 after:rounded-full md:after:size-5 after:left-1/2 after:top-1/2 after:z-30 after:-translate-x-1/2 after:-translate-y-1/2" data-name="platter">
+    <div class="stylus bg-background absolute top-0 aspect-[1/8] h-1/2 w-auto origin-[50%_100%] md:aspect-[1/8]" style="transform: rotate(0deg);" data-name="stylus"></div>
+  </div>
+  <div class="opacity-0 absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    <div class="col-span-2 flex flex-col items-center">
+      <!--v-if-->
+    </div>
+    <div class="mb-4">
+      <p class="text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base">+0%</p>
+    </div>
+    <div class="mb-4">
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;

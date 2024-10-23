@@ -23,7 +23,8 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     'nuxt-lucide-icons',
     '@nuxt/fonts',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxt/test-utils/module'
   ],
   pinia: {
     storesDirs: [`${currentDir}/layers/**/stores`]

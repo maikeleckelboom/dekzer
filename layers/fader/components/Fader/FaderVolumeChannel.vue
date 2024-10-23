@@ -1,29 +1,26 @@
 <script lang="ts" setup>
+import {
+  type FaderContext,
+  injectFaderRootContext
+} from '~~/layers/fader/components/Fader/FaderRoot.vue'
 import { clamp } from '@vueuse/core'
 
-interface SegmentMeterProps {
-  dBMin?: number
-  dBMax?: number
-  orientation?: 'horizontal' | 'vertical'
-  segments?: number
-}
+const { disabled, orientation } = injectFaderRootContext({
+  disabled: false,
+  orientation: 'horizontal'
+}) as FaderContext
 
-const {
-  dBMin = -48,
-  dBMax = 0,
-  segments = 40,
-  orientation = 'vertical'
-} = defineProps<SegmentMeterProps>()
+const isHorizontal = computed(() => orientation.value === 'horizontal')
 
-const modelValue = defineModel<number>('modelValue', {
-  type: Number,
-  required: true
-})
+const { value, segments = 40 } = defineProps<{ value: number, segments?:number }>()
+
+const dBMin = -60
+const dBMax = 0
 
 const bars = computed(() => {
   const range = dBMax - dBMin
   const step = range / segments
-  const value = modelValue.value
+  const value = -60 // dbValues.value[index]
   const result = []
   for (let i = segments; i >= 0; i--) {
     const segmentMin = dBMin + i * step
@@ -34,11 +31,10 @@ const bars = computed(() => {
   return result
 })
 
-// 2 red, 4 orange, 34 green
 const colorMap = new Map([
   [0, '#f44336'],
-  [-3, { start: '#ffae00', end: '#ff9800' }],
-  [-10, { start: '#009600', end: '#bfff00' }]
+  [-3, '#ff9800'],
+  [-10, { start: '#099a09', end: '#66ff00' }]
 ])
 
 function interpolateColor(start: string, end: string, normalized: number): string {
@@ -78,23 +74,28 @@ function getClosestColor(value: number): string {
   return ''
 }
 
-function segmentStyle(segment: number): Record<string, string> {
-	return modelValue.value >= segment ? { backgroundColor: getClosestColor(segment) } : {}
+function getBarStyle(bar: number): Record<string, string> {
+  return value > bar ? { backgroundColor: getClosestColor(bar) } : {}
 }
+
+const id = useId()
 </script>
 
 <template>
   <div
-    :class="cn('flex', orientation === 'horizontal' ? 'flex-row' : 'flex-col')">
+    :id="id"
+    :class="cn('flex size-fit', isHorizontal ? 'flex-row-reverse gap-x-[3px]' : 'flex-col gap-y-[3px]')">
     <div
-      v-for="segment in bars"
-      :key="segment"
+      v-for="bar in bars"
+      :key="bar"
       :class="
         cn(
           'bg-muted/80',
-          orientation === 'horizontal' ? 'mr-[3px] h-[14px] w-[2px] last:mr-0' : 'mb-[3px] h-[2px] w-[14px] last:mb-0'
+          isHorizontal
+            ? 'h-[14px] w-[2px]'
+            : 'h-[2px] w-[14px]'
         )
       "
-      :style="segmentStyle(segment)" />
+      :style="getBarStyle(bar)" />
   </div>
 </template>

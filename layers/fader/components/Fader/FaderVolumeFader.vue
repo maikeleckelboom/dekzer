@@ -6,7 +6,14 @@ import type {
   FaderRootProps
 } from '~~/layers/fader/components/Fader/FaderRoot.vue'
 
-const props = defineProps<FaderRootProps & { class?: HTMLAttributes['class'] }>()
+const props = defineProps<
+  FaderRootProps & {
+    channels: [number, number]
+    segments?: number
+    class?: HTMLAttributes['class']
+  }
+>()
+
 const emits = defineEmits<FaderRootEmits>()
 
 const delegatedProps = computed(() => {
@@ -20,8 +27,14 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
 <template>
   <FaderRoot v-bind="forwarded">
-    <FaderChannel :index="0" />
+    <FaderVolumeChannel
+      :index="0"
+      :segments="$props.segments"
+      :value="$props.channels?.[0]" />
     <FaderHandle />
-    <FaderChannel :index="1" />
+    <FaderVolumeChannel
+      :index="1"
+      :segments="$props.segments"
+      :value="$props.channels?.[1]" />
   </FaderRoot>
 </template>
