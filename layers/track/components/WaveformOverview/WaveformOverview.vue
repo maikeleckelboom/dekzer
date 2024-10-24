@@ -86,7 +86,7 @@ function drawWaveform(
   // set currentColor
 
   ctx.lineWidth = 1
-  ctx.fillStyle = 'currentColor'
+  ctx.fillStyle = '#ccd9f1'
   ctx.fill()
   ctx.closePath()
 }
@@ -249,7 +249,9 @@ function drawHoverCursor(time: number) {
   ctx.moveTo(x - w / 2, 0)
   ctx.lineTo(x + w / 2, 0)
   ctx.lineTo(x, h)
-  ctx.fillStyle = 'currentColor'
+  ctx.fillStyle = '#ccd9f1'
+  ctx.strokeStyle = '#131313'
+  ctx.stroke()
 
   ctx.fill()
   ctx.closePath()
@@ -278,31 +280,33 @@ function drawTriangle(canvas: HTMLCanvasElement, length: number) {
 
   const offsetFromCenter = 1
   const h = height / 2 - offsetFromCenter
-  const w = h * 1.3
+  const w = h * 1.5
 
   ctx.beginPath()
   ctx.moveTo(x - w / 2, 0)
   ctx.lineTo(x + w / 2, 0)
   ctx.lineTo(x, h)
   ctx.closePath()
-
   ctx.fillStyle = '#c53636'
   ctx.fill()
+  ctx.strokeStyle = 'rgba(14,14,14,0.66)'
+
+  ctx.stroke()
 }
 </script>
 
 <template>
   <div
     ref="container"
-    class="relative my-2 h-8 w-full overflow-clip text-foreground ">
+    class="relative my-2 h-8 w-full overflow-clip  [color:blue] ">
     <canvas
       ref="hoverCanvas"
-      class="absolute inset-0 size-full text-background " />
+      class="absolute inset-0 size-full [color:inherit] " />
     <canvas
       ref="markerCanvas"
-      class="absolute inset-0 size-full text-background" />
+      class="absolute inset-0 size-full [color:inherit]" />
     <canvas
       ref="waveformCanvas"
-      class="size-full" />
+      class="size-full [color:inherit]" />
   </div>
 </template>

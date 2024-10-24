@@ -7,6 +7,7 @@ const modelValue = ref<number>(100)
     v-model="modelValue"
     :max="150"
     :min="50"
+    class="h-60"
     orientation="vertical">
     <FaderTrack>
       <FaderMarkerRail :stripe-count="9" />

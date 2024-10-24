@@ -44,7 +44,7 @@ const everyNth = (index: number) => index % 4 === 0
         cn(
           'bg-muted absolute ',
           orientation === 'vertical' && 'h-0.5 w-full -translate-y-1/2',
-          orientation === 'horizontal' && 'h-full w-0.5',
+          orientation === 'horizontal' && 'h-full w-0.5 -translate-x-1/2',
           everyNth(stripe) && orientation === 'vertical' ? 'h-1' : '',
           everyNth(stripe) && orientation === 'horizontal' ? 'w-1' : ''
         )

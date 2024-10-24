@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
+import { type FaderContext, injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
 
 const { disabled, orientation } = injectFaderRootContext({
   min: shallowRef(0),
@@ -10,8 +10,9 @@ const { disabled, orientation } = injectFaderRootContext({
   disabled: shallowRef(false),
   orientation: shallowRef('horizontal'),
   width: shallowRef(0),
-  height: shallowRef(0)
-})
+  height: shallowRef(0),
+  defaultValue: shallowRef(0.5)
+}) as FaderContext
 </script>
 
 <template>
@@ -21,7 +22,7 @@ const { disabled, orientation } = injectFaderRootContext({
         'flex',
         orientation === 'horizontal'
           ? 'h-10 w-full min-w-44 flex-col'
-          : 'h-full min-h-44 w-10 flex-row'
+          : 'h-full min-h-44 w-10 flex-row '
       )
     ">
     <slot />

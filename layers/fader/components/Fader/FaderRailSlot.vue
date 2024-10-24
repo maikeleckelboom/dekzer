@@ -29,6 +29,7 @@ const fillStyle = computed(() => {
 
   // Calculate the fill size based on the distance from the center
   const fillSize = (absDistanceCenter / (max.value - min.value)) * containerSize.value
+const handleHalf = 8
 
   // For horizontal, reverse the direction of fillOffset
   const fillOffset = unref(isHorizontal)
@@ -41,7 +42,7 @@ const fillStyle = computed(() => {
 
   // Return the appropriate styles for horizontal and vertical sliders
   return {
-    [unref(isHorizontal) ? 'width' : 'height']: `${fillSize}px`,
+    [unref(isHorizontal) ? 'width' : 'height']: `${fillSize - 2}px`,
     [unref(isHorizontal) ? 'left' : 'top']: `${fillOffset}px`,
     [unref(isHorizontal) ? 'top' : 'left']: '0%',
     [unref(isHorizontal) ? 'height' : 'width']: '100%'
@@ -53,7 +54,7 @@ const fillStyle = computed(() => {
   <div
     :class="
       cn(
-        'relative m-auto overflow-clip rounded-full bg-black',
+        'relative m-auto overflow-clip p-px rounded-[1px] bg-black',
         orientation === 'horizontal' ? 'h-1 w-full' : 'h-full w-1'
       )
     ">

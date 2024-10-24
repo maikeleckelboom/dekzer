@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
+import { type FaderContext, injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
 import { FADER_DEFAULT_HANDLE_SIZE } from '~~/layers/fader/utils/constants'
 
 const { offset, disabled, orientation, min, max, step, modelValue, width, height } =
@@ -12,13 +12,14 @@ const { offset, disabled, orientation, min, max, step, modelValue, width, height
     disabled: shallowRef(false),
     orientation: shallowRef('horizontal'),
     width: shallowRef(0),
-    height: shallowRef(0)
-  })
+    height: shallowRef(0),
+    defaultValue: shallowRef(0.5)
+  }) as FaderContext
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 const containerSize = computed(() => (unref(isHorizontal) ? width.value : height.value))
 
-const { translucent = true} = defineProps<{
+const { translucent = true } = defineProps<{
   translucent?: boolean
 }>()
 
@@ -36,7 +37,6 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
     const inverter = -1
     const sideValue = unref(isHorizontal) ? unref(distanceX) : unref(distanceY)
     const progress = unref(startOffset) + ((inverter * sideValue) / unref(containerSize)) * 100
-    const handleWidth = (FADER_DEFAULT_HANDLE_SIZE / unref(containerSize) * 100)
 
     const delta = (FADER_DEFAULT_HANDLE_SIZE / unref(containerSize)) * 100
     offset.value = clamp(progress, 0, 100 - delta)
@@ -61,12 +61,14 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
     :aria-valuenow="modelValue"
     :class="
       cn(
-        'absolute flex cursor-grab touch-none select-none bg-black active:cursor-grabbing rounded-[2px]',
+        'absolute flex cursor-grab touch-none select-none rounded-[2px] bg-black active:cursor-grabbing',
+        'subpixel-antialiased [image-rendering:pixelated] transition-none',
+        // '[clip-path:polygon(0%_0%,_100%_0%,_95%_50%,_100%_100%,_0%_100%,_5%_50%)]',
         translucent
           ? 'opacity-50 transition-opacity duration-75 ease-in-out hover:opacity-75 active:opacity-100'
-          : 'border-muted border p-1',
+          : 'border-muted/75 border p-1',
         isHorizontal
-          ? `w-[${height}px] top-0 flex h-full flex-row `
+          ? `w-[${height}px] top-0 flex h-full flex-row`
           : `h-[${width}px] left-0 flex w-full flex-col`
       )
     "
@@ -76,8 +78,11 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
     }"
     :tabindex="disabled ? undefined : 0"
     role="slider">
-    <div :class="cn('bg-black rounded-[2px]', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
-    <div :class="cn('bg-white rounded-[2px]', isHorizontal ? `h-full w-[2px]` : `h-[2px] w-full`)" />
-    <div :class="cn('bg-black rounded-[2px]', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
+    <div
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
+    <div
+      :class="cn('rounded-[2px] bg-white', isHorizontal ? `h-full w-[2px]` : `h-[2px] w-full`)" />
+    <div
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
   </div>
 </template>
