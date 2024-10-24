@@ -12,10 +12,14 @@ const { disabled, orientation } = injectFaderRootContext({
 
 <template>
   <div
-    :class="cn(
-      'bg-muted',
-      orientation === 'horizontal' ? 'h-10 w-full min-w-44' : 'w-10 h-full min-h-44',
-    )">
+    :class="
+      cn(
+        'flex',
+        orientation === 'horizontal'
+          ? 'h-10 w-full min-w-44 flex-col'
+          : 'h-full min-h-44 w-10 flex-row'
+      )
+    ">
     <slot />
   </div>
 </template>

@@ -5,7 +5,6 @@ import {
   MASTER_GAIN_MIN,
   MASTER_GAIN_ORIENTATION
 } from '~~/layers/fader/utils/constants'
-import { useGainNode } from '~/composables/useGainNode'
 
 interface Props {
   channels: [number, number]

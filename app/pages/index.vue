@@ -23,7 +23,7 @@ const pannerValue = ref(0)
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col relative">
     <TopBar />
     <div class="grid md:grid-cols-2 md:divide-x">
       <DeckPlatform

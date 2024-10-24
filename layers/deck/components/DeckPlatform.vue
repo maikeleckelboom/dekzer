@@ -25,7 +25,7 @@ const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
 
 const loaded = computed(() => !!track.value && !!audioBuffer.value)
 
-const { audioContext, getAudioContext} = useSharedAudioContext()
+const { audioContext, getAudioContext } = useSharedAudioContext()
 
 let rAF: number | null = null
 
@@ -119,7 +119,6 @@ async function play() {
   const buffer = unref(audioBuffer)
   if (!canPlay(context, buffer)) return
   const source = setupSourceNode(context, buffer)
-
 
   setupAnalyserNodes(context, source)
   source.connect(context.destination)
@@ -253,8 +252,8 @@ function ejectTrack() {
 const duration = computedEager(() => track.value?.format.duration)
 const bpm = computedEager(() => track.value?.common.bpm)
 
-const demoBpm = shallowRef(150)
-const tempo = shallowRef<number>(0)
+const demoBpm = shallowRef(100)
+const tempoDiff = shallowRef<number>(0)
 </script>
 
 <template>
@@ -263,12 +262,18 @@ const tempo = shallowRef<number>(0)
     :disabled="!loaded"
     class="flex bg-black"
     @load="createAndLoadTrack">
-    <DeckTempoFader
-      :bpm="demoBpm"
-      v-model:tempo="tempo"
-      :disabled="!track"
-      class="flex flex-col gap-2 p-2" />
-    <div class="flex w-full flex-col overflow-hidden relative">
+    <div class="grid h-full place-items-center gap-2 p-2 w-32">
+    <DemoTempoFader/>
+    </div>
+
+    <!--    <div class="grid h-full place-items-center gap-2 px-2">-->
+<!--      <DeckTempoFader-->
+<!--        v-model:bpm="demoBpm"-->
+<!--        v-model:tempo-diff="tempoDiff"-->
+<!--        :disabled="!track" />-->
+<!--    </div>-->
+
+    <div class="relative flex w-full flex-col overflow-hidden">
       <TrackTitleBar :track="track" />
       <WaveformOverview
         v-model:current-time="currentTime"
@@ -278,10 +283,13 @@ const tempo = shallowRef<number>(0)
 
       <div
         :class="
-          cn('flex flex-wrap justify-end gap-2 p-2', deck.index % 2 === 0 && 'md:flex-row-reverse')
+          cn(
+            'flex flex-wrap justify-end gap-2 p-2',
+            deck.index % 2 === 0 && 'md:flex-row-reverse'
+          )
         ">
         <DeckButton
-         v-if="track"
+          v-if="track"
           @click="ejectTrack">
           Eject
         </DeckButton>
@@ -293,7 +301,10 @@ const tempo = shallowRef<number>(0)
     </div>
     <div
       :class="
-        cn('flex w-fit flex-nowrap gap-4 p-2 md:p-2', deck.index % 2 === 0 && 'md:flex-row-reverse')
+        cn(
+          'flex w-fit flex-nowrap gap-4 p-2 md:p-2',
+          deck.index % 2 === 0 && 'md:flex-row-reverse'
+        )
       ">
       <VirtualDeck
         v-model:currentTime="currentTime"

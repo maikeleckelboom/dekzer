@@ -80,8 +80,8 @@ provideFaderRootContext({
     ref="root"
     :class="
       cn(
-        'relative flex touch-none select-none gap-0.5',
-        orientation === 'horizontal' ? `flex-col max-h-fit` : `max-w-fit flex-row`
+        'relative flex touch-none select-none gap-0.5 h-full',
+        orientation === 'horizontal' ? `flex-col` : `flex-row`
       )
     ">
     <slot />
