@@ -3,6 +3,8 @@ import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
 import type { Deck } from '~~/layers/deck/stores/deck'
 import DeckGainFader from '~/components/DeckGainFader.vue'
+import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
+import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -86,7 +88,7 @@ function stopPlaying() {
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const { leftVolume, rightVolume, startVolumeAnalyser, stopVolumeAnalyser } = useVolumeAnalyzer(
+const { channels, startAnalyser, stopAnalyser } = useAudioLevelAnalyser(
   analyserNode,
   analyserNodeR,
   2048
@@ -122,7 +124,7 @@ async function play() {
 
   setupAnalyserNodes(context, source)
   source.connect(context.destination)
-  startVolumeAnalyser()
+  startAnalyser()
 
   startTime.value = context.currentTime
   handlePlayback(context, buffer)
@@ -146,7 +148,7 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stopVolumeAnalyser()
+  stopAnalyser()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -198,15 +200,6 @@ whenever(track, async ({ url }) => {
   audioBuffer.value = await loadAudioBuffer(context, url)
 })
 
-onMounted(async () => {
-  // const context = await getAudioContext()
-  // const gain = new GainNode(context)
-  // deckGainNodes.value.push(gain)
-  // gain.connect(masterGainNode.value)
-  // console.log(deckGainNodes.value, 'Deck Gain Nodes')
-  // console.log(masterGainNode.value, 'Master Gain Node')
-})
-
 onBeforeUnmount(() => {
   if (playing.value) pause()
   deckStore.eject(deck)
@@ -214,7 +207,7 @@ onBeforeUnmount(() => {
 
 function resetDeck() {
   stopPlaying()
-  stopVolumeAnalyser()
+  stopAnalyser()
 
   currentTime.value = 0
   audioBuffer.value = null
@@ -259,7 +252,8 @@ const duration = computedEager(() => track.value?.format.duration)
 const bpm = computedEager(() => track.value?.common.bpm)
 
 const demoBpm = shallowRef(100)
-const tempoDiff = shallowRef<number>(0)
+const pitchRange = shallowRef<8|16|50>(8)
+const pitchDelta = shallowRef<number>(0)
 </script>
 
 <template>
@@ -304,12 +298,14 @@ const tempoDiff = shallowRef<number>(0)
         )
       ">
       <VirtualDeck
-        v-model:currentTime="currentTime"
+        v-model:current-time="currentTime"
         v-model:interacting="interacting"
         :bpm="bpm"
+        :pitch-delta="pitchDelta"
+        :pitch-range="pitchRange"
         :disabled="!track"
         :duration="duration" />
-      <DeckGainFader :channels="[leftVolume, rightVolume]" />
+      <DeckGainFader :channels="channels" />
     </div>
   </DeckRoot>
 </template>

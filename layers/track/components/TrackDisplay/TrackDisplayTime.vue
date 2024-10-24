@@ -9,7 +9,7 @@ const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
 <template>
   <span
-    v-if="track?.format?.duration"
+    v-if="track?.format.duration"
     class="text-foreground text-end text-sm tabular-nums leading-none md:text-base">
     {{ formatSeconds(track?.format.duration) }}
   </span>

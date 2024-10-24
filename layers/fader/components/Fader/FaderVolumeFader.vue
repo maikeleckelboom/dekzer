@@ -8,7 +8,7 @@ import type {
 
 const props = defineProps<
   FaderRootProps & {
-    channels: [number, number]
+    channels: number[]
     segments?: number
     class?: HTMLAttributes['class']
   }
@@ -30,11 +30,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <FaderVolumeChannel
       :index="0"
       :segments="$props.segments"
-      :value="$props.channels?.[0]" />
+      :value="$props.channels[0]!" />
     <FaderHandle />
     <FaderVolumeChannel
       :index="1"
       :segments="$props.segments"
-      :value="$props.channels?.[1]" />
+      :value="$props.channels[1]!" />
   </FaderRoot>
 </template>

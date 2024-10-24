@@ -21,10 +21,10 @@ export interface FaderContext {
 }
 
 export interface FaderRootEmits {
-  'update:modelValue': [payload: number]
+  (event: 'update:modelValue', value: number): void
 }
 
-export const [injectFaderRootContext, provideFaderRootContext] = createContext<FaderRootContext>(
+export const [injectFaderRootContext, provideFaderRootContext] = createContext<FaderContext>(
   ['FaderRoot'],
   'FaderContext'
 )

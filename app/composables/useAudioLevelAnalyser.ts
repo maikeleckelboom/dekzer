@@ -1,4 +1,4 @@
-export function useVolumeAnalyzer(
+export function useAudioLevelAnalyser(
   analyzer: MaybeRefOrGetter<AnalyserNode | null>,
   analyserR: MaybeRefOrGetter<AnalyserNode | null>,
   fftSize: 1024 | 2048 | 4096 = 1024
@@ -11,10 +11,11 @@ export function useVolumeAnalyzer(
 
   let rAF: number | null = null
 
-  function start(algorithm: 'rms' | 'peak' = 'rms') {
-    const a =  toValue(analyzer)
+  function startAnalyser(algorithm: 'rms' | 'peak' = 'rms') {
+    const a = toValue(analyzer)
     const b = toValue(analyserR)
-    if(!a || !b) return
+    if (!a || !b) return
+
     a.getFloatTimeDomainData(floatSampleBufferL)
     b.getFloatTimeDomainData(floatSampleBufferR)
 
@@ -23,8 +24,8 @@ export function useVolumeAnalyzer(
       let peakInstantaneousPowerR = 0
 
       for (let i = 0; i < fftSize; i++) {
-        const sampleL = floatSampleBufferL[i]!
-        const sampleR = floatSampleBufferR[i]!
+        const sampleL = floatSampleBufferL[i] as number
+        const sampleR = floatSampleBufferR[i] as number
 
         const powerL = sampleL ** 2
         const powerR = sampleR ** 2
@@ -41,8 +42,8 @@ export function useVolumeAnalyzer(
       let sumOfSquaresR = 0
 
       for (let i = 0; i < fftSize; i++) {
-        const sampleL = floatSampleBufferL[i]!
-        const sampleR = floatSampleBufferR[i]!
+        const sampleL = floatSampleBufferL[i] as number
+        const sampleR = floatSampleBufferR[i] as number
 
         sumOfSquaresL += sampleL ** 2
         sumOfSquaresR += sampleR ** 2
@@ -53,10 +54,10 @@ export function useVolumeAnalyzer(
       returnValueR.value = 10 * Math.log10(sumOfSquaresR / fftSize)
     }
 
-    rAF = requestAnimationFrame(() => start(algorithm))
+    rAF = requestAnimationFrame(() => startAnalyser(algorithm))
   }
 
-  function stop() {
+  function stopAnalyser() {
     returnValueL.value = Number.NEGATIVE_INFINITY
     returnValueR.value = Number.NEGATIVE_INFINITY
     if (rAF) {
@@ -65,10 +66,44 @@ export function useVolumeAnalyzer(
     }
   }
 
+  const channels = computed(() => [returnValueL.value, returnValueR.value])
+
   return {
-    leftVolume: readonly(returnValueL),
-    rightVolume: readonly(returnValueR),
-    startVolumeAnalyser: start,
-    stopVolumeAnalyser: stop
+    channels,
+    startAnalyser,
+    stopAnalyser
   }
 }
+
+export const useMasterGainControl = createSharedComposable((context:AudioContext) => {
+  const gain = ref<GainNode | null>(null)
+
+  onMounted(() => {
+    gain.value = context.createGain()
+  })
+
+  return {
+    gain,
+    setVolume(value: number) {
+      const g = toValue(gain)
+      if (!g) return
+      g.gain.value = value
+    }
+  }
+})
+
+export const useMasterVolumeAnalyser = createSharedComposable((context:AudioContext) => {
+  const analyzer = ref<AnalyserNode | null>(null)
+  const analyserR = ref<AnalyserNode | null>(null)
+
+  onMounted(() => {
+    const a = context.createAnalyser()
+    const b = context.createAnalyser()
+    a.fftSize = 1024
+    b.fftSize = 1024
+    analyzer.value = a
+    analyserR.value = b
+  })
+
+  return useAudioLevelAnalyser(analyzer, analyserR)
+})

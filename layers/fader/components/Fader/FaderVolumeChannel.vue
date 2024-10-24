@@ -1,13 +1,17 @@
 <script lang="ts" setup>
-import {
-  type FaderContext,
-  injectFaderRootContext
-} from '~~/layers/fader/components/Fader/FaderRoot.vue'
-import { clamp } from '@vueuse/core'
+import { type FaderContext, injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
+import { clamp } from '~/utils/math'
 
 const { disabled, orientation } = injectFaderRootContext({
-  disabled: false,
-  orientation: 'horizontal'
+  modelValue: shallowRef(0),
+  orientation: shallowRef('horizontal'),
+  min: shallowRef(0),
+  max: shallowRef(1),
+  step: shallowRef(0.01),
+  disabled: shallowRef(false),
+  offset: shallowRef(0),
+  width: shallowRef(0),
+  height: shallowRef(0)
 }) as FaderContext
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
@@ -31,9 +35,9 @@ const bars = computed(() => {
   return result
 })
 
-const colorMap = new Map([
-  [0, '#f44336'],
-  [-3, '#ff9800'],
+const colorMap: Map<number, string | { start: string; end: string }> = new Map([
+  [0, { start: '#f44336', end: '#f44336' }],
+  [-3, { start: '#ff9800', end: '#ff9800' }],
   [-10, { start: '#099a09', end: '#66ff00' }]
 ])
 
@@ -63,11 +67,15 @@ function getClosestColor(value: number): string {
   const closestKey = getClosestColorKey(value)
   const color = colorMap.get(closestKey)
 
+  if(typeof color === 'undefined') {
+    return ''
+  }
+
   if (typeof color === 'string') {
     return color
   }
 
-  if (color && color.start && color.end) {
+  if (color?.start && color?.end) {
     return interpolateColor(color.start, color.end, normalize(value))
   }
 

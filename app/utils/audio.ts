@@ -1,3 +1,5 @@
+import { analyze } from 'web-audio-beat-detector'
+
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
   const response = await fetch(url, { headers: { ResponseType: 'stream' } })
   const arrayBuffer = await response.arrayBuffer()
@@ -12,15 +14,6 @@ export function createConstantSourceNode(
   constantSourceNode.offset.value = offsetValue
   constantSourceNode.start(context.currentTime)
   return constantSourceNode
-}
-
-async function playAudio(deckIndex: number, audioBuffer: AudioBuffer, context: AudioContext) {
-  // Create an audio buffer source node
-  const source = context.createBufferSource()
-  source.buffer = audioBuffer // Set the buffer you loaded
-  // Connect the source to the corresponding deck gain node
-  // source.connect(deckGainNodes.value[deckIndex]) // Connect source to deck gain node
-  // source.start() // Start playback
 }
 
 export function createBufferSourceNode(
@@ -71,7 +64,7 @@ export function canPlay(
   return (toValue(context) && toValue(buffer) && !toValue(playing)) || false
 }
 
-export function fadeIn(context:AudioContext, node: AudioBufferSourceNode, duration: number) {
+export function fadeIn(context: AudioContext, node: AudioBufferSourceNode, duration: number) {
   const gainNode = context.createGain()
   gainNode.gain.setValueAtTime(0, context.currentTime)
   gainNode.gain.linearRampToValueAtTime(1, context.currentTime + duration)
@@ -79,10 +72,19 @@ export function fadeIn(context:AudioContext, node: AudioBufferSourceNode, durati
   gainNode.connect(context.destination)
 }
 
-export function fadeOut(context:AudioContext, node: AudioBufferSourceNode, duration: number) {
+export function fadeOut(context: AudioContext, node: AudioBufferSourceNode, duration: number) {
   const gainNode = context.createGain()
   node.connect(gainNode)
   gainNode.connect(context.destination)
   gainNode.gain.setValueAtTime(1, context.currentTime)
   gainNode.gain.linearRampToValueAtTime(0, context.currentTime + duration)
+}
+
+export async function getAnalyzedTempo(
+  url: string,
+  context: AudioContext,
+  options = { minTempo: 60, maxTempo: 220 }
+): Promise<number> {
+  const buffer = await loadAudioBuffer(context, url)
+  return await analyze(buffer, options)
 }

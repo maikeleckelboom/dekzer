@@ -24,7 +24,7 @@ export function createContext<ContextValue>(
    * @throws When context injection failed and no fallback is specified.
    * This happens when the component injecting the context is not a child of the root component providing the context.
    */
-  const injectContext = <T extends ContextValue | null | undefined = ContextValue>(
+  const injectContext = <T extends ContextValue | null = ContextValue>(
     fallback?: T
   ): T extends null ? ContextValue | null : ContextValue => {
     const context = inject(injectionKey, fallback)
@@ -32,13 +32,13 @@ export function createContext<ContextValue>(
 
     if (context === null) return context as any
 
-    const message = `Injection \`${injectionKey.toString()}\` not found. Component must be used within ${
-      Array.isArray(providerComponentName)
-        ? `one of the following components: ${providerComponentName.join(', ')}`
-        : `\`${providerComponentName}\``
-    }`
+    const message = `Injection \`${injectionKey.toString()}\` not found.Component must be used within ${Array.isArray(providerComponentName) ? `one of the following components: ${providerComponentName.join(', ')}` : `\`${providerComponentName}\``}`
 
     console.warn(message)
+
+    if (!fallback) throw new Error(message)
+
+    return fallback as any
   }
 
   const provideContext = (contextValue: ContextValue) => {

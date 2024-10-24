@@ -5,12 +5,12 @@ export interface DeckRootProps {
 }
 
 export interface DeckRootEmits {
-  load: [file: File]
+  (event: 'load', file: File): void
 }
 </script>
 
 <script lang="ts" setup>
-import type { DeckDropzone } from '#components'
+import { DeckDropzone } from '#components'
 
 const props = withDefaults(defineProps<DeckRootProps>(), {
   disabled: false,
@@ -19,10 +19,10 @@ const props = withDefaults(defineProps<DeckRootProps>(), {
 
 const emit = defineEmits<DeckRootEmits>()
 
-const deckDropzone = useTemplateRef<InstanceType<DeckDropzone>>('deckDropzone')
+const deckDropzone = useTemplateRef<InstanceType<typeof DeckDropzone>>('deckDropzone')
 
 useEventListener(
-  deckDropzone,
+  () => deckDropzone.value?.$el,
   props.triggerEvent,
   (event: Event) => {
     event.preventDefault()
@@ -33,6 +33,7 @@ useEventListener(
 )
 
 function onChange([file]: File[]) {
+  if (!file) return
   emit('load', file)
 }
 </script>

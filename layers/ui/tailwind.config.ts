@@ -1,5 +1,4 @@
 import animate from 'tailwindcss-animate'
-import {materialThemeConfig} from './material.config'
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -15,9 +14,6 @@ module.exports = {
   ],
   plugins: [
     animate
-  ],
-  presets: [
-    materialThemeConfig
   ],
   theme: {
     container: {

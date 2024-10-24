@@ -10,11 +10,10 @@ const tempoDiff = defineModel<number>('tempoDiff', {
 })
 
 const bpmRange = defineModel<8 | 16 | 50>('bpmRange', {
-  type: Number,
   default: 8
 })
 
-function getTempoRange(originalBpm: number, bpmRange = 8) {
+function getTempoRange(originalBpm: number, bpmRange: 8 | 16 | 50 = 8) {
   const min = originalBpm - originalBpm * (bpmRange / 100)
   const max = originalBpm + originalBpm * (bpmRange / 100)
   return [min, max]
@@ -39,7 +38,6 @@ watch(tempoDiff, (diff) => {
     :step="0.01"
     class="h-full"
     orientation="vertical">
-
   </Fader>
 </template>
 

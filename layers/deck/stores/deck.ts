@@ -1,9 +1,9 @@
 import type { Track } from '~~/layers/track/types'
 
 export interface Deck {
-  id: string
-  name: string
+  id: number
   index: number
+  name: string
   track: Track | null
 }
 
@@ -29,25 +29,31 @@ export const useDeckStore = defineStore('deck.store', () => {
 
   function getTrackByById(id: string | undefined): Track | undefined {
     if (typeof id === 'undefined') return
-    return tracks.value.find((track) => track?.id === id)
+    const found = tracks.value.find((track) => track?.id === id)
+    return found || undefined
   }
 
   function load(deck: Deck, track: Track): void {
     const index = decks.value.findIndex((d) => d.id === deck.id)
     if (index === -1) return
-    decks.value[index].track = track
+    decks.value.at(index)!.track = track
   }
 
   function eject(deck: Deck): void {
     const index = decks.value.findIndex((d) => d.id === deck.id)
     if (index === -1) return
-    decks.value[index].track = null
+    decks.value.at(index)!.track = null
   }
+
+  const computedTrack = (deck: Deck) => computed(() => getTrackByById(deck.track?.id))
+
+  console.log('Deck store initialized', { decks, tracks })
 
   return {
     decks,
     tracks,
-    computedTrack: (deck: Deck) => computed(() => getTrackByById(deck.track?.id)),
+    getTrackByById,
+    computedTrack,
     load,
     eject
   }

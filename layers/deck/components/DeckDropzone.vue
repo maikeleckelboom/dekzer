@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { UseFileDialogOptions } from '@vueuse/core'
 
-const props = defineProps<UseFileDialogOptions>()
+const props = defineProps<UseFileDialogOptions & { dataTypes?: string[] }>()
 
 const emit = defineEmits<{
   (ev: 'change', files: File[]): void
@@ -26,7 +26,7 @@ function onDrop(files: FileList | File[] | null, _: DragEvent) {
   }
 }
 
-async function openFilePicker(options?: UseFileDialogOptions): void {
+async function openFilePicker(options?: UseFileDialogOptions): Promise<void> {
   const handle = useFileDialog({
     accept: Array.isArray(props.dataTypes) ? props.dataTypes.join(',') : '*',
     multiple: options?.multiple ?? false,
@@ -34,7 +34,7 @@ async function openFilePicker(options?: UseFileDialogOptions): void {
   })
   handle.open()
   handle.onChange((files: FileList | null) => {
-    if (files) emit('change', files)
+    if (files) emit('change', Array.from(files))
     handle.reset()
   })
 }

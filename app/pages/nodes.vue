@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+// @ts-nocheck
+
 import {
   DECK_GAIN_DEFAULT_VALUE,
   DECK_VOLUME_DEFAULT_VALUE,

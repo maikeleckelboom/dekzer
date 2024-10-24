@@ -1,13 +1,17 @@
 <script lang="ts" setup>
-import {
-  type FaderContext,
-  injectFaderRootContext
-} from '~~/layers/fader/components/Fader/FaderRoot.vue'
+import { injectFaderRootContext } from '~~/layers/fader/components/Fader/FaderRoot.vue'
 
 const { disabled, orientation } = injectFaderRootContext({
-  disabled: false,
-  orientation: 'horizontal'
-}) as FaderContext
+  min: shallowRef(0),
+  max: shallowRef(1),
+  step: shallowRef(0.01),
+  modelValue: shallowRef(0),
+  offset: shallowRef(0),
+  disabled: shallowRef(false),
+  orientation: shallowRef('horizontal'),
+  width: shallowRef(0),
+  height: shallowRef(0)
+})
 </script>
 
 <template>

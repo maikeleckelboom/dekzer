@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { ComputedRef } from '@vue/reactivity'
+import type { ShallowRef } from 'vue'
 
 export type VirtualDeckRootProps = Partial<{
   currentTime: number
@@ -11,20 +12,20 @@ export type VirtualDeckRootProps = Partial<{
 }>
 
 export interface VirtualDeckRootEmits {
-  'update:currentTime': [payload: number]
-  'update:progress': [payload: number]
-  'update:interacting': [payload: boolean]
+  (event: 'update:interacting', value: boolean): void
+  (event: 'update:progress', value: number): void
+  (event: 'update:currentTime', value: number): void
 }
 
 export interface VirtualDeckRootContext {
   currentTime: Ref<number>
   duration: Readonly<Ref<number>>
-  pitchDelta: ComputedRef<number>
-  pitchRange: ComputedRef<8 | 16 | 50>
-  interacting: ComputedRef<boolean>
+  pitchDelta: ShallowRef<number>
+  pitchRange: ShallowRef<8 | 16 | 50>
+  interacting: ShallowRef<boolean>
   progress: ComputedRef<number>
-  bpm: ComputedRef<number>
-  angle: Ref<number>
+  bpm: Readonly<Ref<number>>
+  angle: ShallowRef<number>
 }
 
 export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext] =
@@ -33,16 +34,27 @@ export const [injectVirtualDeckRootContext, provideVirtualDeckRootContext] =
 
 <script lang="ts" setup>
 import { clamp } from '@vueuse/core'
+import type { WritableComputedRef } from 'vue'
 
-const props = defineProps<VirtualDeckRootProps>()
+const props = withDefaults(defineProps<VirtualDeckRootProps>(), {
+  currentTime: 0,
+  duration: 1,
+  bpm: 0,
+  pitchDelta: 0,
+  pitchRange: 8,
+  disabled: false
+})
+
 const emits = defineEmits<VirtualDeckRootEmits>()
 
-const currentTime = useVModel(props, 'currentTime', emits)
+const currentTime = useVModel(props, 'currentTime', emits, {
+  defaultValue: 0
+}) as WritableComputedRef<number>
 
-const pitchDelta = computedEager(() => props?.pitchDelta ?? 0)
-const pitchRange = computedEager(() => props?.pitchRange)
-const bpm = computedEager(() => props?.bpm)
-const duration = computedEager(() => props?.duration)
+const pitchDelta = computedEager(() => props.pitchDelta)
+const pitchRange = computedEager(() => props.pitchRange)
+const bpm = computedEager(() => props.bpm)
+const duration = computedEager(() => props.duration)
 
 const virtualDeck = useTemplateRef<HTMLElement>('virtualDeck')
 

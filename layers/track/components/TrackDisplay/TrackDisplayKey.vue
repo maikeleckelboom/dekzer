@@ -6,12 +6,12 @@ import {
 
 const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
-const keyClass = computedEager<string>(() => {
+const keyClass = computedEager<string | undefined>(() => {
   if (!track.value?.common?.key) return
   const { key } = track.value.common
-  if (!MusicalKeysMap.has(key)) return
-  const { color } = MusicalKeysMap.get(key)
-  return color
+  const entry = MusicalKeysMap.get(key)
+  if (!entry) return
+  return entry.class
 })
 </script>
 

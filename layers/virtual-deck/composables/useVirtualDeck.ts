@@ -1,17 +1,18 @@
 import { usePlatterPosition } from './usePlatterPosition'
-import type { MaybeElementRef, MaybeRefOrGetter } from '@vueuse/core'
+import type { MaybeRefOrGetter } from '@vueuse/core'
+import type { ShallowRef, WritableComputedRef } from 'vue'
 
 export function useVirtualDeck(
-  deck: MaybeElementRef<HTMLElement>,
-  currentTime: Ref<number>,
-  playbackRate: MaybeRefOrGetter<number> = 1,
+  deck: MaybeRefOrGetter<HTMLElement> | ShallowRef<HTMLElement | null>,
+  currentTime: WritableComputedRef<number>,
+  playbackRate: MaybeRefOrGetter<number> | WritableComputedRef<number> = 1,
   disabled: MaybeRefOrGetter<boolean> = false
 ) {
   let elDeck: HTMLElement | null = null
   let elStylus: HTMLElement | null = null
 
   onMounted(() => {
-    elDeck = unrefElement(deck)
+    elDeck = <HTMLElement>unrefElement(toValue(deck))
     elStylus = elDeck.querySelector('[data-name="stylus"]')
 
     if (!elDeck || !elStylus) {
@@ -21,8 +22,8 @@ export function useVirtualDeck(
 
   const { angle, angleFromSeconds } = usePlatterPosition(currentTime)
 
-  watch(currentTime, (timeInSeconds) => {
-    if (!elStylus) return
+  watch(currentTime, (timeInSeconds: number | undefined) => {
+    if (!elStylus || typeof timeInSeconds === 'undefined') return
     const angle = angleFromSeconds(timeInSeconds)
     elStylus.style.transform = `rotate(${angle}deg)`
   })
@@ -83,9 +84,7 @@ export function useVirtualDeck(
 
     pdEvent.preventDefault()
 
-    if (toValue(disabled)) {
-      return
-    }
+    if (toValue(disabled)) return
 
     startInteract(pdEvent)
 

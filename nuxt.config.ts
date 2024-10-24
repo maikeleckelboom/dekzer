@@ -24,7 +24,6 @@ export default defineNuxtConfig({
     'nuxt-lucide-icons',
     '@nuxt/fonts',
     '@pinia/nuxt',
-    '@nuxt/test-utils/module'
   ],
   pinia: {
     storesDirs: [`${currentDir}/layers/**/stores`]

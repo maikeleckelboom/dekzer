@@ -17,7 +17,7 @@ function getTopStyle(stripe: number) {
   return `${stripe * stripeHeight + dynamicOffset}%`
 }
 
-const everyNth = (index, total) => index % total === 0
+const everyNth = (index: number, total: number) => index % total === 0
 </script>
 
 <template>

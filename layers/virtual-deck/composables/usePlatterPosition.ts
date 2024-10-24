@@ -1,5 +1,5 @@
 export function usePlatterPosition(
-  currentTime: MaybeRefOrGetter<number>,
+  currentTime: MaybeRefOrGetter<number | undefined>,
   playbackRate: MaybeRefOrGetter<number> = 1
 ) {
   const angle = ref<number>(0)
@@ -13,7 +13,8 @@ export function usePlatterPosition(
 
   watch(
     () => toValue(currentTime),
-    (timeInSeconds) => {
+    (timeInSeconds: number | undefined) => {
+      if (typeof timeInSeconds === 'undefined') return
       angle.value = angleFromSeconds(timeInSeconds)
     },
     { immediate: true }

@@ -3,3 +3,4 @@ export const convertRange = (min: number, max: number, a: number, b: number, x: 
   if (temp === 0) return a
   return ((b - a) * (x - min)) / temp + a
 }
+export const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max)

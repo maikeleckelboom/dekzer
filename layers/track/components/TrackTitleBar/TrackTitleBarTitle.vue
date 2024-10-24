@@ -9,36 +9,36 @@ const { track } = injectTrackTitleBarContext() as TrackTitleBarContext
 
 const { as = 'span', asChild = false } = defineProps<PrimitiveProps>()
 
-const slotText = computed(
-  () => {
-    let returnText: string | null = null
+const slotText = computed(() => {
+  let returnText: string | undefined = undefined
 
-    if (track.value?.common.title && track.value?.common.title !== '') {
-      returnText = track.value?.common.title
-    }
+  if (track.value?.common.title && track.value?.common.title !== '') {
+    returnText = track.value?.common.title
+  }
 
-    const [text] = Array.from(slots.default?.() ?? [])
-      .map((node) => node?.children)
-      .join('')
-      .trim()
-      .split('\n')
+  const [text] = Array.from(slots.default?.() ?? [])
+    .map((node) => {
+      /* @ts-ignore */
+      return node.children
+    })
+    .join('')
+    .trim()
+    .split('\n')
 
-    if (text && text !== '') {
-      returnText ??= text
-    }
+  if (text && text !== '') {
+    returnText = text
+  }
 
-    if (!returnText) {
-      returnText = ''
-    }
+  if (!returnText) {
+    returnText = ''
+  }
 
-    const [match] = returnText.match(/\(([^)]+)\)/) || []
+  const [match] = returnText.match(/\(([^)]+)\)/) || []
 
-    if (!match) return returnText
+  if (!match) return returnText
 
-    return returnText.replace(match, highlightParentheses(match))
-  },
-  { flush: 'post' }
-)
+  return returnText.replace(match, highlightParentheses(match))
+})
 
 function highlightParentheses(match: string | undefined) {
   if (!match) return ''
@@ -51,12 +51,15 @@ const slots = defineSlots<{
 </script>
 
 <template>
-  <div class="row-start-1 flex items-end mr-2">
+  <div class="row-start-1 mr-2 flex items-end">
     <Primitive
       :as="as"
       :as-child="asChild"
       :class="
-        cn('text-foreground text-start text-lg font-semibold leading-tight truncate', $attrs.class)
+        cn(
+          'text-foreground truncate text-start text-lg font-semibold leading-tight',
+          $attrs?.class ?? ''
+        )
       "
       v-html="slotText" />
     <VisuallyHidden>

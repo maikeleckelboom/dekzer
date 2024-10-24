@@ -9,7 +9,7 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
-const formattedError = computed(() => useApiError(props.error))
+const formattedError = computed(() => props.error)
 </script>
 
 <template>

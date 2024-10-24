@@ -16,8 +16,6 @@ export const [injectTrackTitleBarContext, provideTrackTitleBarContext] =
 </script>
 
 <script lang="ts" setup>
-import type { Track } from '~~/layers/track/types'
-
 const props = defineProps<TrackTitleBarRootProps>()
 
 provideTrackTitleBarContext({

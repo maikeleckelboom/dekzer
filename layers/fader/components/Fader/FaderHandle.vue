@@ -3,36 +3,38 @@ import {
   type FaderContext,
   injectFaderRootContext
 } from '~~/layers/fader/components/Fader/FaderRoot.vue'
-import { clamp, type UseSwipeDirection } from '@vueuse/core'
 import { FADER_DEFAULT_HANDLE_SIZE } from '~~/layers/fader/utils/constants'
+import type { UseSwipeDirection } from '@vueuse/core'
 
 const { offset, disabled, orientation, min, max, step, modelValue, width, height } =
   injectFaderRootContext({
-    min: 0,
-    max: 1,
-    step: 0.01,
-    modelValue: 0,
-    offset: 0,
-    disabled: false,
-    orientation: 'horizontal',
-    width: 0,
-    height: 0
+    min: shallowRef(0),
+    max: shallowRef(1),
+    step: shallowRef(0.01),
+    modelValue: shallowRef(0),
+    offset: shallowRef(0),
+    disabled: shallowRef(false),
+    orientation: shallowRef('horizontal'),
+    width: shallowRef(0),
+    height: shallowRef(0)
   }) as FaderContext
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 const containerSize = computed(() => (unref(isHorizontal) ? width.value : height.value))
 
 const offsetStart = ref<number>(0)
+
 const target = useTemplateRef<HTMLDivElement>('handle')
-const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
+const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
   disableTextSelect: true,
   threshold: 0,
-  onSwipeStart(event: PointerEvent) {
-    event.preventDefault()
+  onSwipeStart(e: PointerEvent) {
+    e.preventDefault()
     offsetStart.value = offset.value
   },
-  onSwipe(_: PointerEvent, direction: UseSwipeDirection) {
-    const multiplier = direction === 'up' || direction === 'left' ? 1 : -1
+  // @ts-ignore
+  onSwipe: (_e: PointerEvent, dir: UseSwipeDirection) => {
+    const multiplier = ['up', 'left'].includes(dir) ? 1 : -1
     const sideValue = unref(isHorizontal) ? unref(distanceX) : unref(distanceY)
     const progress = unref(offsetStart) + ((multiplier * sideValue) / unref(containerSize)) * 100
     const delta = (FADER_DEFAULT_HANDLE_SIZE / unref(containerSize)) * 100
@@ -59,10 +61,10 @@ const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
     :class="
       cn(
         'absolute flex cursor-grab touch-none select-none active:cursor-grabbing',
-        'opacity-50 hover:opacity-75 active:opacity-100 transition-opacity ease-in-out duration-75',
+        'opacity-50 transition-opacity duration-75 ease-in-out hover:opacity-75 active:opacity-100',
         isHorizontal
-          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full flex-row -translate-x-1/2`
-          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full flex-col -translate-y-1/2`
+          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full --x-1/2 flex-row`
+          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full --y-1/2 flex-col`
       )
     "
     :data-swiping="isSwiping"
