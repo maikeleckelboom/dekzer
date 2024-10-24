@@ -34,7 +34,7 @@ const pitchRangeDisplay = computed(() => {
   return `±${pitchRange.value}`
 })
 
-const isReady = computed(() => typeof currentTime.value !== 'undefined' && toValue(duration))
+const isReady = computed(() => duration.value > 0 && typeof currentTime.value !== 'undefined')
 </script>
 
 <template>

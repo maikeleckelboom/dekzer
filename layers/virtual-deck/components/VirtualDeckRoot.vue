@@ -38,7 +38,7 @@ import type { WritableComputedRef } from 'vue'
 
 const props = withDefaults(defineProps<VirtualDeckRootProps>(), {
   currentTime: 0,
-  duration: 1,
+  duration: 0,
   bpm: 0,
   pitchDelta: 0,
   pitchRange: 8,

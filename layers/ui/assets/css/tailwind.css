@@ -88,4 +88,12 @@
         color: hsl(var(--foreground));
         background-color: hsl(var(--background));
     }
+
+    .border {
+        border-color: hsl(var(--border));
+    }
+}
+
+@layer utilities {
+
 }
