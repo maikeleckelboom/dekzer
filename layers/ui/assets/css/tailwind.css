@@ -73,27 +73,16 @@
 }
 
 @layer base {
-    .arimo-regular {
-        font-family: 'Arimo', sans-serif;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
-    }
 
     body {
         font-family: 'Arimo', sans-serif;
         font-optical-sizing: auto;
         font-weight: 400;
         font-style: normal;
-        color: hsl(var(--foreground));
-        background-color: hsl(var(--background));
+        @apply bg-background text-foreground;
     }
 
     .border {
         border-color: hsl(var(--border));
     }
-}
-
-@layer utilities {
-
 }

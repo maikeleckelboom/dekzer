@@ -5,6 +5,7 @@ import {
   MASTER_GAIN_MIN,
   MASTER_GAIN_ORIENTATION
 } from '~~/layers/fader/utils/constants'
+import FaderVolumeSlider from '~~/layers/fader/components/Fader/FaderVolumeSlider.vue'
 
 interface Props {
   channels: [number, number]
@@ -17,7 +18,7 @@ const modelValue = useState<number>(`master-gain-fader`, () => MASTER_GAIN_DEFAU
 </script>
 
 <template>
-  <FaderVolumeFader
+  <FaderVolumeSlider
     v-model="modelValue"
     :channels="channels"
     :max="MASTER_GAIN_MAX"

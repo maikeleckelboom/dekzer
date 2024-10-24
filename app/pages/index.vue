@@ -23,24 +23,22 @@ const pannerValue = ref(0)
 </script>
 
 <template>
-  <div class="flex flex-col relative mx-8 gap-4">
+  <div class="relative mx-8 flex flex-col gap-4">
     <TopBar />
-    <div class="grid md:grid-cols-2 gap-2">
+    <div class="grid gap-2 md:grid-cols-2">
       <DeckPlatform
         v-for="deck in decks"
         :key="deck.id"
         :deck="deck" />
     </div>
-    <div class="flex flex-row justify-center  ">
-      <FaderRoot
-        class="w-52 "
-        :min="-1"
-        :max="1"
-        v-model="pannerValue">
+    <div class="flex flex-row justify-center">
+      <FaderRoot v-model="pannerValue" :max="1" :min="-1" class="w-40 md:w-56">
         <FaderTrack>
-          <!-- -->
+          <FaderMarkerRail :stripe-count="5" />
+          <FaderRailSlot />
+          <FaderMarkerRail :stripe-count="5"/>
         </FaderTrack>
-        <FaderHandle />
+        <FaderHandle :translucent="false" />
       </FaderRoot>
     </div>
     <div class="flex flex-col">

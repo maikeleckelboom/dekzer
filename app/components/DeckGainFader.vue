@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { DECK_GAIN_MAX, DECK_GAIN_MIN } from '~~/layers/fader/utils/constants'
+import FaderVolumeSlider from '~~/layers/fader/components/Fader/FaderVolumeSlider.vue'
 
 const { channels } = defineProps<{ channels: number[] }>()
 const modelValue = useState<number>(`deck-gain-fader`, () => 0)
 </script>
 
 <template>
-  <FaderVolumeFader
+  <FaderVolumeSlider
     v-model="modelValue"
     :channels="channels"
     :max="DECK_GAIN_MAX"

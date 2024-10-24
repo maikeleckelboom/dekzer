@@ -40,34 +40,34 @@ const isReady = computed(() => duration.value > 0 && typeof currentTime.value !=
 <template>
   <div
     :class="isReady ? 'opacity-100' : 'opacity-0'"
-    class="absolute inset-0 mb-6 mt-4 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:my-6">
+    class="absolute inset-0 mb-5 mt-2 grid grid-cols-2 grid-rows-[1fr,auto,1fr] items-center md:mt-4">
     <div class="col-span-2 flex flex-col items-center">
       <template v-if="bpmDisplay">
         <strong
           class="text-background select-none whitespace-pre-wrap text-center text-xl font-black capitalize md:text-3xl">
           {{ bpmDisplay }}
         </strong>
-        <p class="text-background text-center text-xs">BPM</p>
+        <p class="text-background text-center text-xs leading-none">BPM</p>
       </template>
     </div>
-    <div class="mb-4">
+    <div class="mb-6">
       <template v-if="pitchDisplay">
         <p
           :class="
             cn(
-              'text-background mb-2 select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-wide md:text-sm'
+              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-wider md:text-sm md:tracking-widest'
             )
           ">
           {{ pitchDisplay }}
         </p>
       </template>
     </div>
-    <div class="mb-4">
+    <div class="mb-6">
       <template v-if="pitchRange">
         <p
           :class="
             cn(
-              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base'
+              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-wider md:text-sm md:tracking-widest'
             )
           ">
           {{ pitchRangeDisplay }}
@@ -75,11 +75,11 @@ const isReady = computed(() => duration.value > 0 && typeof currentTime.value !=
       </template>
     </div>
     <template v-if="typeof currentTime !== 'undefined' && typeof duration !== 'undefined'">
-      <div class="col-span-2 flex flex-col items-center">
+      <div class="col-span-2 mb-1 flex flex-col items-center">
         <strong
           :class="
             cn(
-              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-none'
+              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-tight md:text-lg md:leading-none'
             )
           ">
           {{ currentTimeDisplay }}
@@ -87,7 +87,7 @@ const isReady = computed(() => duration.value > 0 && typeof currentTime.value !=
         <strong
           :class="
             cn(
-              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-none'
+              'text-background select-none text-center text-sm font-semibold capitalize tabular-nums leading-none md:text-lg md:leading-tight'
             )
           ">
           <slot name="remainingTime">

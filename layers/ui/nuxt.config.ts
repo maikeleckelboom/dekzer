@@ -20,7 +20,7 @@ export default defineNuxtConfig({
   colorMode: {
     classSuffix: '',
     preference: 'system',
-    fallback: 'light'
+    fallback: 'dark'
   },
   imports: {
     presets: [

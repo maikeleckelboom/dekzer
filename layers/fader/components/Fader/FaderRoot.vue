@@ -5,11 +5,13 @@ export interface FaderRootProps {
   max?: number
   step?: number
   disabled?: boolean
+  defaultValue?: number
   modelValue: number
 }
 
 export interface FaderContext {
   modelValue: Ref<number>
+  defaultValue: Ref<number>
   orientation: Ref<'horizontal' | 'vertical'>
   min: Ref<number>
   max: Ref<number>
@@ -39,13 +41,14 @@ const props = withDefaults(defineProps<FaderRootProps>(), {
   max: 1,
   step: 0.01,
   modelValue: 0,
+  defaultValue: 0,
   disabled: false
 })
 
-const { orientation, min, max, step, disabled } = toRefs(props)
+const { orientation, min, max, step, disabled,defaultValue } = toRefs(props)
 
 const emits = defineEmits<FaderRootEmits>()
-const modelValue = useVModel(props, 'modelValue', emits)
+const modelValue = useVModel(props, 'modelValue', emits, { defaultValue: defaultValue.value })
 
 const id = useId()
 const offset = useState<number>(`fader-offset-${id}`, () => 0)
@@ -60,7 +63,6 @@ if (orientation.value === 'horizontal') {
 }
 
 const rootElement = useTemplateRef<HTMLDivElement>('root')
-
 const { width, height } = useElementSize(rootElement)
 
 provideFaderRootContext({
@@ -72,7 +74,8 @@ provideFaderRootContext({
   step,
   disabled,
   width,
-  height
+  height,
+  defaultValue
 })
 </script>
 
