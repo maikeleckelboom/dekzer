@@ -262,7 +262,7 @@ const tempoDiff = shallowRef<number>(0)
     :disabled="!loaded"
     class="flex bg-black"
     @load="createAndLoadTrack">
-    <div class="grid h-full place-items-center gap-2 p-2 w-32">
+    <div class="grid h-full place-items-center gap-2 py-1 px-2 w-32">
     <DemoTempoFader/>
     </div>
 
