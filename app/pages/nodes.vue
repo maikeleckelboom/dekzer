@@ -199,7 +199,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 controls
                 data-deck="1"
                 loop
-                src="/assets/audio2.wav" />
+                src="/assets/Serato/StarterPack/01 - House Track Serato House Starter Pack.mp3" />
             </div>
             <section
               class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
@@ -288,7 +288,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 controls
                 data-deck="2"
                 loop
-                src="/assets/audio3.wav" />
+                src="/assets/Serato/StarterPack/02 - House Track Serato House Starter Pack.mp3"/>
             </div>
             <section
               class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">

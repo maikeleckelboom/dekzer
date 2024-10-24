@@ -116,8 +116,8 @@ function setupConstantSourceNode(context: AudioContext) {
 
 async function play() {
   const context = await getAudioContext()
-  const buffer = unref(audioBuffer)
-  if (!canPlay(context, buffer)) return
+  const buffer = unref(audioBuffer)!
+  if (!canPlay(context, buffer, playing)) return
   const source = setupSourceNode(context, buffer)
 
   setupAnalyserNodes(context, source)
@@ -132,11 +132,11 @@ function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
   const offsetStart = unref(startOffset)
   if (offsetStart < 0) {
     setupConstantSourceNode(context)
-    schedulePlayback(buffer)
+    schedulePlayback()
   } else if (offsetStart >= buffer.duration) {
     startPlaying()
   } else {
-    sourceNode.value.start(0, offsetStart, buffer.duration - offsetStart)
+    sourceNode.value!.start(0, offsetStart, buffer.duration - offsetStart)
     startPlaying()
   }
 }
@@ -146,7 +146,7 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stop()
+  stopVolumeAnalyser()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -159,15 +159,21 @@ function onPlayPause(playing: boolean) {
 
 async function createAndLoadTrack(file: File) {
   const url = URL.createObjectURL(file)
-  const response = await fetch(url, { headers: { ResponseType: 'stream' } })
-  const metadata = await parseWebStream(response.body, {
-    mimeType: file.type,
-    size: file.size,
-    url
-  })
-  const track = trackStore.createTrack(url, metadata)
-  trackStore.addTrack(track)
-  deckStore.load(deck, track)
+  try {
+    const response = await fetch(url, { headers: { ResponseType: 'stream' } })
+    if (!response.body) return
+    const metadata = await parseWebStream(response.body, {
+      mimeType: file.type,
+      size: file.size,
+      url
+    })
+    const track = trackStore.createTrack(url, metadata)
+    trackStore.addTrack(track)
+    deckStore.load(deck, track)
+  } catch (error) {
+    console.error(error)
+  } finally {
+  }
 }
 
 const interacting = shallowRef<boolean>(false)
@@ -208,7 +214,7 @@ onBeforeUnmount(() => {
 
 function resetDeck() {
   stopPlaying()
-  stop()
+  stopVolumeAnalyser()
 
   currentTime.value = 0
   audioBuffer.value = null
@@ -257,53 +263,53 @@ const tempoDiff = shallowRef<number>(0)
 </script>
 
 <template>
-    <DeckRoot
-      :class="cn('md:even:flex-row-reverse')"
-      :disabled="!loaded"
-      class="flex"
-      @load="createAndLoadTrack">
-      <div class="grid h-full place-items-center gap-4 px-4 py-1">
-        <DemoTempoFader />
-      </div>
+  <DeckRoot
+    :class="cn('md:even:flex-row-reverse')"
+    :disabled="!loaded"
+    class="flex"
+    @load="createAndLoadTrack">
+    <div class="grid h-full place-items-center gap-4 px-4 py-1">
+      <DemoTempoFader />
+    </div>
 
-      <div class="relative flex w-full flex-col overflow-clip">
-        <TrackTitleBar :track="track" />
-        <WaveformOverview
-          v-model:current-time="currentTime"
-          v-model:interacting="interacting"
-          v-model:start-offset="startOffset"
-          :track="track" />
+    <div class="relative flex w-full flex-col overflow-clip">
+      <TrackTitleBar :track="track" />
+      <WaveformOverview
+        v-model:current-time="currentTime"
+        v-model:interacting="interacting"
+        v-model:start-offset="startOffset"
+        :track="track" />
 
-        <div
-          :class="
-            cn(
-              'flex flex-wrap justify-end gap-2 p-2',
-              deck.index % 2 === 0 && 'md:flex-row-reverse'
-            )
-          ">
-          <template v-if="track">
-            <DeckButton @click="ejectTrack"> Eject</DeckButton>
-            <DeckPlayPause
-              :disabled="!loaded"
-              :playing="playing"
-              @playPause="onPlayPause" />
-          </template>
-        </div>
-      </div>
       <div
         :class="
           cn(
-            'flex w-fit flex-nowrap gap-4 p-2 md:p-2',
+            'flex flex-wrap justify-end gap-2 p-2',
             deck.index % 2 === 0 && 'md:flex-row-reverse'
           )
         ">
-        <VirtualDeck
-          v-model:currentTime="currentTime"
-          v-model:interacting="interacting"
-          :bpm="bpm"
-          :disabled="!track"
-          :duration="duration" />
-        <DeckGainFader :channels="[leftVolume, rightVolume]" />
+        <template v-if="track">
+          <DeckButton @click="ejectTrack"> Eject</DeckButton>
+          <DeckPlayPause
+            :disabled="!loaded"
+            :playing="playing"
+            @playPause="onPlayPause" />
+        </template>
       </div>
-    </DeckRoot>
+    </div>
+    <div
+      :class="
+        cn(
+          'flex w-fit flex-nowrap gap-4 p-2 md:p-2',
+          deck.index % 2 === 0 && 'md:flex-row-reverse'
+        )
+      ">
+      <VirtualDeck
+        v-model:currentTime="currentTime"
+        v-model:interacting="interacting"
+        :bpm="bpm"
+        :disabled="!track"
+        :duration="duration" />
+      <DeckGainFader :channels="[leftVolume, rightVolume]" />
+    </div>
+  </DeckRoot>
 </template>

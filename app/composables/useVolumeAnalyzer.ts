@@ -1,6 +1,6 @@
 export function useVolumeAnalyzer(
-  analyzer: MaybeRefOrGetter<AnalyserNode>,
-  analyserR: MaybeRefOrGetter<AnalyserNode>,
+  analyzer: MaybeRefOrGetter<AnalyserNode | null>,
+  analyserR: MaybeRefOrGetter<AnalyserNode | null>,
   fftSize: 1024 | 2048 | 4096 = 1024
 ) {
   const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
@@ -12,16 +12,19 @@ export function useVolumeAnalyzer(
   let rAF: number | null = null
 
   function start(algorithm: 'rms' | 'peak' = 'rms') {
-    toValue(analyzer).getFloatTimeDomainData(floatSampleBufferL)
-    toValue(analyserR).getFloatTimeDomainData(floatSampleBufferR)
+    const a =  toValue(analyzer)
+    const b = toValue(analyserR)
+    if(!a || !b) return
+    a.getFloatTimeDomainData(floatSampleBufferL)
+    b.getFloatTimeDomainData(floatSampleBufferR)
 
     if (algorithm === 'peak') {
       let peakInstantaneousPowerL = 0
       let peakInstantaneousPowerR = 0
 
       for (let i = 0; i < fftSize; i++) {
-        const sampleL = floatSampleBufferL[i]
-        const sampleR = floatSampleBufferR[i]
+        const sampleL = floatSampleBufferL[i]!
+        const sampleR = floatSampleBufferR[i]!
 
         const powerL = sampleL ** 2
         const powerR = sampleR ** 2
@@ -38,8 +41,8 @@ export function useVolumeAnalyzer(
       let sumOfSquaresR = 0
 
       for (let i = 0; i < fftSize; i++) {
-        const sampleL = floatSampleBufferL[i]
-        const sampleR = floatSampleBufferR[i]
+        const sampleL = floatSampleBufferL[i]!
+        const sampleR = floatSampleBufferR[i]!
 
         sumOfSquaresL += sampleL ** 2
         sumOfSquaresR += sampleR ** 2
@@ -56,7 +59,10 @@ export function useVolumeAnalyzer(
   function stop() {
     returnValueL.value = Number.NEGATIVE_INFINITY
     returnValueR.value = Number.NEGATIVE_INFINITY
-    cancelAnimationFrame(rAF)
+    if (rAF) {
+      cancelAnimationFrame(rAF)
+      rAF = null
+    }
   }
 
   return {

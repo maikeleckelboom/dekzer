@@ -19,8 +19,8 @@ async function playAudio(deckIndex: number, audioBuffer: AudioBuffer, context: A
   const source = context.createBufferSource()
   source.buffer = audioBuffer // Set the buffer you loaded
   // Connect the source to the corresponding deck gain node
-  source.connect(deckGainNodes.value[deckIndex]) // Connect source to deck gain node
-  source.start() // Start playback
+  // source.connect(deckGainNodes.value[deckIndex]) // Connect source to deck gain node
+  // source.start() // Start playback
 }
 
 export function createBufferSourceNode(
@@ -64,25 +64,25 @@ export function setupDestination(context: AudioContext, source: AudioBufferSourc
 }
 
 export function canPlay(
-  context: AudioContext | null,
-  buffer: AudioBuffer | null,
-  playing: boolean
+  context: MaybeRefOrGetter<AudioContext | null>,
+  buffer: MaybeRefOrGetter<AudioBuffer | null>,
+  playing: MaybeRefOrGetter<boolean>
 ): boolean {
-  return !!(context && buffer && !playing)
+  return (toValue(context) && toValue(buffer) && !toValue(playing)) || false
 }
 
-export function fadeIn(node: AudioBufferSourceNode, duration: number) {
-  const gainNode = audioContext.createGain()
-  gainNode.gain.setValueAtTime(0, audioContext.currentTime)
-  gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration)
+export function fadeIn(context:AudioContext, node: AudioBufferSourceNode, duration: number) {
+  const gainNode = context.createGain()
+  gainNode.gain.setValueAtTime(0, context.currentTime)
+  gainNode.gain.linearRampToValueAtTime(1, context.currentTime + duration)
   node.connect(gainNode)
-  gainNode.connect(audioContext.destination)
+  gainNode.connect(context.destination)
 }
 
-export function fadeOut(node: AudioBufferSourceNode, duration: number) {
-  const gainNode = audioContext.createGain()
+export function fadeOut(context:AudioContext, node: AudioBufferSourceNode, duration: number) {
+  const gainNode = context.createGain()
   node.connect(gainNode)
-  gainNode.connect(audioContext.destination)
-  gainNode.gain.setValueAtTime(1, audioContext.currentTime)
-  gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration)
+  gainNode.connect(context.destination)
+  gainNode.gain.setValueAtTime(1, context.currentTime)
+  gainNode.gain.linearRampToValueAtTime(0, context.currentTime + duration)
 }

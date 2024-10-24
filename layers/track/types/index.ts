@@ -1,7 +1,9 @@
-import type { IAudioMetadata } from 'music-metadata'
+import type { ICommonTagsResult, IFormat } from 'music-metadata'
 
-export interface Track extends IAudioMetadata {
+export interface Track {
   id: string
   url: string
-  pictureUrl: string
+  pictureUrl: string | undefined
+  common: Omit<ICommonTagsResult, 'movementIndex' | 'picture'>
+  format: Omit<IFormat, 'tagTypes'>
 }
