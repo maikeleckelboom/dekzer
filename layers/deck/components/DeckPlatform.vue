@@ -257,62 +257,53 @@ const tempoDiff = shallowRef<number>(0)
 </script>
 
 <template>
-  <DeckRoot
-    :class="cn('md:even:flex-row-reverse')"
-    :disabled="!loaded"
-    class="flex bg-black"
-    @load="createAndLoadTrack">
-    <div class="grid h-full place-items-center gap-2 py-1 px-2 w-32">
-    <DemoTempoFader/>
-    </div>
+    <DeckRoot
+      :class="cn('md:even:flex-row-reverse')"
+      :disabled="!loaded"
+      class="flex"
+      @load="createAndLoadTrack">
+      <div class="grid h-full place-items-center gap-4 px-4 py-1">
+        <DemoTempoFader />
+      </div>
 
-    <!--    <div class="grid h-full place-items-center gap-2 px-2">-->
-<!--      <DeckTempoFader-->
-<!--        v-model:bpm="demoBpm"-->
-<!--        v-model:tempo-diff="tempoDiff"-->
-<!--        :disabled="!track" />-->
-<!--    </div>-->
+      <div class="relative flex w-full flex-col overflow-clip">
+        <TrackTitleBar :track="track" />
+        <WaveformOverview
+          v-model:current-time="currentTime"
+          v-model:interacting="interacting"
+          v-model:start-offset="startOffset"
+          :track="track" />
 
-    <div class="relative flex w-full flex-col overflow-hidden">
-      <TrackTitleBar :track="track" />
-      <WaveformOverview
-        v-model:current-time="currentTime"
-        v-model:interacting="interacting"
-        v-model:start-offset="startOffset"
-        :track="track" />
-
+        <div
+          :class="
+            cn(
+              'flex flex-wrap justify-end gap-2 p-2',
+              deck.index % 2 === 0 && 'md:flex-row-reverse'
+            )
+          ">
+          <template v-if="track">
+            <DeckButton @click="ejectTrack"> Eject</DeckButton>
+            <DeckPlayPause
+              :disabled="!loaded"
+              :playing="playing"
+              @playPause="onPlayPause" />
+          </template>
+        </div>
+      </div>
       <div
         :class="
           cn(
-            'flex flex-wrap justify-end gap-2 p-2',
+            'flex w-fit flex-nowrap gap-4 p-2 md:p-2',
             deck.index % 2 === 0 && 'md:flex-row-reverse'
           )
         ">
-        <DeckButton
-          v-if="track"
-          @click="ejectTrack">
-          Eject
-        </DeckButton>
-        <DeckPlayPause
-          :disabled="!loaded"
-          :playing="playing"
-          @playPause="onPlayPause" />
+        <VirtualDeck
+          v-model:currentTime="currentTime"
+          v-model:interacting="interacting"
+          :bpm="bpm"
+          :disabled="!track"
+          :duration="duration" />
+        <DeckGainFader :channels="[leftVolume, rightVolume]" />
       </div>
-    </div>
-    <div
-      :class="
-        cn(
-          'flex w-fit flex-nowrap gap-4 p-2 md:p-2',
-          deck.index % 2 === 0 && 'md:flex-row-reverse'
-        )
-      ">
-      <VirtualDeck
-        v-model:currentTime="currentTime"
-        v-model:interacting="interacting"
-        :bpm="bpm"
-        :disabled="!track"
-        :duration="duration" />
-      <DeckGainFader :channels="[leftVolume, rightVolume]" />
-    </div>
-  </DeckRoot>
+    </DeckRoot>
 </template>

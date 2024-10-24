@@ -55,7 +55,7 @@ const isReady = computed(() => typeof currentTime.value !== 'undefined' && toVal
         <p
           :class="
             cn(
-              'text-background select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-widest md:text-base'
+              'text-background mb-2 select-none text-center text-xs font-semibold capitalize tabular-nums leading-none tracking-wide md:text-sm'
             )
           ">
           {{ pitchDisplay }}

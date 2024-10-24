@@ -61,8 +61,8 @@ const { distanceX, distanceY, isSwiping } = usePointerSwipe(target, {
         'absolute flex cursor-grab touch-none select-none active:cursor-grabbing',
         'opacity-50 hover:opacity-75 active:opacity-100 transition-opacity ease-in-out duration-75',
         isHorizontal
-          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full flex-row`
-          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full flex-col`
+          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full flex-row -translate-x-1/2`
+          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full flex-col -translate-y-1/2`
       )
     "
     :data-swiping="isSwiping"

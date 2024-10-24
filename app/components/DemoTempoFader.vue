@@ -1,40 +1,38 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+const modelValue = ref<number>(0)
 
-const modelValue = ref<number>(0);
-const STRIPE_COUNT: number = 8;
+const STRIPE_COUNT: number = 13
 
 const stripes = computed(() => {
-  const stripes = [];
+  const stripes = []
   for (let i = 0; i < STRIPE_COUNT; i++) {
-    stripes.push(i);
+    stripes.push(i)
   }
-  return stripes;
-});
+  return stripes
+})
 
-// Calculate the top position of the stripe dynamically based on the stripe count
-const geTop = (stripe: number) => {
-  const stripeHeight = 100 / STRIPE_COUNT; // Calculate the height percentage of each stripe
-  const dynamicOffset = stripeHeight / 2; // Calculate the dynamic offset based on the stripe height
-  return `${stripe * stripeHeight + dynamicOffset}%`; // Set the top position based on the stripe index
-};
+function getTopStyle(stripe: number) {
+  const stripeHeight = 100 / STRIPE_COUNT
+  const dynamicOffset = stripeHeight / 2
+  return `${stripe * stripeHeight + dynamicOffset}%`
+}
+
+const everyNth = (index, total) => index % total === 0
 </script>
 
 <template>
-  <div class="relative flex h-full min-h-44 w-10 justify-center">
+  <div class="relative grid h-full min-w-8 place-items-center">
     <FaderThumb />
-    <div class="flex flex-col items-center justify-center pt-0.5">
-      <div class="absolute top-0 z-10 mx-auto h-full w-2 bg-black" />
-
-      <div
-        v-for="stripe in stripes"
-        :key="stripe"
-        :style="{ top: geTop(stripe) }"
-        class="bg-muted absolute h-1 w-full  border border-black -translate-y-1/2" />
-    </div>
+    <div class="absolute top-0 z-10 mx-auto h-full w-2 overflow-clip rounded-[2px] bg-black" />
+    <div
+      v-for="stripe in stripes"
+      :key="stripe"
+      :class="
+        cn(
+          'bg-muted absolute -translate-y-1/2',
+          everyNth(stripe, 6) ? 'bg-foreground/60 h-1 w-full' : 'bg-foreground/60 h-px w-full'
+        )
+      "
+      :style="{ top: getTopStyle(stripe) }" />
   </div>
 </template>
-
-<style scoped>
-/* Add your styles here if needed */
-</style>

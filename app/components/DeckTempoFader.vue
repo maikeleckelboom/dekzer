@@ -39,8 +39,7 @@ watch(tempoDiff, (diff) => {
     :step="0.01"
     class="h-full"
     orientation="vertical">
-    <div class="h-full w-1/2"></div>
-    <div class="h-full w-1/2"></div>
+
   </Fader>
 </template>
 
