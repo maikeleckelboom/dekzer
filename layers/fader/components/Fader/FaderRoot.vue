@@ -50,17 +50,18 @@ const modelValue = useVModel(props, 'modelValue', emits)
 const id = useId()
 const offset = useState<number>(`fader-offset-${id}`, () => 0)
 
-const extraHandleOffset =FADER_DEFAULT_HANDLE_SIZE / FADER_DEFAULT_SIZE * 100 / 2
+const handleOffset  =FADER_DEFAULT_HANDLE_SIZE / FADER_DEFAULT_SIZE * 100 / 2
+
 if (orientation.value === 'horizontal') {
-  offset.value = ((modelValue.value - min.value) / (max.value - min.value)) * 100 - extraHandleOffset
+  offset.value = ((modelValue.value - min.value) / (max.value - min.value)) * 100 - handleOffset
 } else {
   offset.value =
-    ((max.value - modelValue.value) / (max.value - min.value)) * 100 - extraHandleOffset
+    ((max.value - modelValue.value) / (max.value - min.value)) * 100 - handleOffset
 }
 
-const root = useTemplateRef<HTMLDivElement>('root')
+const rootElement = useTemplateRef<HTMLDivElement>('root')
 
-const { width, height } = useElementSize(root)
+const { width, height } = useElementSize(rootElement)
 
 provideFaderRootContext({
   modelValue,

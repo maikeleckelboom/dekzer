@@ -2,7 +2,7 @@
 import { injectVirtualDeckRootContext } from './VirtualDeckRoot.vue'
 import type { VirtualDeckRootContext } from '~~/layers/virtual-deck/components/VirtualDeckRoot.vue'
 
-const { progress } = injectVirtualDeckRootContext() as VirtualDeckRootContext
+const { progress,duration } = injectVirtualDeckRootContext() as VirtualDeckRootContext
 
 const CIRCLE_SIZE = 100
 
@@ -11,7 +11,10 @@ const cx = computed(() => CIRCLE_SIZE / 2)
 const cy = computed(() => CIRCLE_SIZE / 2)
 const r = computed(() => CIRCLE_SIZE / 2)
 const strokeDasharray = computed(() => 2 * Math.PI * r.value)
-const strokeDashoffset = computed(() => strokeDasharray.value * (1 - progress.value))
+const strokeDashoffset = computed(() => {
+  if (toValue(duration) === 0) return strokeDasharray.value
+  return strokeDasharray.value * (1 - progress.value)
+})
 const strokeWidth = 12
 </script>
 

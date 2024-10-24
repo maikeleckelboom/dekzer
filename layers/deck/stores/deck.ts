@@ -47,8 +47,6 @@ export const useDeckStore = defineStore('deck.store', () => {
 
   const computedTrack = (deck: Deck) => computed(() => getTrackByById(deck.track?.id))
 
-  console.log('Deck store initialized', { decks, tracks })
-
   return {
     decks,
     tracks,

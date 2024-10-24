@@ -4,7 +4,6 @@ import {
   injectFaderRootContext
 } from '~~/layers/fader/components/Fader/FaderRoot.vue'
 import { FADER_DEFAULT_HANDLE_SIZE } from '~~/layers/fader/utils/constants'
-import type { UseSwipeDirection } from '@vueuse/core'
 
 const { offset, disabled, orientation, min, max, step, modelValue, width, height } =
   injectFaderRootContext({
@@ -22,7 +21,7 @@ const { offset, disabled, orientation, min, max, step, modelValue, width, height
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 const containerSize = computed(() => (unref(isHorizontal) ? width.value : height.value))
 
-const offsetStart = ref<number>(0)
+const startOffset = ref<number>(0)
 
 const target = useTemplateRef<HTMLDivElement>('handle')
 const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
@@ -30,13 +29,12 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
   threshold: 0,
   onSwipeStart(e: PointerEvent) {
     e.preventDefault()
-    offsetStart.value = offset.value
+    startOffset.value = offset.value
   },
-  // @ts-ignore
-  onSwipe: (_e: PointerEvent, dir: UseSwipeDirection) => {
-    const multiplier = ['up', 'left'].includes(dir) ? 1 : -1
+  onSwipe(e: PointerEvent) {
+    const inverter = -1
     const sideValue = unref(isHorizontal) ? unref(distanceX) : unref(distanceY)
-    const progress = unref(offsetStart) + ((multiplier * sideValue) / unref(containerSize)) * 100
+    const progress = unref(startOffset) + ((inverter * sideValue) / unref(containerSize)) * 100
     const delta = (FADER_DEFAULT_HANDLE_SIZE / unref(containerSize)) * 100
     offset.value = clamp(progress, 0, 100 - delta)
 
@@ -63,15 +61,15 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
         'absolute flex cursor-grab touch-none select-none active:cursor-grabbing',
         'opacity-50 transition-opacity duration-75 ease-in-out hover:opacity-75 active:opacity-100',
         isHorizontal
-          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] top-0 flex h-full --x-1/2 flex-row`
-          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] left-0 flex w-full --y-1/2 flex-col`
+          ? `w-[${FADER_DEFAULT_HANDLE_SIZE}px] --x-1/2 top-0 flex h-full flex-row`
+          : `h-[${FADER_DEFAULT_HANDLE_SIZE}px] --y-1/2 left-0 flex w-full flex-col`
       )
     "
     :data-swiping="isSwiping"
     :style="{
       [isHorizontal ? 'left' : 'top']: `${offset}%`
     }"
-    :tabindex="disabled ? -1 : 0"
+    :tabindex="disabled ? undefined : 0"
     role="slider">
     <div :class="cn('bg-background', isHorizontal ? 'h-full w-[6px]' : 'h-[6px] w-full')" />
     <div :class="cn('bg-foreground', isHorizontal ? 'h-full w-[2px]' : 'h-[2px] w-full')" />
