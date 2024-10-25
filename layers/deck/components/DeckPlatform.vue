@@ -252,17 +252,19 @@ const duration = computedEager(() => track.value?.format.duration)
 const bpm = computedEager(() => track.value?.common.bpm)
 
 const demoBpm = shallowRef(100)
-const pitchRange = shallowRef<8|16|50>(8)
+const pitchRange = shallowRef<8 | 16 | 50>(8)
 const pitchDelta = shallowRef<number>(0)
 </script>
 
 <template>
   <DeckRoot
-    :class="cn('md:even:flex-row-reverse')"
+    :class="
+      cn('items-center md:even:flex-row-reverse odd:[&>div]:first:mr-4 odd:[&>div]:last:ml-4')
+    "
     :disabled="!loaded"
     class="flex"
     @load="createAndLoadTrack">
-    <div class="grid h-full place-items-center gap-4 px-4 py-1">
+    <div class="grid h-full place-items-center gap-4 py-1">
       <DemoTempoFader />
     </div>
 
@@ -301,10 +303,10 @@ const pitchDelta = shallowRef<number>(0)
         v-model:current-time="currentTime"
         v-model:interacting="interacting"
         :bpm="bpm"
+        :disabled="!track?.url"
+        :duration="duration"
         :pitch-delta="pitchDelta"
-        :pitch-range="pitchRange"
-        :disabled="!track"
-        :duration="duration" />
+        :pitch-range="pitchRange" />
       <DeckGainFader :channels="channels" />
     </div>
   </DeckRoot>

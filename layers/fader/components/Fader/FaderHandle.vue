@@ -69,7 +69,7 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
           : 'border-muted/75 border p-1',
         isHorizontal
           ? `w-[${height}px] top-0 flex h-full flex-row`
-          : `h-[${width}px] left-0 flex w-full flex-col`
+          : `h-[${width}px] left-0 flex w-full flex-col `
       )
     "
     :data-swiping="isSwiping"

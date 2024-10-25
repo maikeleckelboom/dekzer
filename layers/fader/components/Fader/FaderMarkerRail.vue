@@ -8,7 +8,7 @@ const { orientation } = injectFaderRootContext({
   orientation: shallowRef('horizontal')
 } as FaderContext)
 
-const { stripeCount = 5 } = defineProps<{ stripeCount: number }>()
+const { stripeCount = 5, nth = 2 } = defineProps<{ stripeCount: number, nth?:number }>()
 
 const stripes = computed(() => {
   const stripes = []
@@ -18,19 +18,13 @@ const stripes = computed(() => {
   return stripes
 })
 
-function getOffsetStyle2(stripe: number) {
-  const stripeSize = 100 / stripeCount
-  const dynamicOffset = stripeSize / 2
-  return `${stripe * stripeSize + dynamicOffset}%`
-}
-
 function getOffsetStyle(stripe: number) {
   const stripeSize = 100 / stripeCount
   const dynamicOffset = stripeSize / 2
   return `${stripe * stripeSize + dynamicOffset}%`
 }
 
-const everyNth = (index: number) => index % 4 === 0
+const everyNth = (index: number) => index % nth === 0
 </script>
 
 <template>
@@ -43,8 +37,8 @@ const everyNth = (index: number) => index % 4 === 0
       :class="
         cn(
           'bg-muted absolute ',
-          orientation === 'vertical' && 'h-0.5 w-full -translate-y-1/2',
-          orientation === 'horizontal' && 'h-full w-0.5 -translate-x-1/2',
+          orientation === 'vertical' && 'h-0.5 w-3/4 -translate-y-1/2',
+          orientation === 'horizontal' && 'h-3/4 w-0.5 -translate-x-1/2',
           everyNth(stripe) && orientation === 'vertical' ? 'h-1' : '',
           everyNth(stripe) && orientation === 'horizontal' ? 'w-1' : ''
         )

@@ -2,7 +2,7 @@
 import { useForwardPropsEmits } from 'radix-vue'
 import type { TrackTitleBarRootProps } from '~~/layers/track/components/TrackTitleBar/TrackTitleBarRoot.vue'
 
-interface TrackTitleBarProps extends /* @vue-ignore */ TrackTitleBarRootProps {}
+interface TrackTitleBarProps extends TrackTitleBarRootProps {}
 
 const props = defineProps<TrackTitleBarProps>()
 
@@ -16,6 +16,5 @@ const forward = useForwardPropsEmits(props)
     <TrackTitleBarPicture>
       <TrackTitleBarPictureFallback />
     </TrackTitleBarPicture>
-<!--    <TrackTitleBarMetrics />-->
   </TrackTitleBarRoot>
 </template>
