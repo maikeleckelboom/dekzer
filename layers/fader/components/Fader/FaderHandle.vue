@@ -63,7 +63,7 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
       cn(
         'absolute flex cursor-grab touch-none select-none rounded-[2px] bg-black active:cursor-grabbing',
         'subpixel-antialiased [image-rendering:pixelated] transition-none',
-        // '[clip-path:polygon(0%_0%,_100%_0%,_95%_50%,_100%_100%,_0%_100%,_5%_50%)]',
+        '[clip-path:polygon(0%_0%,_100%_0%,_95%_50%,_100%_100%,_0%_100%,_5%_50%)]',
         translucent
           ? 'opacity-50 transition-opacity duration-75 ease-in-out hover:opacity-75 active:opacity-100'
           : 'border-muted/75 border p-1',
@@ -81,7 +81,7 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
     <div
       :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
     <div
-      :class="cn('rounded-[2px] bg-white', isHorizontal ? `h-full w-[2px]` : `h-[2px] w-full`)" />
+      :class="cn('rounded-[1px] bg-white', isHorizontal ? `h-full w-[1px]` : `h-[1px] w-full`)" />
     <div
       :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
   </div>
