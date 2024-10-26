@@ -26,7 +26,7 @@ const fillStyle = computed(() => {
   const halfHandleSize = FADER_DEFAULT_HANDLE_SIZE / 2
 
   // Calculate the fill size based on the distance from the center
-  const fillSize = (absDistanceCenter / (max.value - min.value)) * containerSize.value - halfHandleSize
+  const fillSize = (absDistanceCenter / (max.value - min.value)) * containerSize.value
 
   // For horizontal, reverse the direction of fillOffset
   const fillOffset = isHorizontal.value
@@ -41,10 +41,10 @@ const fillStyle = computed(() => {
   const crossedCenter = distanceCenter < 0
 
   return {
-    [isHorizontal.value ? 'width' : 'height']: `${fillSize}px`,
+    [isHorizontal.value ? 'width' : 'height']: `${fillSize }px`,
     [isHorizontal.value ? 'left' : 'top']: `${fillOffset}px`,
     [isHorizontal.value ? 'top' : 'left']: '0%',
-    [isHorizontal.value ? 'height' : 'width']: '100%'
+    [isHorizontal.value ? 'height' : 'width']: '100%',
   }
 })
 </script>

@@ -39,8 +39,8 @@ const everyNth = (index: number) => index % nth === 0
           'bg-muted absolute',
           orientation === 'vertical' && 'h-0.5 w-3/4 -translate-y-1/2',
           orientation === 'horizontal' && 'h-3/4 w-0.5 -translate-x-1/2',
-          everyNth(stripe) && orientation === 'vertical' ? 'h-1' : '',
-          everyNth(stripe) && orientation === 'horizontal' ? 'w-1' : ''
+          everyNth(stripe) && orientation === 'vertical' ? 'h-1 w-full' : '',
+          everyNth(stripe) && orientation === 'horizontal' ? 'w-1 h-full' : ''
         )
       "
       :style="{ [orientation === 'vertical' ? 'top' : 'left']: getOffsetStyle(stripe) }" />

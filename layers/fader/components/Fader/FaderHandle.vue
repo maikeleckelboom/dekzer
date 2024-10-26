@@ -84,10 +84,10 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
     :tabindex="disabled ? undefined : 0"
     role="slider">
     <div
-      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[40%]` : `h-[40%] w-full`)" />
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[45%]` : `h-[45%] w-full`)" />
     <div
       :class="cn('rounded-[1px] bg-white', isHorizontal ? `h-full w-[10%]` : `h-[10%] w-full`)" />
     <div
-      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[40%]` : `h-[40%] w-full`)" />
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[45%]` : `h-[45%] w-full`)" />
   </div>
 </template>
