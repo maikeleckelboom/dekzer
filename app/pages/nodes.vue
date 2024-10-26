@@ -32,15 +32,15 @@ function connectDeck(
   deckAudioEl: HTMLMediaElement | null,
   deckGainNode: GainNode,
   deckVolumeNode: GainNode,
-  panGainNode: GainNode
+  panGainNode: GainNode,
+  masterNode: GainNode
 ) {
   if (!deckAudioEl) return
   const source = audioContext.createMediaElementSource(deckAudioEl)
   source.connect(deckGainNode)
   deckGainNode.connect(deckVolumeNode)
   deckVolumeNode.connect(panGainNode)
-
-  panGainNode.connect(audioContext.destination)
+  panGainNode.connect(masterNode)
 }
 
 function getDbBounds(el: HTMLInputElement): [number, number] {
@@ -52,31 +52,44 @@ function getDbBounds(el: HTMLInputElement): [number, number] {
 const setVolume = (node: GainNode, db: number) => {
   const audioContext = audioCtx.value!
   const gainValue = dbToLinearGain(db)
+
+  console.log('node', node)
+  console.log('db', db)
+  console.log('gainValue', gainValue)
+
+  const gainDefaultValue = node.gain?.defaultValue
+
+  console.log('gainDefaultValue', gainDefaultValue)
+
+  // if (gainValue < 0.0001) {
+  //   node.gain.setValueAtTime(0.0001, audioContext.currentTime)
+  //   return
+  // }
   node.gain.setValueAtTime(gainValue, audioContext.currentTime)
 }
 
 function onGainChange(event: InputEvent) {
   const el = event.target as HTMLInputElement
   const inputValue = parseFloat(el.value)
+
   const [dBMin, dBMax] = getDbBounds(el)
+
   const db = faderToDB(inputValue, dBMin, dBMax)
-  switch (parseInt(el.dataset.deck)) {
-    case Number.NaN:
-      break
+  const deck = parseInt(el.dataset.deck)
+
+
+  switch (deck) {
     case 1:
-      const deck1Gain = unref(deck1GainNode)!
       deck1GainValue.value = inputValue
-      setVolume(deck1Gain, db)
+      setVolume(deck1GainNode.value, db)
       break
     case 2:
-      const deck2Gain = unref(deck2GainNode)!
       deck2GainValue.value = inputValue
-      setVolume(deck2Gain, db)
+      setVolume(deck2GainNode.value, db)
       break
     default:
-      const masterGain = unref(masterGainNode)!
       masterGainValue.value = inputValue
-      setVolume(masterGain, db)
+      setVolume(masterGainNode.value, db)
   }
 }
 
@@ -119,20 +132,17 @@ onMounted(() => {
   const audioContext = new AudioContext()
   audioCtx.value = audioContext
 
-  // Create gain nodes
-  masterGainNode.value = audioContext.createGain()
   deck1GainNode.value = audioContext.createGain()
   deck2GainNode.value = audioContext.createGain()
-
-  masterGainNode.value.gain.value = masterGainValue.value
-  deck1GainNode.value.gain.value = deck1GainValue.value
-  deck2GainNode.value.gain.value = deck2GainValue.value
-
   deck1VolumeNode.value = audioContext.createGain()
   deck2VolumeNode.value = audioContext.createGain()
+  masterGainNode.value = audioContext.createGain()
 
+  deck1GainNode.value.gain.value = deck1GainValue.value
+  deck2GainNode.value.gain.value = deck2GainValue.value
   deck1VolumeNode.value.gain.value = deck1VolumeValue.value
   deck2VolumeNode.value.gain.value = deck2VolumeValue.value
+  masterGainNode.value.gain.value = masterGainValue.value
 
   deckAFadeGain.value = audioContext.createGain()
   deckBFadeGain.value = audioContext.createGain()
@@ -142,15 +152,28 @@ onMounted(() => {
     deck1Audio.value,
     deck1GainNode.value,
     deck1VolumeNode.value,
-    deckAFadeGain.value
+    deckAFadeGain.value,
+    masterGainNode.value
   )
   connectDeck(
     audioContext,
     deck2Audio.value,
     deck2GainNode.value,
     deck2VolumeNode.value,
-    deckBFadeGain.value
+    deckBFadeGain.value,
+    masterGainNode.value
   )
+
+  // connect m
+  masterGainNode.value.connect(audioContext.destination)
+
+  // Set initial volume
+  setVolume(masterGainNode.value, 3)
+  setVolume(deck1GainNode.value, 0)
+  setVolume(deck2GainNode.value, 0)
+  setVolume(deck1VolumeNode.value, deck1VolumeValue.value)
+  setVolume(deck2VolumeNode.value, deck2VolumeValue.value)
+
 })
 
 function mapRange(value: number, inMin: number, inMax: number, outMin: number, outMax: number) {
@@ -231,7 +254,7 @@ function onPannerChange(event: InputEvent) {
                 controls
                 data-deck="1"
                 loop
-                src="/assets/Serato/StarterPack/01 - House Track Serato House Starter Pack.mp3" />
+                src="/assets/YouTube/Go%20Get%20Busy%20(Hardcore%20Edit).opus" />
             </div>
             <section
               class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
@@ -334,7 +357,8 @@ function onPannerChange(event: InputEvent) {
                 controls
                 data-deck="2"
                 loop
-                src="/assets/Serato/StarterPack/02 - House Track Serato House Starter Pack.mp3" />
+                src="/assets/YouTube/Turn%20off%20Your%20Brain.opus"
+              />
             </div>
             <section
               class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">

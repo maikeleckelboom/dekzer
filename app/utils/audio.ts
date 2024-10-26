@@ -52,9 +52,6 @@ export function createAnalyserNodes(
   return [analyser, analyserR]
 }
 
-export function setupDestination(context: AudioContext, source: AudioBufferSourceNode) {
-  source.connect(context.destination)
-}
 
 export function canPlay(
   context: MaybeRefOrGetter<AudioContext | null>,
