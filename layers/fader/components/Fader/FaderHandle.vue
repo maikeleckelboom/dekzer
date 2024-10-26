@@ -4,16 +4,16 @@ import { FADER_DEFAULT_HANDLE_SIZE } from '~~/layers/fader/utils/constants'
 
 const { offset, disabled, orientation, min, max, step, modelValue, width, height } =
   injectFaderRootContext({
-    min: shallowRef(0),
-    max: shallowRef(1),
-    step: shallowRef(0.01),
-    modelValue: shallowRef(0),
-    offset: shallowRef(0),
-    disabled: shallowRef(false),
-    orientation: shallowRef('horizontal'),
-    width: shallowRef(0),
-    height: shallowRef(0),
-    defaultValue: shallowRef(0.5)
+    min: ref(0),
+    max: ref(1),
+    step: ref(0.01),
+    modelValue: ref(0),
+    offset: ref(0),
+    disabled: ref(false),
+    orientation: ref('horizontal'),
+    width: ref(0),
+    height: ref(0),
+    defaultValue: ref(0.5)
   }) as FaderContext
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
@@ -68,21 +68,24 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
           ? 'opacity-50 transition-opacity duration-75 ease-in-out hover:opacity-75 active:opacity-100'
           : 'border-muted/75 border p-1',
         isHorizontal
-          ? `w-[${height}px] top-0 flex h-full flex-row`
-          : `h-[${width}px] left-0 flex w-full flex-col `
+          ? `h-full flex-row`
+          : `w-full flex-col `
       )
     "
     :data-swiping="isSwiping"
     :style="{
-      [isHorizontal ? 'left' : 'top']: `${offset}%`
+      [isHorizontal ? 'left' : 'top']: `${offset}%`,
+      [isHorizontal ? 'top' : 'left']: '0%',
+      [isHorizontal ? 'width' : 'height']: `${FADER_DEFAULT_HANDLE_SIZE}px`,
+
     }"
     :tabindex="disabled ? undefined : 0"
     role="slider">
     <div
-      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[40%]` : `h-[40%] w-full`)" />
     <div
-      :class="cn('rounded-[1px] bg-white', isHorizontal ? `h-full w-[1px]` : `h-[1px] w-full`)" />
+      :class="cn('rounded-[1px] bg-white', isHorizontal ? `h-full w-[10%]` : `h-[10%] w-full`)" />
     <div
-      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[8px]` : `h-[8px] w-full`)" />
+      :class="cn('rounded-[2px] bg-black', isHorizontal ? `h-full w-[40%]` : `h-[40%] w-full`)" />
   </div>
 </template>

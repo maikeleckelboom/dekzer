@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<FaderRootProps>(), {
   disabled: false
 })
 
-const { orientation, min, max, step, disabled,defaultValue } = toRefs(props)
+const { orientation, min, max, step, disabled, defaultValue } = toRefs(props)
 
 const emits = defineEmits<FaderRootEmits>()
 const modelValue = useVModel(props, 'modelValue', emits, { defaultValue: defaultValue.value })
@@ -53,13 +53,12 @@ const modelValue = useVModel(props, 'modelValue', emits, { defaultValue: default
 const id = useId()
 const offset = useState<number>(`fader-offset-${id}`, () => 0)
 
-const handleOffset  =FADER_DEFAULT_HANDLE_SIZE / FADER_DEFAULT_SIZE * 100 / 2
+const handleOffset = ((FADER_DEFAULT_HANDLE_SIZE / FADER_DEFAULT_SIZE) * 100) / 2
 
 if (orientation.value === 'horizontal') {
   offset.value = ((modelValue.value - min.value) / (max.value - min.value)) * 100 - handleOffset
 } else {
-  offset.value =
-    ((max.value - modelValue.value) / (max.value - min.value)) * 100 - handleOffset
+  offset.value = ((max.value - modelValue.value) / (max.value - min.value)) * 100 - handleOffset
 }
 
 const rootElement = useTemplateRef<HTMLDivElement>('root')
@@ -84,7 +83,7 @@ provideFaderRootContext({
     ref="root"
     :class="
       cn(
-        'relative flex touch-none select-none gap-0.5 h-full',
+        'relative flex h-full touch-none select-none gap-0.5',
         orientation === 'horizontal' ? `flex-col` : `flex-row`
       )
     ">

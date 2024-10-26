@@ -18,7 +18,7 @@ const { width, height, orientation, min, max, modelValue } =
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 
-const containerSize = computed(() => (unref(isHorizontal) ? width.value : height.value))
+const containerSize = computed(() => (isHorizontal.value ? width.value : height.value))
 
 const fillStyle = computed(() => {
   const distanceCenter = min.value + (max.value - min.value) / 2 - modelValue.value
@@ -28,7 +28,7 @@ const fillStyle = computed(() => {
   const fillSize = (absDistanceCenter / (max.value - min.value)) * containerSize.value
 
   // For horizontal, reverse the direction of fillOffset
-  const fillOffset = unref(isHorizontal)
+  const fillOffset = isHorizontal.value
     ? distanceCenter > 0
       ? containerSize.value / 2 - fillSize
       : containerSize.value / 2
@@ -38,10 +38,10 @@ const fillStyle = computed(() => {
 
   // Return the appropriate styles for horizontal and vertical sliders
   return {
-    [unref(isHorizontal) ? 'width' : 'height']: `${fillSize}px`,
-    [unref(isHorizontal) ? 'left' : 'top']: `${fillOffset}px`,
-    [unref(isHorizontal) ? 'top' : 'left']: '0%',
-    [unref(isHorizontal) ? 'height' : 'width']: '100%'
+    [isHorizontal.value ? 'width' : 'height']: `${fillSize}px`,
+    [isHorizontal.value ? 'left' : 'top']: `${fillOffset}px`,
+    [isHorizontal.value ? 'top' : 'left']: '0%',
+    [isHorizontal.value ? 'height' : 'width']: '100%'
   }
 })
 </script>
@@ -51,7 +51,7 @@ const fillStyle = computed(() => {
     :class="
       cn(
         'relative m-auto overflow-clip rounded-[1px] bg-black p-px',
-        orientation === 'horizontal' ? 'h-1 w-full' : 'h-full w-1'
+       isHorizontal ? 'h-1 w-full' : 'h-full w-1'
       )
     ">
     <div
