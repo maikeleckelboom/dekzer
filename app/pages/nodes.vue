@@ -6,6 +6,7 @@ import {
   DECK_VOLUME_DEFAULT_VALUE,
   MASTER_GAIN_DEFAULT_VALUE
 } from '~~/layers/fader/utils/constants'
+import { mapRange } from '~/utils/math'
 
 const masterGainNode = shallowRef<GainNode>()
 const deck1GainNode = shallowRef<GainNode>()
@@ -14,13 +15,13 @@ const deck2GainNode = shallowRef<GainNode>()
 const deck1VolumeNode = shallowRef<GainNode>()
 const deck2VolumeNode = shallowRef<GainNode>()
 
-const masterGainValue = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
+const masterGainValue = shallowRef<number>(0)
 
-const deck1GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
-const deck2GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
+const deck1GainValue = shallowRef<number>(0)
+const deck2GainValue = shallowRef<number>(0)
 
-const deck1VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
-const deck2VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const deck1VolumeValue = shallowRef<number>(1)
+const deck2VolumeValue = shallowRef<number>(1)
 
 const audioCtx = shallowRef<AudioContext>()
 
@@ -32,15 +33,27 @@ function connectDeck(
   deckAudioEl: HTMLMediaElement | null,
   deckGainNode: GainNode,
   deckVolumeNode: GainNode,
-  panGainNode: GainNode
+  panGainNode: GainNode,
+  masterGainNode: GainNode,
+  analyserL: AnalyserNode,
+  analyserR: AnalyserNode
 ) {
   if (!deckAudioEl) return
   const source = audioContext.createMediaElementSource(deckAudioEl)
   source.connect(deckGainNode)
+
   deckGainNode.connect(deckVolumeNode)
+
   deckVolumeNode.connect(panGainNode)
 
-  panGainNode.connect(audioContext.destination)
+  // // Connect to left and right analysers
+  panGainNode.connect(analyserL)
+  panGainNode.connect(analyserR)
+
+  // Connect analysers to the master gain
+  analyserL.connect(masterGainNode)
+  analyserR.connect(masterGainNode)
+
 }
 
 function getDbBounds(el: HTMLInputElement): [number, number] {
@@ -115,24 +128,59 @@ const pannerValue = ref(0)
 const deckAFadeGain = ref<GainNode>()
 const deckBFadeGain = ref<GainNode>()
 
+const analyserLDeckA = ref<AnalyserNode>()
+const analyserRDeckA = ref<AnalyserNode>()
+const analyserLDeckB = ref<AnalyserNode>()
+const analyserRDeckB = ref<AnalyserNode>()
+const masterAnalyserNodeL = ref<AnalyserNode>()
+const masterAnalyserNodeR = ref<AnalyserNode>()
+
+const {
+  startAnalyser: startAnalyserA,
+  stopAnalyser: stopAnalyserA,
+  valueL: valueAL,
+  valueR: valueAR
+} = useAudioLevelAnalyser(analyserLDeckA, analyserRDeckA)
+
+const {
+  startAnalyser: startAnalyserB,
+  stopAnalyser: stopAnalyserB,
+  valueL: valueBL,
+  valueR: valueBR
+} = useAudioLevelAnalyser(analyserLDeckB, analyserRDeckB)
+
+const {
+  startAnalyser: startMasterAnalyser,
+  stopAnalyser: stopMasterAnalyser,
+  valueL: masterValueL,
+  valueR: masterValueB
+} = useAudioLevelAnalyser(masterAnalyserNodeL, masterAnalyserNodeR)
+
 onMounted(() => {
   const audioContext = new AudioContext()
   audioCtx.value = audioContext
 
-  // Create gain nodes
-  masterGainNode.value = audioContext.createGain()
   deck1GainNode.value = audioContext.createGain()
   deck2GainNode.value = audioContext.createGain()
-
-  masterGainNode.value.gain.value = masterGainValue.value
-  deck1GainNode.value.gain.value = deck1GainValue.value
-  deck2GainNode.value.gain.value = deck2GainValue.value
-
   deck1VolumeNode.value = audioContext.createGain()
   deck2VolumeNode.value = audioContext.createGain()
+  masterGainNode.value = audioContext.createGain()
 
+  deck1GainNode.value.gain.value = deck1GainValue.value
+  deck2GainNode.value.gain.value = deck2GainValue.value
   deck1VolumeNode.value.gain.value = deck1VolumeValue.value
   deck2VolumeNode.value.gain.value = deck2VolumeValue.value
+  masterGainNode.value.gain.value = masterGainValue.value
+
+
+
+
+  analyserLDeckA.value = audioContext.createAnalyser()
+  analyserRDeckA.value = audioContext.createAnalyser()
+  analyserLDeckB.value = audioContext.createAnalyser()
+  analyserRDeckB.value = audioContext.createAnalyser()
+  masterAnalyserNodeL.value = audioContext.createAnalyser()
+  masterAnalyserNodeR.value = audioContext.createAnalyser()
 
   deckAFadeGain.value = audioContext.createGain()
   deckBFadeGain.value = audioContext.createGain()
@@ -142,27 +190,33 @@ onMounted(() => {
     deck1Audio.value,
     deck1GainNode.value,
     deck1VolumeNode.value,
-    deckAFadeGain.value
+    deckAFadeGain.value,
+    masterGainNode.value,
+    analyserLDeckA.value,
+    analyserRDeckA.value
   )
+
   connectDeck(
     audioContext,
     deck2Audio.value,
     deck2GainNode.value,
     deck2VolumeNode.value,
-    deckBFadeGain.value
+    deckBFadeGain.value,
+    masterGainNode.value,
+    analyserLDeckB.value,
+    analyserRDeckB.value
   )
+
+  masterGainNode.value.connect(masterAnalyserNodeL.value)
+  masterGainNode.value.connect(masterAnalyserNodeR.value)
+  masterGainNode.value.connect(audioContext.destination)
+
 })
 
-function mapRange(value: number, inMin: number, inMax: number, outMin: number, outMax: number) {
-  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
-}
-
 function onCrossFade(value: number) {
-  const deckAFadeGainNode = deckAFadeGain.value!
-  const deckBFadeGainNode = deckBFadeGain.value!
   const mappedValue = mapRange(value, -1, 1, 0, 1)
-  deckAFadeGainNode.gain.value = Math.cos(mappedValue * 0.5 * Math.PI)
-  deckBFadeGainNode.gain.value = Math.cos((1.0 - mappedValue) * 0.5 * Math.PI)
+  deckAFadeGain.value!.gain.value = Math.cos(mappedValue * 0.5 * Math.PI)
+  deckBFadeGain.value!.gain.value = Math.cos((1.0 - mappedValue) * 0.5 * Math.PI)
 }
 
 function onPannerChange(event: InputEvent) {
@@ -170,6 +224,18 @@ function onPannerChange(event: InputEvent) {
   const value = parseFloat(el.value)
   pannerValue.value = value
   onCrossFade(value)
+}
+
+function handlePlay(event: Event) {
+  startAnalyserA()
+  startAnalyserB()
+  startMasterAnalyser()
+}
+
+function handlePause(event: Event) {
+  stopAnalyserA()
+  stopAnalyserB()
+  stopMasterAnalyser()
 }
 </script>
 
@@ -183,7 +249,11 @@ function onPannerChange(event: InputEvent) {
           <div class="col-span-full flex flex-col justify-center gap-2">
             <div class="flex items-center justify-between gap-2">
               <h2 class="text-lg font-bold">Master Gain</h2>
-              <output>{{ masterGainDisplay }}dB</output>
+              <output>
+                {{ masterGainDisplay }}dB
+                {{ masterValueL }}
+                {{ masterValueB }}
+              </output>
             </div>
 
             <div class="relative flex w-full flex-col gap-2">
@@ -224,14 +294,20 @@ function onPannerChange(event: InputEvent) {
         <section class="grid gap-4 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
           <!-- Deck 1 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border-2 bg-gray-400/10 p-2">
-            <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
+            <div class="col-span-full flex flex-col">
+              <h3 class="text-2xl font-bold">Deck A</h3>
+              <pre>{{ valueAL }}</pre>
+              <pre>{{ valueAR }}</pre>
+            </div>
             <div class="col-span-full flex flex-col gap-2">
               <audio
                 ref="deck1Audio"
                 controls
                 data-deck="1"
                 loop
-                src="/assets/Serato/StarterPack/01 - House Track Serato House Starter Pack.mp3" />
+                src="/assets/Serato/ScratchBeats/ScratchBeat1.mp3"
+                @pause="handlePause"
+                @play="handlePlay" />
             </div>
             <section
               class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
@@ -277,7 +353,9 @@ function onPannerChange(event: InputEvent) {
               class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
               <div class="flex items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Volume</h4>
-                <output>{{ deck1VolumeValue }}</output>
+                <output>
+                  {{ deck1VolumeValue }}
+                </output>
               </div>
               <div class="grid place-items-center gap-4">
                 <div class="relative flex flex-col items-center gap-2">
@@ -314,7 +392,7 @@ function onPannerChange(event: InputEvent) {
           <!-- CrossFade -->
           <div class="flex flex-col gap-4">
             <fieldset class="flex flex-col border-4 p-4">
-              <legend class="text-2xl font-bold tracking-tight">Panner</legend>
+              <legend class="text-2xl font-bold tracking-tight">Cross-fade</legend>
               <input
                 :value="pannerValue"
                 class="w-full"
@@ -327,20 +405,26 @@ function onPannerChange(event: InputEvent) {
           </div>
           <!-- Deck 2 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border bg-gray-400/10 p-2">
-            <h3 class="col-span-full text-2xl font-bold">Deck 2</h3>
+            <div class="col-span-full flex flex-col">
+              <h3 class="text-2xl font-bold">Deck B</h3>
+              <pre>{{ valueBL }}</pre>
+              <pre>{{ valueBR }}</pre>
+            </div>
             <div class="col-span-full flex flex-col gap-2">
               <audio
                 ref="deck2Audio"
                 controls
                 data-deck="2"
                 loop
-                src="/assets/Serato/StarterPack/02 - House Track Serato House Starter Pack.mp3" />
+                src="/assets/Serato/ScratchBeats/ScratchBeat2.mp3"
+                @pause="handlePause"
+                @play="handlePlay" />
             </div>
             <section
               class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
               <div class="flex w-full items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Gain</h4>
-                <output>{{ deck2GainDB > 0 ? '+' : '' }}{{ deck2GainDB }}dB</output>
+                <output> {{ deck2GainDB > 0 ? '+' : '' }}{{ deck2GainDB }}dB</output>
               </div>
               <div class="relative m-auto w-fit">
                 <span
@@ -417,9 +501,6 @@ function onPannerChange(event: InputEvent) {
     <div class="col-span-full flex flex-col gap-4">
       <fieldset class="flex flex-col border-4 p-4">
         <legend class="text-2xl font-bold tracking-tight">Values</legend>
-        <!-- Master Gain -->
-        <!-- Deck Gain 1 & 2 -->
-        <!-- Deck Volume 1 & 2 -->
         <section>
           <!-- boring small list -->
           <ul class="grid gap-4 md:grid-cols-2">

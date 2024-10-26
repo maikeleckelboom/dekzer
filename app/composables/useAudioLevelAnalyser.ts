@@ -66,10 +66,10 @@ export function useAudioLevelAnalyser(
     }
   }
 
-  const channels = computed(() => [returnValueL.value, returnValueR.value])
 
   return {
-    channels,
+    valueL: returnValueL,
+    valueR: returnValueR,
     startAnalyser,
     stopAnalyser
   }

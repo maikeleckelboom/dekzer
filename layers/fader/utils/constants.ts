@@ -11,7 +11,7 @@ export const DECK_GAIN_MAX: number = 12 as const
 export const MASTER_GAIN_ORIENTATION = 'horizontal' as const
 export const DECK_GAIN_ORIENTATION = 'vertical' as const
 
-export const MASTER_GAIN_DEFAULT_VALUE: number = 0.625 as const
+export const MASTER_GAIN_DEFAULT_VALUE: number = 0.5 as const // 0.625 as const
 export const DECK_GAIN_DEFAULT_VALUE: number = 0.5 as const
 export const DECK_VOLUME_DEFAULT_VALUE: number = 1 as const
 export const DECK_GAIN_DEFAULT = 0 as const
