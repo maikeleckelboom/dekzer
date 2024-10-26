@@ -27,56 +27,26 @@ const audioCtx = shallowRef<AudioContext>()
 const deck1Audio = useTemplateRef<HTMLAudioElement>('deck1Audio')
 const deck2Audio = useTemplateRef<HTMLAudioElement>('deck2Audio')
 
-onMounted(() => {
-  const audioContext = new AudioContext()
-  audioCtx.value = audioContext
+function connectDeck(
+  audioContext: AudioContext,
+  deckAudioEl: HTMLMediaElement | null,
+  deckGainNode: GainNode,
+  deckVolumeNode: GainNode,
+  panGainNode: GainNode
+) {
+  if (!deckAudioEl) return
+  const source = audioContext.createMediaElementSource(deckAudioEl)
+  source.connect(deckGainNode)
+  deckGainNode.connect(deckVolumeNode)
+  deckVolumeNode.connect(panGainNode)
 
-  // Create gain nodes
-  masterGainNode.value = audioContext.createGain()
-  deck1GainNode.value = audioContext.createGain()
-  deck2GainNode.value = audioContext.createGain()
-
-  masterGainNode.value.gain.value = masterGainValue.value
-  deck1GainNode.value.gain.value = deck1GainValue.value
-  deck2GainNode.value.gain.value = deck2GainValue.value
-
-  deck1VolumeNode.value = audioContext.createGain()
-  deck2VolumeNode.value = audioContext.createGain()
-
-  // Function to connect deck sources
-  function connectDeck(
-    deckAudioEl: HTMLMediaElement | null,
-    deckGainNode: GainNode,
-    deckVolumeNode: GainNode
-  ) {
-    if (!deckAudioEl) return
-    const source = audioContext.createMediaElementSource(deckAudioEl)
-    source.connect(deckGainNode)
-    deckGainNode.connect(deckVolumeNode)
-    deckVolumeNode.connect(masterGainNode.value)
-  }
-
-  // Connect both decks
-  connectDeck(deck1Audio.value, deck1GainNode.value, deck1VolumeNode.value)
-  connectDeck(deck2Audio.value, deck2GainNode.value, deck2VolumeNode.value)
-
-  // Connect master gain to the destination
-  masterGainNode.value.connect(audioContext.destination)
-})
-
-function faderToDB(value: number, minDB: number, maxDB: number): number {
-  const normalizedValue = (value - 0.5) * 2
-  return (normalizedValue * (maxDB - minDB)) / 2
+  panGainNode.connect(audioContext.destination)
 }
 
 function getDbBounds(el: HTMLInputElement): [number, number] {
   const minDB = parseFloat(el.dataset.minDb)
   const maxDB = parseFloat(el.dataset.maxDb)
   return [minDB, maxDB]
-}
-
-function dbToLinearGain(db: number): number {
-  return Math.pow(10, db / 20)
 }
 
 const setVolume = (node: GainNode, db: number) => {
@@ -140,6 +110,67 @@ function onDeckVolumeChange(event: InputEvent) {
 const masterGainDisplay = computed(() => faderToDB(masterGainValue.value, -12, 12).toFixed())
 const deckGainDisplay = computed(() => faderToDB(deck1GainValue.value, -24, 24).toFixed())
 const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFixed())
+
+const pannerValue = ref(0)
+const deckAFadeGain = ref<GainNode>()
+const deckBFadeGain = ref<GainNode>()
+
+onMounted(() => {
+  const audioContext = new AudioContext()
+  audioCtx.value = audioContext
+
+  // Create gain nodes
+  masterGainNode.value = audioContext.createGain()
+  deck1GainNode.value = audioContext.createGain()
+  deck2GainNode.value = audioContext.createGain()
+
+  masterGainNode.value.gain.value = masterGainValue.value
+  deck1GainNode.value.gain.value = deck1GainValue.value
+  deck2GainNode.value.gain.value = deck2GainValue.value
+
+  deck1VolumeNode.value = audioContext.createGain()
+  deck2VolumeNode.value = audioContext.createGain()
+
+  deck1VolumeNode.value.gain.value = deck1VolumeValue.value
+  deck2VolumeNode.value.gain.value = deck2VolumeValue.value
+
+  deckAFadeGain.value = audioContext.createGain()
+  deckBFadeGain.value = audioContext.createGain()
+
+  connectDeck(
+    audioContext,
+    deck1Audio.value,
+    deck1GainNode.value,
+    deck1VolumeNode.value,
+    deckAFadeGain.value
+  )
+  connectDeck(
+    audioContext,
+    deck2Audio.value,
+    deck2GainNode.value,
+    deck2VolumeNode.value,
+    deckBFadeGain.value
+  )
+})
+
+function mapRange(value: number, inMin: number, inMax: number, outMin: number, outMax: number) {
+  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+}
+
+function onCrossFade(value: number) {
+  const deckAFadeGainNode = deckAFadeGain.value!
+  const deckBFadeGainNode = deckBFadeGain.value!
+  const mappedValue = mapRange(value, -1, 1, 0, 1)
+  deckAFadeGainNode.gain.value = Math.cos(mappedValue * 0.5 * Math.PI)
+  deckBFadeGainNode.gain.value = Math.cos((1.0 - mappedValue) * 0.5 * Math.PI)
+}
+
+function onPannerChange(event: InputEvent) {
+  const el = event.target as HTMLInputElement
+  const value = parseFloat(el.value)
+  pannerValue.value = value
+  onCrossFade(value)
+}
 </script>
 
 <template>
@@ -190,8 +221,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
 
         <!-- Deck Gain 1 & 2 -->
-        <section class="grid gap-4 p-2 md:grid-cols-2 md:p-4">
-          <h1 class="col-span-full hidden text-4xl font-bold">Decks</h1>
+        <section class="grid gap-4 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
           <!-- Deck 1 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border-2 bg-gray-400/10 p-2">
             <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
@@ -281,6 +311,20 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
               </div>
             </section>
           </section>
+          <!-- CrossFade -->
+          <div class="flex flex-col gap-4">
+            <fieldset class="flex flex-col border-4 p-4">
+              <legend class="text-2xl font-bold tracking-tight">Panner</legend>
+              <input
+                :value="pannerValue"
+                class="w-full"
+                max="1"
+                min="-1"
+                step="0.01"
+                type="range"
+                @input="onPannerChange" />
+            </fieldset>
+          </div>
           <!-- Deck 2 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border bg-gray-400/10 p-2">
             <h3 class="col-span-full text-2xl font-bold">Deck 2</h3>
@@ -290,7 +334,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
                 controls
                 data-deck="2"
                 loop
-                src="/assets/Serato/StarterPack/02 - House Track Serato House Starter Pack.mp3"/>
+                src="/assets/Serato/StarterPack/02 - House Track Serato House Starter Pack.mp3" />
             </div>
             <section
               class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
@@ -370,7 +414,7 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
         </section>
       </fieldset>
     </div>
-    <div class="flex flex-col gap-4">
+    <div class="col-span-full flex flex-col gap-4">
       <fieldset class="flex flex-col border-4 p-4">
         <legend class="text-2xl font-bold tracking-tight">Values</legend>
         <!-- Master Gain -->
@@ -400,9 +444,17 @@ const deck2GainDB = computed(() => faderToDB(deck2GainValue.value, -24, 24).toFi
               <h2 class="text-sm font-bold">Deck 2 Volume</h2>
               <output>{{ deck2VolumeValue }}</output>
             </li>
+            <!-- Cross-fade Gains -->
+            <li class="flex flex-col gap-2">
+              <h2 class="text-sm font-bold">Panner</h2>
+              <output>{{ pannerValue }}</output>
+            </li>
           </ul>
         </section>
       </fieldset>
+    </div>
+    <div class="col-span-full col-start-1">
+      <!-- Panner -->
     </div>
   </div>
 </template>
