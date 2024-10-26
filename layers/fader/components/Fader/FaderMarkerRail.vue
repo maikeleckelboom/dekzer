@@ -36,7 +36,7 @@ const everyNth = (index: number) => index % nth === 0
       :key="stripe"
       :class="
         cn(
-          'bg-muted absolute ',
+          'bg-muted absolute',
           orientation === 'vertical' && 'h-0.5 w-3/4 -translate-y-1/2',
           orientation === 'horizontal' && 'h-3/4 w-0.5 -translate-x-1/2',
           everyNth(stripe) && orientation === 'vertical' ? 'h-1' : '',

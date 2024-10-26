@@ -11,12 +11,13 @@ const { disabled, orientation } = injectFaderRootContext({
   disabled: shallowRef(false),
   offset: shallowRef(0),
   width: shallowRef(0),
-  height: shallowRef(0)
+  height: shallowRef(0),
+  defaultValue: shallowRef(0.5)
 }) as FaderContext
 
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 
-const { value, segments = 40 } = defineProps<{ value: number; segments?: number }>()
+const { value, segments = 30 } = defineProps<{ value: number; segments?: number }>()
 
 const dBMin = -60
 const dBMax = 0

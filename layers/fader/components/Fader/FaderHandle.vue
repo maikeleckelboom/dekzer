@@ -16,6 +16,8 @@ const { offset, disabled, orientation, min, max, step, modelValue, width, height
     defaultValue: ref(0.5)
   }) as FaderContext
 
+const STICK_THRESHOLD_CENTER:boolean = true
+
 const isHorizontal = computed(() => orientation.value === 'horizontal')
 const containerSize = computed(() => (unref(isHorizontal) ? width.value : height.value))
 
@@ -35,8 +37,8 @@ const { distanceX, distanceY, isSwiping, direction } = usePointerSwipe(target, {
   },
   onSwipe(e: PointerEvent) {
     const inverter = -1
-    const sideValue = unref(isHorizontal) ? unref(distanceX) : unref(distanceY)
-    const progress = unref(startOffset) + ((inverter * sideValue) / unref(containerSize)) * 100
+    const distance = unref(isHorizontal) ? unref(distanceX) : unref(distanceY)
+    const progress = unref(startOffset) + (distance / unref(containerSize)) * 100 * inverter
 
     const delta = (FADER_DEFAULT_HANDLE_SIZE / unref(containerSize)) * 100
     offset.value = clamp(progress, 0, 100 - delta)
