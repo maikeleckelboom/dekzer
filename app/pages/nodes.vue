@@ -94,6 +94,7 @@ const trackAFadeGain = ref<GainNode>()
 const trackBFadeGain = ref<GainNode>()
 
 const masterLimiterNode = ref<DynamicsCompressorNode>()
+
 onMounted(() => {
   const audioContext = new AudioContext();
   audioCtx.value = audioContext; // Ensure audioCtx is a reactive reference
@@ -101,10 +102,11 @@ onMounted(() => {
 
   // Create gain nodes for decks and volume control
   trackAGain.value = audioContext.createGain();
-  trackBGain.value = audioContext.createGain();
   trackAVolumeGain.value = audioContext.createGain();
-  trackBVolumeGain.value = audioContext.createGain();
   trackAFadeGain.value = audioContext.createGain();
+
+  trackBGain.value = audioContext.createGain();
+  trackBVolumeGain.value = audioContext.createGain();
   trackBFadeGain.value = audioContext.createGain();
 
   // Create limiters for each deck
