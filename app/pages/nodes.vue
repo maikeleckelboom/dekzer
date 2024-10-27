@@ -6,112 +6,47 @@ import {
 } from '~~/layers/fader/utils/constants'
 import { createAudioLimiter, LimiterOptions } from '~/utils/limiter'
 
-const masterGainNode = shallowRef<GainNode>()
-const trackAGain = shallowRef<GainNode>()
-const trackBGain = shallowRef<GainNode>()
-
-const trackAVolumeGain = shallowRef<GainNode>()
-const trackBVolumeGain = shallowRef<GainNode>()
-
-const masterGainValue = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
-
-const deck1GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
-const deck2GainValue = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
-
-const deck1VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
-const deck2VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
-
 const audioCtx = shallowRef<AudioContext>()
 
 const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
 const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
+
+const masterLimiter = ref<DynamicsCompressorNode>()
 const trackALimiter = shallowRef<DynamicsCompressorNode>()
 const trackBLimiter = shallowRef<DynamicsCompressorNode>()
 
-function getDbBounds(el: HTMLInputElement): [number, number] {
-  const { minDb, maxDb } = el.dataset as { minDb: string; maxDb: string }
-  const minDB = parseFloat(minDb)
-  const maxDB = parseFloat(maxDb)
-  return [minDB, maxDB]
-}
-
-const setVolume = (node: GainNode, db: number) => {
-  const audioContext = audioCtx.value!
-  const gainValue = dbToLinearGain(db)
-  node.gain.setValueAtTime(gainValue, audioContext.currentTime)
-}
-
-function onGainChange(event: Event) {
-  const el = event.target as HTMLInputElement
-  const inputValue = parseFloat(el.value)
-  const [dBMin, dBMax] = getDbBounds(el)
-  const db = faderToDB(inputValue, dBMin, dBMax)
-  const deck = parseInt(el.dataset.deck || '0', 10)
-  switch (deck) {
-    case 1:
-      deck1GainValue.value = inputValue
-      setVolume(trackAGain.value!, db)
-      break
-    case 2:
-      deck2GainValue.value = inputValue
-      setVolume(trackBGain.value!, db)
-      break
-    default:
-      masterGainValue.value = inputValue
-      setVolume(masterGainNode.value!, db)
-  }
-}
-
-function resetDeckGain(deckNum: number) {
-  switch (deckNum) {
-    case 1:
-      const deck1Gain = unref(trackAGain)!
-      deck1GainValue.value = DECK_GAIN_DEFAULT_VALUE
-      setVolume(deck1Gain, 0)
-      break
-    case 2:
-      const deck2Gain = unref(trackBGain)!
-      deck2GainValue.value = DECK_GAIN_DEFAULT_VALUE
-      setVolume(deck2Gain, 0)
-      break
-  }
-}
-
-function onDeckVolumeChange(event: Event) {
-  const el = event.target as HTMLInputElement
-  const value = parseFloat(el.value)
-  if (el.dataset.deck === '1') {
-    deck1VolumeValue.value = value
-    trackAVolumeGain.value!.gain.value = value
-  } else {
-    deck2VolumeValue.value = value
-    trackBVolumeGain.value!.gain.value = value
-  }
-}
+const masterGain = shallowRef<GainNode>()
+const trackAGain = shallowRef<GainNode>()
+const trackBGain = shallowRef<GainNode>()
+const trackAVolumeGain = shallowRef<GainNode>()
+const trackBVolumeGain = shallowRef<GainNode>()
 
 const crossFadeValue = ref(0)
 const trackAFadeGain = ref<GainNode>()
 const trackBFadeGain = ref<GainNode>()
 
-const masterLimiterNode = ref<DynamicsCompressorNode>()
+const masterGainVal = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
+const trackAGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
+const trackAVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const trackBGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 
 onMounted(() => {
-  const audioContext = new AudioContext();
-  audioCtx.value = audioContext; // Ensure audioCtx is a reactive reference
-  masterGainNode.value = audioContext.createGain();
+  const audioContext = new AudioContext()
 
-  // Create gain nodes for decks and volume control
-  trackAGain.value = audioContext.createGain();
-  trackAVolumeGain.value = audioContext.createGain();
-  trackAFadeGain.value = audioContext.createGain();
+  audioCtx.value = audioContext
 
-  trackBGain.value = audioContext.createGain();
-  trackBVolumeGain.value = audioContext.createGain();
-  trackBFadeGain.value = audioContext.createGain();
+  trackAGain.value = audioContext.createGain()
+  trackAVolumeGain.value = audioContext.createGain()
+  trackAFadeGain.value = audioContext.createGain()
 
-  // Create limiters for each deck
-  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track);
-  trackBLimiter.value = createAudioLimiter(audioContext, LimiterOptions.track);
+  trackBGain.value = audioContext.createGain()
+  trackBVolumeGain.value = audioContext.createGain()
+  trackBFadeGain.value = audioContext.createGain()
+  masterGain.value = audioContext.createGain()
+
+  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
+  trackBLimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
 
   connectDeck(
     audioContext,
@@ -120,8 +55,8 @@ onMounted(() => {
     trackAVolumeGain.value,
     trackAFadeGain.value,
     trackALimiter.value,
-    masterGainNode.value
-  );
+    masterGain.value
+  )
 
   connectDeck(
     audioContext,
@@ -130,17 +65,15 @@ onMounted(() => {
     trackBVolumeGain.value,
     trackBFadeGain.value,
     trackBLimiter.value,
-    masterGainNode.value
-  );
+    masterGain.value
+  )
+  
+  masterLimiter.value = createAudioLimiter(audioContext, LimiterOptions.master)
 
-  // Create and connect the master limiter
-  const limiter = createAudioLimiter(audioContext, LimiterOptions.master);
-  masterLimiterNode.value = limiter;
-  masterGainNode.value.connect(limiter);
-  limiter.connect(audioContext.destination);
-});
+  masterGain.value.connect(masterLimiter.value)
+  masterLimiter.value.connect(audioContext.destination)
+})
 
-// Connect deck function
 function connectDeck(
   audioContext: AudioContext,
   deckAudioEl: HTMLMediaElement | null,
@@ -150,13 +83,13 @@ function connectDeck(
   limiterNode: DynamicsCompressorNode,
   masterNode: GainNode
 ) {
-  if (!deckAudioEl) return;
-  const source = audioContext.createMediaElementSource(deckAudioEl);
-  source.connect(deckGainNode);
-  deckGainNode.connect(deckVolumeNode);
-  deckVolumeNode.connect(panGainNode);
-  panGainNode.connect(limiterNode);
-  limiterNode.connect(masterNode);
+  if (!deckAudioEl) return
+  const source = audioContext.createMediaElementSource(deckAudioEl)
+  source.connect(deckGainNode)
+  deckGainNode.connect(deckVolumeNode)
+  deckVolumeNode.connect(panGainNode)
+  panGainNode.connect(limiterNode)
+  limiterNode.connect(masterNode)
 }
 
 function onCrossFade(value: number) {
@@ -174,16 +107,86 @@ function handleCrossFade(event: Event) {
   onCrossFade(value)
 }
 
+const setVolume = (node: GainNode, db: number) => {
+  const audioContext = audioCtx.value!
+  const gainValue = dbToLinearGain(db)
+  if(!node?.gain) {
+    console.warn('Node not found', node)
+    return
+  }
+  node.gain.setValueAtTime(gainValue, audioContext.currentTime)
+}
 
+function onGainChange(event: Event) {
+  const el = event.target as HTMLInputElement
+  const inputValue = parseFloat(el.value)
+  const [dBMin, dBMax] = getDbBounds(el)
+  const db = faderToDB(inputValue, dBMin, dBMax)
+  const deck = parseInt(el.dataset.deck!)
+  if(isNaN(deck)) {
+    console.warn('Deck not found')
+    return
+  }
+  switch (deck) {
+    case 0:
+      masterGainVal.value = inputValue
+      setVolume(masterGain.value!, db)
+      break
+    case 1:
+      trackAGainVal.value = inputValue
+      setVolume(trackAGain.value!, db)
+      break
+    case 2:
+      trackBGainVal.value = inputValue
+      setVolume(trackBGain.value!, db)
+      break
+  }
+}
 
-const masterGainDisplay = computed(() => Number(faderToDB(masterGainValue.value, -12, 12).toFixed()))
-const deckGainDisplay = computed(() => Number(faderToDB(deck1GainValue.value, -24, 24).toFixed()))
-const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 24).toFixed()))
+function onDeckVolumeChange(event: Event) {
+  const el = event.target as HTMLInputElement
+  const value = parseFloat(el.value)
+  if (el.dataset.deck === '1') {
+    trackAVolumeVal.value = value
+    trackAVolumeGain.value!.gain.value = value
+  } else {
+    trackBVolumeVal.value = value
+    trackBVolumeGain.value!.gain.value = value
+  }
+}
+
+function resetDeckGain(deckNum: number) {
+  switch (deckNum) {
+    case 1:
+      if(!trackAGain.value) return
+      trackAGainVal.value = DECK_GAIN_DEFAULT_VALUE
+      setVolume(trackAGain.value, 0)
+      break
+    case 2:
+      if(!trackBGain.value) return
+      trackBGainVal.value = DECK_GAIN_DEFAULT_VALUE
+      setVolume(trackBGain.value, 0)
+      break
+  }
+}
+
+function getDbBounds(el: HTMLInputElement): [number, number] {
+  const { minDb, maxDb } = el.dataset as { minDb: string; maxDb: string }
+  const minDB = parseFloat(minDb)
+  const maxDB = parseFloat(maxDb)
+  return [minDB, maxDB]
+}
+
+const masterGainDisplay = computed(() =>
+  Number(faderToDB(masterGainVal.value, -12, 12).toFixed())
+)
+const deckGainDisplay = computed(() => Number(faderToDB(trackAGainVal.value, -24, 24).toFixed()))
+const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24).toFixed()))
 </script>
 
 <template>
-  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr,auto,auto] gap-8 p-2 md:p-4">
-    <div class="flex flex-col gap-4">
+  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr,auto,auto] gap-2 p-2 md:p-4">
+    <div class="flex flex-col gap-2">
       <fieldset class="flex flex-col border-4 p-2 md:p-8">
         <legend class="text-3xl font-bold tracking-tight">Gain Nodes</legend>
         <!-- Master Gain -->
@@ -196,11 +199,11 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
 
             <div class="relative flex w-full flex-col gap-2">
               <input
-                ref="masterGain"
-                :value="masterGainValue"
-                class="w-full"
+                :data-deck="0"
                 :data-max-db="12"
                 :data-min-db="-12"
+                :value="masterGainVal"
+                class="w-full"
                 max="1"
                 min="0"
                 step="0.01"
@@ -218,21 +221,23 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               </div>
             </div>
             <Button
-              :disabled="masterGainValue === MASTER_GAIN_DEFAULT_VALUE"
+              :disabled="masterGainVal === MASTER_GAIN_DEFAULT_VALUE"
               class="w-fit"
               size="xs"
               variant="outline"
-              @click="()=>{
-                masterGainValue = MASTER_GAIN_DEFAULT_VALUE
-                setVolume(masterGainNode!, 0)
-              }">
+              @click="
+                () => {
+                  masterGainVal = MASTER_GAIN_DEFAULT_VALUE
+                  setVolume(masterGain!, 0)
+                }
+              ">
               Reset
             </Button>
           </div>
         </section>
 
         <!-- Deck Gain 1 & 2 -->
-        <section class="grid gap-4 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
+        <section class="grid gap-2 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
           <!-- Deck 1 -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 border-2 bg-gray-400/10 p-2">
             <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
@@ -258,7 +263,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
                   +24dB
                 </span>
                 <input
-                  :value="deck1GainValue"
+                  :value="trackAGainVal"
                   aria-orientation="vertical"
                   data-deck="1"
                   data-max-db="24"
@@ -275,7 +280,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               </div>
               <div class="flex flex-col items-center">
                 <Button
-                  :disabled="deck1GainValue === DECK_GAIN_DEFAULT_VALUE"
+                  :disabled="trackAGainVal === DECK_GAIN_DEFAULT_VALUE"
                   class="mr-auto"
                   size="xs"
                   variant="outline"
@@ -285,19 +290,19 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               </div>
             </section>
             <section
-              class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
+              class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed">
               <div class="flex items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Volume</h4>
-                <output>{{ deck1VolumeValue }}</output>
+                <output>{{ trackAVolumeVal }}</output>
               </div>
-              <div class="grid place-items-center gap-4">
+              <div class="grid place-items-center gap-2">
                 <div class="relative flex flex-col items-center gap-2">
                   <span
                     class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
                     1
                   </span>
                   <input
-                    :value="deck1VolumeValue"
+                    :value="trackAVolumeVal"
                     aria-orientation="vertical"
                     data-deck="1"
                     max="1"
@@ -312,10 +317,10 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
                 </div>
                 <div class="flex w-full flex-col items-start">
                   <Button
-                    :disabled="deck1VolumeValue === DECK_VOLUME_DEFAULT_VALUE"
+                    :disabled="trackAVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
                     size="xs"
                     variant="outline"
-                    @click="deck1VolumeValue = DECK_VOLUME_DEFAULT_VALUE">
+                    @click="trackAVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
                     Reset
                   </Button>
                 </div>
@@ -323,7 +328,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
             </section>
           </section>
           <!-- CrossFade -->
-          <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
             <fieldset class="flex flex-col border-4 p-4">
               <legend class="text-2xl font-bold tracking-tight">Panner</legend>
               <input
@@ -359,7 +364,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
                   +24dB
                 </span>
                 <input
-                  :value="deck2GainValue"
+                  :value="trackBGainVal"
                   aria-orientation="vertical"
                   data-deck="2"
                   data-max-db="24"
@@ -376,7 +381,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               </div>
               <div class="flex w-full flex-col items-start">
                 <Button
-                  :disabled="deck2GainValue === DECK_GAIN_DEFAULT_VALUE"
+                  :disabled="trackBGainVal === DECK_GAIN_DEFAULT_VALUE"
                   size="xs"
                   variant="outline"
                   @click="resetDeckGain(2)">
@@ -388,16 +393,16 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               class="bg-background/35 row-start-3 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
               <div class="flex w-full items-center justify-between gap-2">
                 <h4 class="text-center text-lg font-semibold">Volume</h4>
-                <output>{{ deck2VolumeValue }}</output>
+                <output>{{ trackBVolumeVal }}</output>
               </div>
-              <div class="grid place-items-center gap-4">
+              <div class="grid place-items-center gap-2">
                 <div class="relative flex flex-col items-center gap-2">
                   <span
                     class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
                     1
                   </span>
                   <input
-                    :value="deck2VolumeValue"
+                    :value="trackBVolumeVal"
                     aria-orientation="vertical"
                     data-deck="2"
                     max="1"
@@ -412,10 +417,10 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
                 </div>
                 <div class="flex w-full flex-col items-start">
                   <Button
-                    :disabled="deck2VolumeValue === DECK_VOLUME_DEFAULT_VALUE"
+                    :disabled="trackBVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
                     size="xs"
                     variant="outline"
-                    @click="deck2VolumeValue = DECK_VOLUME_DEFAULT_VALUE">
+                    @click="trackBVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
                     Reset
                   </Button>
                 </div>

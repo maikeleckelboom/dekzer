@@ -21,21 +21,21 @@ export const LimiterOptions: {
   balanced: Required<LimiterOptions>
 } = {
   master: {
-    threshold: -3, // -6
+    threshold: -6, // +3dB with -9dB headroom
     ratio: 10,
     attack: 0.05,
     release: 0.2,
     knee: 0,
   },
   track: {
-    threshold: -6,
+    threshold: -6, // +3dB with -9dB headroom
     ratio: 4,
     attack: 0.005,
     release: 0.1,
     knee: 0,
   },
   balanced: {
-    threshold: -3,
+    threshold: -3, // +3dB with -6dB headroom
     ratio: 6,
     attack: 0.01,
     release: 0.15,
