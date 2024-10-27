@@ -8,51 +8,63 @@ import { createAudioLimiter, LimiterOptions } from '~/utils/limiter'
 
 const audioCtx = shallowRef<AudioContext>()
 
-const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
-const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
-
-const masterLimiter = ref<DynamicsCompressorNode>()
-const trackALimiter = shallowRef<DynamicsCompressorNode>()
-const trackBLimiter = shallowRef<DynamicsCompressorNode>()
-
-const masterGain = shallowRef<GainNode>()
-const trackAGain = shallowRef<GainNode>()
-const trackBGain = shallowRef<GainNode>()
-const trackAVolumeGain = shallowRef<GainNode>()
-const trackBVolumeGain = shallowRef<GainNode>()
-
-const crossFadeValue = ref(0)
-const trackAFadeGain = ref<GainNode>()
-const trackBFadeGain = ref<GainNode>()
-
+// Master
+const masterLimiter = shallowRef<DynamicsCompressorNode>()
 const masterGainVal = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
+const masterGain = shallowRef<GainNode>()
+const masterAnalyserL = shallowRef<AnalyserNode>()
+const masterAnalyserR = shallowRef<AnalyserNode>()
+
+// Track A
+const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
+const trackAGain = shallowRef<GainNode>()
+const trackAVolumeGain = shallowRef<GainNode>()
+const trackAFadeGain = shallowRef<GainNode>()
+const trackALimiter = shallowRef<DynamicsCompressorNode>()
+const trackAAnalyserL = shallowRef<AnalyserNode>()
+const trackAAnalyserR = shallowRef<AnalyserNode>()
 const trackAGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 const trackAVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
-const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const crossFadeValue = shallowRef<number>(0)
+
+// Track B
+const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
+const trackBGain = shallowRef<GainNode>()
 const trackBGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
+const trackBVolumeGain = shallowRef<GainNode>()
+const trackBFadeGain = shallowRef<GainNode>()
+const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
+const trackBLimiter = shallowRef<DynamicsCompressorNode>()
+const trackBAnalyserL = shallowRef<AnalyserNode>()
+const trackBAnalyserR = shallowRef<AnalyserNode>()
 
 onMounted(() => {
-  const audioContext = new AudioContext()
-
+  const audioContext = new AudioContext({ latencyHint: 'playback' })
   audioCtx.value = audioContext
 
   trackAGain.value = audioContext.createGain()
   trackAVolumeGain.value = audioContext.createGain()
   trackAFadeGain.value = audioContext.createGain()
+  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
+  trackAAnalyserL.value = audioContext.createAnalyser()
+  trackAAnalyserR.value = audioContext.createAnalyser()
 
   trackBGain.value = audioContext.createGain()
   trackBVolumeGain.value = audioContext.createGain()
   trackBFadeGain.value = audioContext.createGain()
-  masterGain.value = audioContext.createGain()
-
-  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
   trackBLimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
+  trackBAnalyserL.value = audioContext.createAnalyser()
+  trackBAnalyserR.value = audioContext.createAnalyser()
+
+  masterGain.value = audioContext.createGain()
 
   connectDeck(
     audioContext,
     trackASourceEl.value,
     trackAGain.value,
     trackAVolumeGain.value,
+    trackAAnalyserL.value,
+    trackAAnalyserR.value,
     trackAFadeGain.value,
     trackALimiter.value,
     masterGain.value
@@ -63,14 +75,22 @@ onMounted(() => {
     trackBSourceEl.value,
     trackBGain.value,
     trackBVolumeGain.value,
+    trackBAnalyserL.value,
+    trackBAnalyserR.value,
     trackBFadeGain.value,
     trackBLimiter.value,
     masterGain.value
   )
 
   masterLimiter.value = createAudioLimiter(audioContext, LimiterOptions.master)
-
   masterGain.value.connect(masterLimiter.value)
+
+  masterAnalyserL.value = audioContext.createAnalyser()
+  masterAnalyserR.value = audioContext.createAnalyser()
+
+  masterGain.value.connect(masterAnalyserL.value)
+  masterGain.value.connect(masterAnalyserR.value)
+
   masterLimiter.value.connect(audioContext.destination)
 })
 
@@ -79,6 +99,8 @@ function connectDeck(
   deckAudioEl: HTMLMediaElement | null,
   deckGainNode: GainNode,
   deckVolumeNode: GainNode,
+  analyserL: AnalyserNode,
+  analyserR: AnalyserNode,
   panGainNode: GainNode,
   limiterNode: DynamicsCompressorNode,
   masterNode: GainNode
@@ -89,7 +111,9 @@ function connectDeck(
   deckGainNode.connect(deckVolumeNode)
   deckVolumeNode.connect(panGainNode)
   panGainNode.connect(limiterNode)
+  limiterNode.connect(analyserL)
   limiterNode.connect(masterNode)
+  limiterNode.connect(analyserR)
 }
 
 function onCrossFade(value: number) {
@@ -110,10 +134,6 @@ function handleCrossFade(event: Event) {
 const setVolume = (node: GainNode, db: number) => {
   const audioContext = audioCtx.value!
   const gainValue = dbToLinearGain(db)
-  if (!node?.gain) {
-    console.warn('Node not found', node)
-    return
-  }
   node.gain.setValueAtTime(gainValue, audioContext.currentTime)
 }
 
@@ -123,22 +143,21 @@ function onGainChange(event: Event) {
   const [dBMin, dBMax] = getDbBounds(el)
   const db = faderToDB(inputValue, dBMin, dBMax)
   const deck = parseInt(el.dataset.deck!)
-  if (isNaN(deck)) {
-    console.warn('Deck not found')
-    return
-  }
   switch (deck) {
     case 0:
       masterGainVal.value = inputValue
-      setVolume(masterGain.value!, db)
+      setVolume(masterGain.value as GainNode, db)
       break
     case 1:
       trackAGainVal.value = inputValue
-      setVolume(trackAGain.value!, db)
+      setVolume(trackAGain.value as GainNode, db)
       break
     case 2:
       trackBGainVal.value = inputValue
-      setVolume(trackBGain.value!, db)
+      setVolume(trackBGain.value as GainNode, db)
+      break
+    case Number.NaN:
+      console.warn('Deck not found')
       break
   }
 }
@@ -177,9 +196,33 @@ function getDbBounds(el: HTMLInputElement): [number, number] {
   return [minDB, maxDB]
 }
 
-const masterGainDisplay = computed(() => Number(faderToDB(masterGainVal.value, -12, 12).toFixed()))
-const deckGainDisplay = computed(() => Number(faderToDB(trackAGainVal.value, -24, 24).toFixed()))
-const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24).toFixed()))
+const {
+  start: startTrackAAnalyser,
+  stop: stopTrackAAnalyser,
+  channels: trackAChannels
+} = useAudioLevelAnalyser(trackAAnalyserL, trackAAnalyserR)
+const {
+  start: startTrackBAnalyser,
+  stop: stopTrackBAnalyser,
+  channels: trackBChannels
+} = useAudioLevelAnalyser(trackBAnalyserL, trackBAnalyserR)
+const {
+  start: startMasterAnalyser,
+  stop: stopMasterAnalyser,
+  channels: masterChannels
+} = useAudioLevelAnalyser(masterAnalyserL, masterAnalyserR)
+
+function onPlay(_: Event) {
+  startTrackAAnalyser()
+  startTrackBAnalyser()
+  startMasterAnalyser()
+}
+
+function onPause(_: Event) {
+  stopTrackAAnalyser()
+  stopTrackBAnalyser()
+  stopMasterAnalyser()
+}
 </script>
 
 <template>
@@ -190,9 +233,13 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
           <div class="col-span-full flex flex-col justify-center gap-2">
             <div class="flex items-center justify-between gap-2">
               <h2 class="font-bold">Master Gain</h2>
-              <output>{{ masterGainDisplay }}dB</output>
+              <output> {{ faderToDB(masterGainVal, -12, 12).toFixed() }}dB </output>
+              <pre>
+                {{ masterChannels }}
+                {{ trackAChannels }}
+                {{ trackBChannels }}
+              </pre>
             </div>
-
             <div class="relative flex w-full flex-col gap-2">
               <input
                 :data-deck="0"
@@ -241,13 +288,15 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 controls
                 data-deck="1"
                 loop
-                src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3" />
+                src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3"
+                @pause="onPause"
+                @play="onPlay" />
             </div>
             <section class="dashed flex size-full flex-col gap-y-2 p-2">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex w-full items-center justify-between gap-2">
                   <h4 class="text-center text-sm font-semibold">Gain (A)</h4>
-                  <output>{{ Number(faderToDB(trackAGainVal, -24, 24).toFixed()) }}dB</output>
+                  <output>{{ faderToDB(trackAGainVal, -24, 24).toFixed() }}dB</output>
                 </div>
               </div>
               <div class="relative m-auto w-fit">
@@ -319,7 +368,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
               </div>
             </section>
           </section>
-          <!-- CrossFade -->
+          <!--
+        -- CrossFade
+        -->
           <div class="flex flex-col items-center justify-center">
             <input
               :value="crossFadeValue"
@@ -330,7 +381,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
               type="range"
               @input="handleCrossFade" />
           </div>
-          <!-- Deck 2 -->
+          <!--
+          -- Deck B
+          -->
           <section class="grid grid-cols-2 gap-x-2 gap-y-4 p-2">
             <h3 class="col-span-full font-bold">Deck B</h3>
             <div class="col-span-full flex flex-col gap-2">
@@ -339,7 +392,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 controls
                 data-deck="2"
                 loop
-                src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3" />
+                src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3"
+                @pause="onPause"
+                @play="onPlay" />
             </div>
             <section class="col-start-2 flex size-full flex-col gap-y-2 p-2">
               <div class="flex w-full items-center justify-between gap-2">

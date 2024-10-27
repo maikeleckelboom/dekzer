@@ -1,6 +1,6 @@
 export function useAudioLevelAnalyser(
-  analyzer: MaybeRefOrGetter<AnalyserNode | null>,
-  analyserR: MaybeRefOrGetter<AnalyserNode | null>,
+  analyzer: MaybeRefOrGetter<AnalyserNode | null | undefined>,
+  analyserR: MaybeRefOrGetter<AnalyserNode | null | undefined>,
   fftSize: 1024 | 2048 | 4096 = 1024
 ) {
   const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
@@ -11,7 +11,7 @@ export function useAudioLevelAnalyser(
 
   let rAF: number | null = null
 
-  function startAnalyser(algorithm: 'rms' | 'peak' = 'rms') {
+  function start(algorithm: 'rms' | 'peak' = 'rms') {
     const a = toValue(analyzer)
     const b = toValue(analyserR)
     if (!a || !b) return
@@ -54,10 +54,10 @@ export function useAudioLevelAnalyser(
       returnValueR.value = 10 * Math.log10(sumOfSquaresR / fftSize)
     }
 
-    rAF = requestAnimationFrame(() => startAnalyser(algorithm))
+    rAF = requestAnimationFrame(() => start(algorithm))
   }
 
-  function stopAnalyser() {
+  function stop() {
     returnValueL.value = Number.NEGATIVE_INFINITY
     returnValueR.value = Number.NEGATIVE_INFINITY
     if (rAF) {
@@ -66,16 +66,19 @@ export function useAudioLevelAnalyser(
     }
   }
 
-  const channels = computed(() => [returnValueL.value, returnValueR.value])
+  const channels = computed(() => [
+    returnValueL.value ?? Number.NEGATIVE_INFINITY,
+    returnValueR.value ?? Number.NEGATIVE_INFINITY
+  ])
 
   return {
     channels,
-    startAnalyser,
-    stopAnalyser
+    start,
+    stop
   }
 }
 
-export const useMasterGainControl = createSharedComposable((context:AudioContext) => {
+export const useMasterGainControl = createSharedComposable((context: AudioContext) => {
   const gain = ref<GainNode | null>(null)
 
   onMounted(() => {
@@ -92,7 +95,7 @@ export const useMasterGainControl = createSharedComposable((context:AudioContext
   }
 })
 
-export const useMasterVolumeAnalyser = createSharedComposable((context:AudioContext) => {
+export const useMasterVolumeAnalyser = createSharedComposable((context: AudioContext) => {
   const analyzer = ref<AnalyserNode | null>(null)
   const analyserR = ref<AnalyserNode | null>(null)
 

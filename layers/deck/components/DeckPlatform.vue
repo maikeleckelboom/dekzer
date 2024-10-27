@@ -89,7 +89,7 @@ function stopPlaying() {
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const { channels, startAnalyser, stopAnalyser } = useAudioLevelAnalyser(
+const { channels, start, stop } = useAudioLevelAnalyser(
   analyserNode,
   analyserNodeR,
   2048
@@ -125,7 +125,7 @@ async function play() {
 
   setupAnalyserNodes(context, source)
   source.connect(context.destination)
-  startAnalyser()
+  start()
 
   startTime.value = context.currentTime
   handlePlayback(context, buffer)
@@ -149,7 +149,7 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stopAnalyser()
+  stop()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -225,7 +225,7 @@ onBeforeUnmount(() => {
 
 function resetDeck() {
   stopPlaying()
-  stopAnalyser()
+  stop()
 
   currentTime.value = 0
   audioBuffer.value = null
