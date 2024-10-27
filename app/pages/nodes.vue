@@ -67,7 +67,7 @@ onMounted(() => {
     trackBLimiter.value,
     masterGain.value
   )
-  
+
   masterLimiter.value = createAudioLimiter(audioContext, LimiterOptions.master)
 
   masterGain.value.connect(masterLimiter.value)
@@ -110,7 +110,7 @@ function handleCrossFade(event: Event) {
 const setVolume = (node: GainNode, db: number) => {
   const audioContext = audioCtx.value!
   const gainValue = dbToLinearGain(db)
-  if(!node?.gain) {
+  if (!node?.gain) {
     console.warn('Node not found', node)
     return
   }
@@ -123,7 +123,7 @@ function onGainChange(event: Event) {
   const [dBMin, dBMax] = getDbBounds(el)
   const db = faderToDB(inputValue, dBMin, dBMax)
   const deck = parseInt(el.dataset.deck!)
-  if(isNaN(deck)) {
+  if (isNaN(deck)) {
     console.warn('Deck not found')
     return
   }
@@ -158,12 +158,12 @@ function onDeckVolumeChange(event: Event) {
 function resetDeckGain(deckNum: number) {
   switch (deckNum) {
     case 1:
-      if(!trackAGain.value) return
+      if (!trackAGain.value) return
       trackAGainVal.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(trackAGain.value, 0)
       break
     case 2:
-      if(!trackBGain.value) return
+      if (!trackBGain.value) return
       trackBGainVal.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(trackBGain.value, 0)
       break
@@ -177,23 +177,19 @@ function getDbBounds(el: HTMLInputElement): [number, number] {
   return [minDB, maxDB]
 }
 
-const masterGainDisplay = computed(() =>
-  Number(faderToDB(masterGainVal.value, -12, 12).toFixed())
-)
+const masterGainDisplay = computed(() => Number(faderToDB(masterGainVal.value, -12, 12).toFixed()))
 const deckGainDisplay = computed(() => Number(faderToDB(trackAGainVal.value, -24, 24).toFixed()))
 const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24).toFixed()))
 </script>
 
 <template>
-  <div class="mx-auto grid w-full max-w-7xl grid-cols-[1fr,auto,auto] gap-2 p-2 md:p-4">
+  <div class="mx-auto grid w-full max-w-4xl grid-cols-[1fr,auto,auto] gap-2 p-2 md:p-4">
     <div class="flex flex-col gap-2">
-      <fieldset class="flex flex-col border-4 p-2 md:p-8">
-        <legend class="text-3xl font-bold tracking-tight">Gain Nodes</legend>
-        <!-- Master Gain -->
+      <fieldset class="flex flex-col p-2 md:p-8">
         <section class="grid gap-2 p-2 md:grid-cols-4 md:p-4">
           <div class="col-span-full flex flex-col justify-center gap-2">
             <div class="flex items-center justify-between gap-2">
-              <h2 class="text-lg font-bold">Master Gain</h2>
+              <h2 class="font-bold">Master Gain</h2>
               <output>{{ masterGainDisplay }}dB</output>
             </div>
 
@@ -236,11 +232,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
           </div>
         </section>
 
-        <!-- Deck Gain 1 & 2 -->
         <section class="grid gap-2 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
-          <!-- Deck 1 -->
-          <section class="grid grid-cols-2 gap-x-2 gap-y-4 border-2 bg-gray-400/10 p-2">
-            <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
+          <section class="-2 grid grid-cols-2 gap-x-2 gap-y-4 p-2">
+            <h2 class="col-span-full font-bold">Deck A</h2>
             <div class="col-span-full flex flex-col gap-2">
               <audio
                 ref="trackASourceEl"
@@ -249,12 +243,11 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 loop
                 src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3" />
             </div>
-            <section
-              class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
+            <section class="dashed flex size-full flex-col gap-y-2 p-2">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex w-full items-center justify-between gap-2">
-                  <h4 class="text-center text-lg font-semibold">Gain</h4>
-                  <output>{{ deckGainDisplay > 0 ? '+' : '' }}{{ deckGainDisplay }}dB</output>
+                  <h4 class="text-center text-sm font-semibold">Gain (A)</h4>
+                  <output>{{ Number(faderToDB(trackAGainVal, -24, 24).toFixed()) }}dB</output>
                 </div>
               </div>
               <div class="relative m-auto w-fit">
@@ -289,10 +282,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 </Button>
               </div>
             </section>
-            <section
-              class="bg-background/35 flex size-full flex-col gap-y-2 border-2 border-dashed">
+            <section class="flex size-full flex-col gap-y-2">
               <div class="flex items-center justify-between gap-2">
-                <h4 class="text-center text-lg font-semibold">Volume</h4>
+                <h4 class="text-center text-sm font-semibold">Volume (A)</h4>
                 <output>{{ trackAVolumeVal }}</output>
               </div>
               <div class="grid place-items-center gap-2">
@@ -328,22 +320,19 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
             </section>
           </section>
           <!-- CrossFade -->
-          <div class="flex flex-col gap-2">
-            <fieldset class="flex flex-col border-4 p-4">
-              <legend class="text-2xl font-bold tracking-tight">Panner</legend>
-              <input
-                :value="crossFadeValue"
-                class="w-full"
-                max="1"
-                min="-1"
-                step="0.001"
-                type="range"
-                @input="handleCrossFade" />
-            </fieldset>
+          <div class="flex flex-col items-center justify-center">
+            <input
+              :value="crossFadeValue"
+              class="w-full"
+              max="1"
+              min="-1"
+              step="0.001"
+              type="range"
+              @input="handleCrossFade" />
           </div>
           <!-- Deck 2 -->
-          <section class="grid grid-cols-2 gap-x-2 gap-y-4 border bg-gray-400/10 p-2">
-            <h3 class="col-span-full text-2xl font-bold">Deck 2</h3>
+          <section class="grid grid-cols-2 gap-x-2 gap-y-4 p-2">
+            <h3 class="col-span-full font-bold">Deck B</h3>
             <div class="col-span-full flex flex-col gap-2">
               <audio
                 ref="trackBSourceEl"
@@ -352,11 +341,10 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 loop
                 src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3" />
             </div>
-            <section
-              class="bg-background/35 col-start-2 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
+            <section class="col-start-2 flex size-full flex-col gap-y-2 p-2">
               <div class="flex w-full items-center justify-between gap-2">
-                <h4 class="text-center text-lg font-semibold">Gain</h4>
-                <output>{{ deck2GainDB > 0 ? '+' : '' }}{{ deck2GainDB }}dB</output>
+                <h4 class="text-center text-sm font-semibold">Gain (B)</h4>
+                <output>{{ faderToDB(trackBGainVal, -24, 24).toFixed() }}dB</output>
               </div>
               <div class="relative m-auto w-fit">
                 <span
@@ -389,10 +377,9 @@ const deck2GainDB = computed(() => Number(faderToDB(trackBGainVal.value, -24, 24
                 </Button>
               </div>
             </section>
-            <section
-              class="bg-background/35 row-start-3 flex size-full flex-col gap-y-2 border-2 border-dashed p-2">
+            <section class="row-start-3 flex size-full flex-col gap-y-2 p-2">
               <div class="flex w-full items-center justify-between gap-2">
-                <h4 class="text-center text-lg font-semibold">Volume</h4>
+                <h4 class="text-center text-sm font-semibold">Volume</h4>
                 <output>{{ trackBVolumeVal }}</output>
               </div>
               <div class="grid place-items-center gap-2">
