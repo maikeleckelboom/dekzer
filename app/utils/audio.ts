@@ -27,7 +27,7 @@ export function createBufferSourceNode(
 
 export function createAnalysers(
   context: AudioContext,
-  fftSize = 2048
+  fftSize: 1024 | 2048 | 4096 | 8192 | 16384 = 1024
 ): [AnalyserNode, AnalyserNode] {
   const analyser = context.createAnalyser()
   const analyserR = context.createAnalyser()
@@ -51,7 +51,6 @@ export function createAnalyserNodes(
 
   return [analyser, analyserR]
 }
-
 
 export function canPlay(
   context: MaybeRefOrGetter<AudioContext | null>,
@@ -80,7 +79,10 @@ export function fadeOut(context: AudioContext, node: AudioBufferSourceNode, dura
 export async function getAnalyzedTempo(
   url: string,
   context: AudioContext,
-  options = { minTempo: 60, maxTempo: 220 }
+  options = {
+    minTempo: 60,
+    maxTempo: 220
+  }
 ): Promise<number> {
   const buffer = await loadAudioBuffer(context, url)
   return await analyze(buffer, options)
@@ -90,6 +92,17 @@ export function faderToDB(value: number, minDB: number, maxDB: number): number {
   const normalizedValue = (value - 0.5) * 2
   return (normalizedValue * (maxDB - minDB)) / 2
 }
+
 export function dbToLinearGain(db: number): number {
   return Math.pow(10, db / 20)
+}
+
+export function mapRange(
+  value: number,
+  inMin: number,
+  inMax: number,
+  outMin: number,
+  outMax: number
+) {
+  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
 }
