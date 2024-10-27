@@ -5,6 +5,8 @@ import type { Deck } from '~~/layers/deck/stores/deck'
 import DeckGainFader from '~/components/DeckGainFader.vue'
 import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
 import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
+import { useAudioTempo } from '~/composables/useAudioTempo'
+import { guess } from 'web-audio-beat-detector'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -177,6 +179,12 @@ async function createAndLoadTrack(file: File) {
   } finally {
   }
 }
+
+whenever(audioBuffer, async (buffer) => {
+ const context = await getAudioContext()
+  const guessedTempo = await guess(buffer, context.sampleRate)
+  console.log('Guessed tempo:', guessedTempo)
+})
 
 const interacting = shallowRef<boolean>(false)
 

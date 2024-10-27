@@ -7,11 +7,11 @@ import {
 import { createAudioLimiter, LimiterOptions } from '~/utils/limiter'
 
 const masterGainNode = shallowRef<GainNode>()
-const deck1GainNode = shallowRef<GainNode>()
-const deck2GainNode = shallowRef<GainNode>()
+const trackAGain = shallowRef<GainNode>()
+const trackBGain = shallowRef<GainNode>()
 
-const deck1VolumeNode = shallowRef<GainNode>()
-const deck2VolumeNode = shallowRef<GainNode>()
+const trackAVolumeGain = shallowRef<GainNode>()
+const trackBVolumeGain = shallowRef<GainNode>()
 
 const masterGainValue = shallowRef<number>(MASTER_GAIN_DEFAULT_VALUE)
 
@@ -23,27 +23,10 @@ const deck2VolumeValue = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 
 const audioCtx = shallowRef<AudioContext>()
 
-const deck1Audio = useTemplateRef<HTMLAudioElement>('deck1Audio')
-const deck2Audio = useTemplateRef<HTMLAudioElement>('deck2Audio')
-const deck1LimiterNode = shallowRef<DynamicsCompressorNode>()
-const deck2LimiterNode = shallowRef<DynamicsCompressorNode>()
-// function connectDeck(
-//   audioContext: AudioContext,
-//   deckAudioEl: HTMLMediaElement | null,
-//   deckGainNode: GainNode,
-//   deckVolumeNode: GainNode,
-//   panGainNode: GainNode,
-//   limiterNode: DynamicsCompressorNode,
-//   masterNode: GainNode
-// ) {
-//   if (!deckAudioEl) return
-//   const source = audioContext.createMediaElementSource(deckAudioEl)
-//   source.connect(deckGainNode)
-//   deckGainNode.connect(deckVolumeNode)
-//   deckVolumeNode.connect(panGainNode)
-//   panGainNode.connect(limiterNode)
-//   limiterNode.connect(masterNode)
-// }
+const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
+const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
+const trackALimiter = shallowRef<DynamicsCompressorNode>()
+const trackBLimiter = shallowRef<DynamicsCompressorNode>()
 
 function getDbBounds(el: HTMLInputElement): [number, number] {
   const { minDb, maxDb } = el.dataset as { minDb: string; maxDb: string }
@@ -67,11 +50,11 @@ function onGainChange(event: Event) {
   switch (deck) {
     case 1:
       deck1GainValue.value = inputValue
-      setVolume(deck1GainNode.value!, db)
+      setVolume(trackAGain.value!, db)
       break
     case 2:
       deck2GainValue.value = inputValue
-      setVolume(deck2GainNode.value!, db)
+      setVolume(trackBGain.value!, db)
       break
     default:
       masterGainValue.value = inputValue
@@ -82,12 +65,12 @@ function onGainChange(event: Event) {
 function resetDeckGain(deckNum: number) {
   switch (deckNum) {
     case 1:
-      const deck1Gain = unref(deck1GainNode)!
+      const deck1Gain = unref(trackAGain)!
       deck1GainValue.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(deck1Gain, 0)
       break
     case 2:
-      const deck2Gain = unref(deck2GainNode)!
+      const deck2Gain = unref(trackBGain)!
       deck2GainValue.value = DECK_GAIN_DEFAULT_VALUE
       setVolume(deck2Gain, 0)
       break
@@ -99,16 +82,16 @@ function onDeckVolumeChange(event: Event) {
   const value = parseFloat(el.value)
   if (el.dataset.deck === '1') {
     deck1VolumeValue.value = value
-    deck1VolumeNode.value!.gain.value = value
+    trackAVolumeGain.value!.gain.value = value
   } else {
     deck2VolumeValue.value = value
-    deck2VolumeNode.value!.gain.value = value
+    trackBVolumeGain.value!.gain.value = value
   }
 }
 
 const crossFadeValue = ref(0)
-const deck1FadeGain = ref<GainNode>()
-const deck2FadeGain = ref<GainNode>()
+const trackAFadeGain = ref<GainNode>()
+const trackBFadeGain = ref<GainNode>()
 
 const masterLimiterNode = ref<DynamicsCompressorNode>()
 onMounted(() => {
@@ -117,35 +100,34 @@ onMounted(() => {
   masterGainNode.value = audioContext.createGain();
 
   // Create gain nodes for decks and volume control
-  deck1GainNode.value = audioContext.createGain();
-  deck2GainNode.value = audioContext.createGain();
-  deck1VolumeNode.value = audioContext.createGain();
-  deck2VolumeNode.value = audioContext.createGain();
-  deck1FadeGain.value = audioContext.createGain();
-  deck2FadeGain.value = audioContext.createGain();
+  trackAGain.value = audioContext.createGain();
+  trackBGain.value = audioContext.createGain();
+  trackAVolumeGain.value = audioContext.createGain();
+  trackBVolumeGain.value = audioContext.createGain();
+  trackAFadeGain.value = audioContext.createGain();
+  trackBFadeGain.value = audioContext.createGain();
 
   // Create limiters for each deck
-  deck1LimiterNode.value = createAudioLimiter(audioContext, LimiterOptions.track);
-  deck2LimiterNode.value = createAudioLimiter(audioContext, LimiterOptions.track);
+  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track);
+  trackBLimiter.value = createAudioLimiter(audioContext, LimiterOptions.track);
 
-  // Connect each deck to the audio graph
   connectDeck(
     audioContext,
-    deck1Audio.value,
-    deck1GainNode.value,
-    deck1VolumeNode.value,
-    deck1FadeGain.value, // Ensure this is correctly initialized
-    deck1LimiterNode.value,
+    trackASourceEl.value,
+    trackAGain.value,
+    trackAVolumeGain.value,
+    trackAFadeGain.value,
+    trackALimiter.value,
     masterGainNode.value
   );
 
   connectDeck(
     audioContext,
-    deck2Audio.value,
-    deck2GainNode.value,
-    deck2VolumeNode.value,
-    deck2FadeGain.value, // Ensure this is correctly initialized
-    deck2LimiterNode.value,
+    trackBSourceEl.value,
+    trackBGain.value,
+    trackBVolumeGain.value,
+    trackBFadeGain.value,
+    trackBLimiter.value,
     masterGainNode.value
   );
 
@@ -162,62 +144,22 @@ function connectDeck(
   deckAudioEl: HTMLMediaElement | null,
   deckGainNode: GainNode,
   deckVolumeNode: GainNode,
-  panGainNode: GainNode, // Ensure this is properly defined
+  panGainNode: GainNode,
   limiterNode: DynamicsCompressorNode,
   masterNode: GainNode
 ) {
-  if (!deckAudioEl) return; // Guard clause if audio element is null
+  if (!deckAudioEl) return;
   const source = audioContext.createMediaElementSource(deckAudioEl);
   source.connect(deckGainNode);
   deckGainNode.connect(deckVolumeNode);
-  deckVolumeNode.connect(panGainNode); // Ensure panGainNode is defined
+  deckVolumeNode.connect(panGainNode);
   panGainNode.connect(limiterNode);
   limiterNode.connect(masterNode);
 }
-// onMounted(() => {
-//   const audioContext = new AudioContext()
-//   audioCtx.value = audioContext
-//   masterGainNode.value = audioContext.createGain()
-//
-//   deck1GainNode.value = audioContext.createGain()
-//   deck2GainNode.value = audioContext.createGain()
-//   deck1VolumeNode.value = audioContext.createGain()
-//   deck2VolumeNode.value = audioContext.createGain()
-//   deck1FadeGain.value = audioContext.createGain()
-//   deck2FadeGain.value = audioContext.createGain()
-//
-//   deck1LimiterNode.value = createAudioLimiter(audioContext, LimiterOptions.track)
-//   deck2LimiterNode.value = createAudioLimiter(audioContext, LimiterOptions.track)
-//
-//   connectDeck(
-//     audioContext,
-//     deck1Audio.value,
-//     deck1GainNode.value,
-//     deck1VolumeNode.value,
-//     deck1FadeGain.value,
-//     deck1LimiterNode.value,
-//     masterGainNode.value
-//   )
-//   connectDeck(
-//     audioContext,
-//     deck2Audio.value,
-//     deck2GainNode.value,
-//     deck2VolumeNode.value,
-//     deck2FadeGain.value,
-//     deck2LimiterNode.value,
-//     masterGainNode.value
-//   )
-//
-//
-//   const limiter = createAudioLimiter(audioContext, LimiterOptions.master)
-//   masterLimiterNode.value = limiter
-//   masterGainNode.value.connect(limiter)
-//   limiter.connect(audioContext.destination)
-// })
 
 function onCrossFade(value: number) {
-  const deckAFadeGainNode = deck1FadeGain.value!
-  const deckBFadeGainNode = deck2FadeGain.value!
+  const deckAFadeGainNode = trackAFadeGain.value!
+  const deckBFadeGainNode = trackBFadeGain.value!
   const mappedValue = mapRange(value, -1, 1, 0, 1)
   deckAFadeGainNode.gain.value = Math.cos(mappedValue * 0.5 * Math.PI)
   deckBFadeGainNode.gain.value = Math.cos((1.0 - mappedValue) * 0.5 * Math.PI)
@@ -278,7 +220,10 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
               class="w-fit"
               size="xs"
               variant="outline"
-              @click="masterGainValue = MASTER_GAIN_DEFAULT_VALUE">
+              @click="()=>{
+                masterGainValue = MASTER_GAIN_DEFAULT_VALUE
+                setVolume(masterGainNode!, 0)
+              }">
               Reset
             </Button>
           </div>
@@ -291,7 +236,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
             <h2 class="col-span-full text-2xl font-bold">Deck 1</h2>
             <div class="col-span-full flex flex-col gap-2">
               <audio
-                ref="deck1Audio"
+                ref="trackASourceEl"
                 controls
                 data-deck="1"
                 loop
@@ -394,7 +339,7 @@ const deck2GainDB = computed(() => Number(faderToDB(deck2GainValue.value, -24, 2
             <h3 class="col-span-full text-2xl font-bold">Deck 2</h3>
             <div class="col-span-full flex flex-col gap-2">
               <audio
-                ref="deck2Audio"
+                ref="trackBSourceEl"
                 controls
                 data-deck="2"
                 loop

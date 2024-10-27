@@ -7,33 +7,39 @@ export interface LimiterOptions {
 }
 
 /**
- * Limiter Options
- *
  * @param threshold - The point at which the compressor is activated.
  * @param ratio - How aggressively the compressor will reduce the signal when it exceeds the threshold.
  * @param attack - How long the compressor takes to reach full compression after the signal crosses the threshold.
  * @param release - How quickly the compressor recovers after peak gain reduction.
- * @param knee - How soft or hard the compression will occur around the threshold.
+ * @param knee - How soft or hard the compression will occur around the threshold (softening).
  * @returns DynamicsCompressorOptions
  * @see https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode/DynamicsCompressorNode
  */
 export const LimiterOptions: {
   master: Required<LimiterOptions>
   track: Required<LimiterOptions>
+  balanced: Required<LimiterOptions>
 } = {
   master: {
-    threshold: -1, // Slightly higher threshold to catch peaks
-    ratio: 10, // 10:1 ratio for more aggressive limiting
-    attack: 5 / 100, // Normalize attack time to a max of 100 ms
-    release: 100 / 1000, // Normalize release time to a max of 1000 ms
-    knee: 0 // Hard knee, remains 0
+    threshold: -3, // -6
+    ratio: 10,
+    attack: 0.05,
+    release: 0.2,
+    knee: 0,
   },
   track: {
-    threshold: -6, // Threshold in dB to allow for some headroom
-    ratio: 4, // 4:1 ratio for moderate limiting
-    attack: 10 / 100, // Normalize attack time to a max of 100 ms
-    release: 50 / 1000, // Normalize release time to a max of 1000 ms
-    knee: 0 // Hard knee, remains 0
+    threshold: -6,
+    ratio: 4,
+    attack: 0.005,
+    release: 0.1,
+    knee: 0,
+  },
+  balanced: {
+    threshold: -3,
+    ratio: 6,
+    attack: 0.01,
+    release: 0.15,
+    knee: 0
   }
 }
 
@@ -48,10 +54,11 @@ export function createAudioLimiter(
   options?: LimiterOptions
 ): DynamicsCompressorNode {
   const limiter = audioContext.createDynamicsCompressor()
-  limiter.threshold.value = options?.threshold ?? -1
-  limiter.ratio.value = options?.ratio ?? 10
-  limiter.attack.value = options?.attack ?? 5 / 100
-  limiter.release.value = options?.release ?? 100 / 1000
-  limiter.knee.value = options?.knee ?? 0
+  const mergedOptions = { ...LimiterOptions.balanced, ...options }
+  limiter.threshold.value = mergedOptions.threshold
+  limiter.ratio.value = mergedOptions.ratio
+  limiter.attack.value = mergedOptions.attack
+  limiter.release.value = mergedOptions.release
+  limiter.knee.value = mergedOptions.knee
   return limiter
 }
