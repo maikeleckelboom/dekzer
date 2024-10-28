@@ -1,10 +1,12 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+
+</script>
 
 <template>
   <PlaygroundProvider>
     <PlaygroundMaster />
-    <PlaygroundDeck />
-    <PlaygroundDeck />
+    <PlaygroundDeck :index="0" />
+    <PlaygroundDeck :index="1" />
     <PlaygroundCrossFader />
   </PlaygroundProvider>
 </template>

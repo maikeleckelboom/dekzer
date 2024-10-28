@@ -17,14 +17,14 @@ export type LimiterPresetKey = 'master' | 'track'
  */
 export const LimiterOptions: Record<LimiterPresetKey, Required<LimiterOptions>> = {
   master: {
-    threshold: -6, // +3dB with -9dB headroom
+    threshold: -3,
     ratio: 10,
     attack: 0.05,
     release: 0.2,
     knee: 0
   },
   track: {
-    threshold: -6, // +3dB with -9dB headroom
+    threshold: -6,
     ratio: 4,
     attack: 0.005,
     release: 0.1,

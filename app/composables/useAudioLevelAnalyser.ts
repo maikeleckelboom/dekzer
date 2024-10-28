@@ -1,6 +1,6 @@
 export function useAudioLevelAnalyser(
-  analyzer: MaybeRefOrGetter<AnalyserNode | null | undefined>,
-  analyserR: MaybeRefOrGetter<AnalyserNode | null | undefined>,
+  analyzerL?: MaybeRefOrGetter<AnalyserNode | null | undefined>,
+  analyserR?: MaybeRefOrGetter<AnalyserNode | null | undefined>,
   fftSize: 1024 | 2048 | 4096 = 1024
 ) {
   const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
@@ -9,12 +9,24 @@ export function useAudioLevelAnalyser(
   const floatSampleBufferL = new Float32Array(fftSize)
   const floatSampleBufferR = new Float32Array(fftSize)
 
+  const _analyserL = shallowRef<AnalyserNode | null | undefined>(toValue(analyzerL))
+  const _analyserR = shallowRef<AnalyserNode | null | undefined>(toValue(analyserR))
+
+  function setAnalysers(AnalyserL: AnalyserNode, AnalyserR: AnalyserNode) {
+    _analyserL.value = AnalyserL
+    _analyserR.value = AnalyserR
+  }
+
   let rAF: number | null = null
 
+
   function start(algorithm: 'rms' | 'peak' = 'rms') {
-    const a = toValue(analyzer)
-    const b = toValue(analyserR)
-    if (!a || !b) return
+    const a = toValue(_analyserL)
+    const b = toValue(_analyserR)
+
+    if (!a || !b) {
+      throw new Error('Analyser nodes are not set')
+    }
 
     a.getFloatTimeDomainData(floatSampleBufferL)
     b.getFloatTimeDomainData(floatSampleBufferR)
@@ -74,26 +86,11 @@ export function useAudioLevelAnalyser(
   return {
     channels,
     start,
-    stop
+    stop,
+    setAnalysers
   }
 }
 
-export const useMasterGainControl = createSharedComposable((context: AudioContext) => {
-  const gain = ref<GainNode | null>(null)
-
-  onMounted(() => {
-    gain.value = context.createGain()
-  })
-
-  return {
-    gain,
-    setVolume(value: number) {
-      const g = toValue(gain)
-      if (!g) return
-      g.gain.value = value
-    }
-  }
-})
 
 export const useMasterVolumeAnalyser = createSharedComposable((context: AudioContext) => {
   const analyzer = ref<AnalyserNode | null>(null)

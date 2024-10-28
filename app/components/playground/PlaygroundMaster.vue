@@ -1,25 +1,38 @@
 <script lang="ts" setup>
-const audioContext = inject('audioContext') as Ref<AudioContext | null>
+import { useAudioStore } from '~/stores/useAudioStore'
 
-const masterGainNode = ref<GainNode>()
-const masterLimiterNode = ref<DynamicsCompressorNode>()
+const { getAudioContext } = useAudioContext()
 
-provide('masterGainNode', masterGainNode)
-provide('masterLimiterNode', masterLimiterNode)
+const store = useAudioStore()
 
-whenever(audioContext, (context) => {
-  console.log('context', context)
+// audio analysers
+const {start,stop,channels,setAnalysers} = useAudioLevelAnalyser()
 
-  masterGainNode.value = context.createGain()
-  masterLimiterNode.value = context.createDynamicsCompressor()
+onMounted(async()=>{
+  const context =  await getAudioContext()
+  if (!context) return
 
-  masterGainNode.value!.connect(masterLimiterNode.value)
-  masterLimiterNode.value!.connect(context.destination)
+  const masterNodes = createMasterNodes(context)
+
+  store.decks.forEach((deck) => {
+    deck.limiter.connect(masterNodes.gain)
+  })
+
+  store.setMasterNodes(masterNodes)
+  masterNodes.gain.connect(masterNodes.limiter)
+  masterNodes.limiter.connect(masterNodes.analyserL)
+  masterNodes.limiter.connect(masterNodes.analyserR)
+  masterNodes.limiter.connect(context.destination)
+
+  setAnalysers(masterNodes.analyserL, masterNodes.analyserR)
+  start()
 })
 </script>
 
 <template>
   <div>
     <!-- Master controls and output -->
+    <pre>{{store.decks}}</pre>
+    <pre>{{channels}}</pre>
   </div>
 </template>

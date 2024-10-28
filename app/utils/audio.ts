@@ -1,4 +1,5 @@
 import { analyze } from 'web-audio-beat-detector'
+import type { DeckNodes, MasterNodes } from '~/composables/useAudioGraph'
 
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
   const response = await fetch(url, { headers: { ResponseType: 'stream' } })
@@ -97,11 +98,42 @@ export function dbToLinearGain(db: number): number {
   return Math.pow(10, db / 20)
 }
 
-
 export function cosineFadeIn(value: number) {
   return Math.cos(value * 0.5 * Math.PI)
 }
 
 export function cosineFadeOut(value: number) {
   return Math.cos((1.0 - value) * 0.5 * Math.PI)
+}
+
+export function createDeckNodes(context: AudioContext): DeckNodes {
+  const gain = context.createGain()
+  const volume = context.createGain()
+  const pan = context.createGain()
+  const limiter = context.createDynamicsCompressor()
+  const analyserL = context.createAnalyser()
+  const analyserR = context.createAnalyser()
+
+  return {
+    gain,
+    volume,
+    analyserL,
+    analyserR,
+    pan,
+    limiter
+  }
+}
+
+export function createMasterNodes(context: AudioContext): MasterNodes {
+  const gain = context.createGain()
+  const limiter = context.createDynamicsCompressor()
+  const analyserL = context.createAnalyser()
+  const analyserR = context.createAnalyser()
+
+  return {
+    gain,
+    limiter,
+    analyserL,
+    analyserR
+  }
 }
