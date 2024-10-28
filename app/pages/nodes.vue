@@ -31,9 +31,9 @@ const crossFadeValue = shallowRef<number>(0)
 const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
 const trackBGain = shallowRef<GainNode>()
 const trackBGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
+const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 const trackBVolumeGain = shallowRef<GainNode>()
 const trackBFadeGain = shallowRef<GainNode>()
-const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 const trackBLimiter = shallowRef<DynamicsCompressorNode>()
 const trackBAnalyserL = shallowRef<AnalyserNode>()
 const trackBAnalyserR = shallowRef<AnalyserNode>()
@@ -110,18 +110,26 @@ function connectDeck(
   source.connect(deckGainNode)
   deckGainNode.connect(deckVolumeNode)
   deckVolumeNode.connect(panGainNode)
+  deckVolumeNode.connect(analyserL)
+  deckVolumeNode.connect(analyserR)
   panGainNode.connect(limiterNode)
-  limiterNode.connect(analyserL)
   limiterNode.connect(masterNode)
-  limiterNode.connect(analyserR)
+}
+
+function cosineFadeIn(value: number) {
+  return Math.cos(value * 0.5 * Math.PI)
+}
+
+function cosineFadeOut(value: number) {
+  return Math.cos((1.0 - value) * 0.5 * Math.PI)
 }
 
 function onCrossFade(value: number) {
   const deckAFadeGainNode = trackAFadeGain.value!
   const deckBFadeGainNode = trackBFadeGain.value!
   const mappedValue = mapRange(value, -1, 1, 0, 1)
-  deckAFadeGainNode.gain.value = Math.cos(mappedValue * 0.5 * Math.PI)
-  deckBFadeGainNode.gain.value = Math.cos((1.0 - mappedValue) * 0.5 * Math.PI)
+  deckAFadeGainNode.gain.value = cosineFadeIn(mappedValue)
+  deckBFadeGainNode.gain.value = cosineFadeOut(mappedValue)
 }
 
 function handleCrossFade(event: Event) {
@@ -131,9 +139,9 @@ function handleCrossFade(event: Event) {
   onCrossFade(value)
 }
 
-const setVolume = (node: GainNode, db: number) => {
+const setVolume = (node: GainNode, dB: number) => {
   const audioContext = audioCtx.value!
-  const gainValue = dbToLinearGain(db)
+  const gainValue = dbToLinearGain(dB)
   node.gain.setValueAtTime(gainValue, audioContext.currentTime)
 }
 
@@ -201,11 +209,13 @@ const {
   stop: stopTrackAAnalyser,
   channels: trackAChannels
 } = useAudioLevelAnalyser(trackAAnalyserL, trackAAnalyserR)
+
 const {
   start: startTrackBAnalyser,
   stop: stopTrackBAnalyser,
   channels: trackBChannels
 } = useAudioLevelAnalyser(trackBAnalyserL, trackBAnalyserR)
+
 const {
   start: startMasterAnalyser,
   stop: stopMasterAnalyser,
@@ -234,11 +244,11 @@ function onPause(_: Event) {
             <div class="flex items-center justify-between gap-2">
               <h2 class="font-bold">Master Gain</h2>
               <output> {{ faderToDB(masterGainVal, -12, 12).toFixed() }}dB </output>
-              <pre>
-                {{ masterChannels }}
-                {{ trackAChannels }}
-                {{ trackBChannels }}
-              </pre>
+              <div>
+                <p>{{ trackAChannels }}</p>
+                <p>{{ masterChannels }}</p>
+                <p>{{ trackBChannels }}</p>
+              </div>
             </div>
             <div class="relative flex w-full flex-col gap-2">
               <input
@@ -295,7 +305,7 @@ function onPause(_: Event) {
             <section class="dashed flex size-full flex-col gap-y-2 p-2">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex w-full items-center justify-between gap-2">
-                  <h4 class="text-center text-sm font-semibold">Gain (A)</h4>
+                  <h4 class="text-center text-sm font-semibold">Gain</h4>
                   <output>{{ faderToDB(trackAGainVal, -24, 24).toFixed() }}dB</output>
                 </div>
               </div>
@@ -333,7 +343,7 @@ function onPause(_: Event) {
             </section>
             <section class="flex size-full flex-col gap-y-2">
               <div class="flex items-center justify-between gap-2">
-                <h4 class="text-center text-sm font-semibold">Volume (A)</h4>
+                <h4 class="text-center text-sm font-semibold">Volume</h4>
                 <output>{{ trackAVolumeVal }}</output>
               </div>
               <div class="grid place-items-center gap-2">
@@ -398,7 +408,7 @@ function onPause(_: Event) {
             </div>
             <section class="col-start-2 flex size-full flex-col gap-y-2 p-2">
               <div class="flex w-full items-center justify-between gap-2">
-                <h4 class="text-center text-sm font-semibold">Gain (B)</h4>
+                <h4 class="text-center text-sm font-semibold">Gain</h4>
                 <output>{{ faderToDB(trackBGainVal, -24, 24).toFixed() }}dB</output>
               </div>
               <div class="relative m-auto w-fit">
