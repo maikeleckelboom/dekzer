@@ -6,14 +6,11 @@ import {
 } from '~~/layers/fader/utils/constants'
 import { createLimiter } from '~/utils/limiter'
 import { cosineFadeIn, cosineFadeOut } from '~/utils/audio'
-import { createHighShelfEQ, createLowShelfEQ, createPeakingEQ } from '~/utils/filters'
 
 /**
- * Deck A: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter -> Master Mixer
- *                                                                                |
- *                                                                                | -> Master FX -> Master Limiter -> Master Output
- *                                                                                |
- * Deck B: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter -> Master Mixer
+ * Deck A: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter ->
+ *                                                                      | -> Master FX -> Master Limiter -> Master Output
+ * Deck B: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter ->
  */
 const audioContext = shallowRef<AudioContext>()
 
@@ -27,9 +24,6 @@ const masterAnalyserR = shallowRef<AnalyserNode>()
 // Track A
 const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
 const trackAGain = shallowRef<GainNode>()
-const trackALowEQ = shallowRef<BiquadFilterNode>()
-const trackAMidEQ = shallowRef<BiquadFilterNode>()
-const trackAHighEQ = shallowRef<BiquadFilterNode>()
 const trackAVolumeGain = shallowRef<GainNode>()
 const trackAFadeGain = shallowRef<GainNode>()
 const trackALimiter = shallowRef<DynamicsCompressorNode>()
@@ -41,9 +35,6 @@ const trackAVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 // Track B
 const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
 const trackBGain = shallowRef<GainNode>()
-const trackBLowEQ = shallowRef<BiquadFilterNode>()
-const trackBMidEQ = shallowRef<BiquadFilterNode>()
-const trackBHighEQ = shallowRef<BiquadFilterNode>()
 const trackBGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 const trackBVolumeGain = shallowRef<GainNode>()
@@ -62,9 +53,6 @@ onMounted(() => {
   audioContext.value = context
 
   trackAGain.value = context.createGain()
-  trackALowEQ.value = createLowShelfEQ(context)
-  trackAMidEQ.value = createPeakingEQ(context)
-  trackAHighEQ.value = createHighShelfEQ(context)
   trackAVolumeGain.value = context.createGain()
   trackAAnalyserL.value = context.createAnalyser()
   trackAAnalyserR.value = context.createAnalyser()
@@ -72,9 +60,6 @@ onMounted(() => {
   trackALimiter.value = createLimiter(context, 'track')
 
   trackBGain.value = context.createGain()
-  trackBLowEQ.value = createLowShelfEQ(context)
-  trackBMidEQ.value = createPeakingEQ(context)
-  trackBHighEQ.value = createHighShelfEQ(context)
   trackBVolumeGain.value = context.createGain()
   trackBAnalyserL.value = context.createAnalyser()
   trackBAnalyserR.value = context.createAnalyser()
@@ -255,13 +240,14 @@ function onPause(_: Event) {
 <template>
   <div class="mx-auto w-full max-w-md">
     <!--  -->
-    <section>
-    </section>
+    <section></section>
     <!-- Master Gain -->
     <section>
       <div>
         <h2>Master</h2>
-        <p>{{ masterChannels }}</p>
+        <div class="my-2">
+          <p>{{ masterChannels }}</p>
+        </div>
       </div>
       <div>
         <input
@@ -288,89 +274,93 @@ function onPause(_: Event) {
         </Button>
       </div>
     </section>
-    <!-- CrossFade -->
-    <section>
-      <input
-        :value="crossFadeValue"
-        class="w-full"
-        max="1"
-        min="-1"
-        step="0.001"
-        type="range"
-        @input="handleCrossFade" />
-    </section>
-    <!-- Decks -->
-    <section class="grid grid-cols-2">
-      <section>
+    <!-- Decks + CrossFade -->
+    <section class="grid grid-cols-3 gap-2">
+      <!-- Deck A -->
+      <div>
         <div>
           <h2>Deck A</h2>
-          <p>{{ trackAChannels }}</p>
-        </div>
-
-        <audio
-          ref="trackASourceEl"
-          controls
-          data-deck="1"
-          loop
-          class="w-32"
-          src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3"
-          @pause="onPause"
-          @play="onPlay" />
-        <section>
-          <div>
-            <p>Gain</p>
+          <div class="my-2">
+            <p>{{ trackAChannels }}</p>
           </div>
-          <input
-            :value="trackAGainVal"
-            aria-orientation="vertical"
+          <audio
+            ref="trackASourceEl"
+            class="w-32"
+            controls
             data-deck="1"
-            data-max-db="24"
-            data-min-db="-24"
-            max="1"
-            min="0"
-            step="0.01"
-            type="range"
-            @input="onGainChange" />
-          <Button
-            :disabled="trackAGainVal === DECK_GAIN_DEFAULT_VALUE"
-            class="mr-auto"
-            size="xs"
-            variant="outline"
-            @click="resetDeckGain(1)">
-            Reset
-          </Button>
-        </section>
-        <section>
-          <div>
-            <p>Volume</p>
-          </div>
-          <div>
+            loop
+            src="/assets/YouTube/Turn%20off%20Your%20Brain.opus"
+            @pause="onPause"
+            @play="onPlay" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <section>
+            <div>
+              <p>Gain</p>
+            </div>
             <input
-              :value="trackAVolumeVal"
+              :value="trackAGainVal"
               aria-orientation="vertical"
               data-deck="1"
+              data-max-db="24"
+              data-min-db="-24"
               max="1"
               min="0"
               step="0.01"
               type="range"
-              @input="onDeckVolumeChange" />
-
+              @input="onGainChange" />
             <Button
-              :disabled="trackAVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
+              :disabled="trackAGainVal === DECK_GAIN_DEFAULT_VALUE"
+              class="mr-auto"
               size="xs"
               variant="outline"
-              @click="trackAVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
+              @click="resetDeckGain(1)">
               Reset
             </Button>
-          </div>
-        </section>
-      </section>
+          </section>
+          <section>
+            <div>
+              <p>Volume</p>
+            </div>
+            <div>
+              <input
+                :value="trackAVolumeVal"
+                aria-orientation="vertical"
+                data-deck="1"
+                max="1"
+                min="0"
+                step="0.01"
+                type="range"
+                @input="onDeckVolumeChange" />
+
+              <Button
+                :disabled="trackAVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
+                size="xs"
+                variant="outline"
+                @click="trackAVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
+                Reset
+              </Button>
+            </div>
+          </section>
+        </div>
+      </div>
+      <!-- CrossFade -->
+      <div class="grid place-items-center">
+        <input
+          :value="crossFadeValue"
+          class="max-w-20"
+          max="1"
+          min="-1"
+          step="0.001"
+          type="range"
+          @input="handleCrossFade" />
+      </div>
       <!-- Deck B -->
       <div>
         <div>
           <h2>Deck B</h2>
         </div>
-        <div>
+        <div class="my-2">
           <p>{{ trackBChannels }}</p>
         </div>
         <div>
@@ -380,58 +370,60 @@ function onPause(_: Event) {
             controls
             data-deck="2"
             loop
-            src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3"
+            src="/assets/YouTube/Go%20Get%20Busy%20(Hardcore%20Edit).opus"
             @pause="onPause"
             @play="onPlay" />
         </div>
-        <section>
-          <div>
-            <h3>Gain</h3>
-          </div>
-          <div>
-            <input
-              :value="trackBGainVal"
-              aria-orientation="vertical"
-              data-deck="2"
-              data-max-db="24"
-              data-min-db="-24"
-              max="1"
-              min="0"
-              step="0.01"
-              type="range"
-              @input="onGainChange" />
-            <Button
-              :disabled="trackBGainVal === DECK_GAIN_DEFAULT_VALUE"
-              size="xs"
-              variant="outline"
-              @click="resetDeckGain(2)">
-              Reset
-            </Button>
-          </div>
-        </section>
-        <section>
-          <div>
-            <h4>Volume</h4>
-          </div>
-          <div>
-            <input
-              :value="trackBVolumeVal"
-              aria-orientation="vertical"
-              data-deck="2"
-              max="1"
-              min="0"
-              step="0.01"
-              type="range"
-              @input="onDeckVolumeChange" />
-            <Button
-              :disabled="trackBVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
-              size="xs"
-              variant="outline"
-              @click="trackBVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
-              Reset
-            </Button>
-          </div>
-        </section>
+        <div class="grid grid-cols-2 gap-2">
+          <section>
+            <div>
+              <h3>Gain</h3>
+            </div>
+            <div>
+              <input
+                :value="trackBGainVal"
+                aria-orientation="vertical"
+                data-deck="2"
+                data-max-db="24"
+                data-min-db="-24"
+                max="1"
+                min="0"
+                step="0.01"
+                type="range"
+                @input="onGainChange" />
+              <Button
+                :disabled="trackBGainVal === DECK_GAIN_DEFAULT_VALUE"
+                size="xs"
+                variant="outline"
+                @click="resetDeckGain(2)">
+                Reset
+              </Button>
+            </div>
+          </section>
+          <section>
+            <div>
+              <h4>Volume</h4>
+            </div>
+            <div>
+              <input
+                :value="trackBVolumeVal"
+                aria-orientation="vertical"
+                data-deck="2"
+                max="1"
+                min="0"
+                step="0.01"
+                type="range"
+                @input="onDeckVolumeChange" />
+              <Button
+                :disabled="trackBVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
+                size="xs"
+                variant="outline"
+                @click="trackBVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
+                Reset
+              </Button>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
   </div>

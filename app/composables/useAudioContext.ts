@@ -1,59 +1,37 @@
-function createAudioContext(
-  options: AudioContextOptions = { latencyHint: 'interactive' }
-): AudioContext {
-  return new AudioContext(options)
-}
+export const useAudioContext = createSharedComposable((options?: AudioContextOptions) => {
+  const audioContext = shallowRef<AudioContext | null>(null)
 
-async function stopAudioContext(context: AudioContext): Promise<void> {
-  if (!context) return
+  async function getAudioContext(): Promise<AudioContext> {
+    audioContext.value ??= new AudioContext(options)
 
-  if (context.state === 'running') {
-    await context.close()
+    const context = unref(audioContext)!
+
+    if (context.state === 'suspended' && navigator.userActivation.hasBeenActive) {
+      await context.resume()
+    }
+
+    return context
   }
-}
 
-export const useAudioContext = createSharedComposable(
-  (
-    options: AudioContextOptions = {
-      latencyHint: 'interactive'
+  async function closeAudioContext(): Promise<void> {
+    if (!audioContext.value) return
+    if (audioContext.value.state === 'running') {
+      await audioContext.value.close()
     }
-  ) => {
-    const audioContext = shallowRef<AudioContext | null>(null)
-
-    async function getAudioContext(): Promise<AudioContext> {
-      audioContext.value ??= createAudioContext(options)
-
-      const context = unref(audioContext)!
-
-      if (context.state === 'suspended' && navigator.userActivation.hasBeenActive) {
-        await context.resume()
-      }
-
-      return context
-    }
-
-    async function closeAudioContext(): Promise<void> {
-      if (!audioContext.value) return
-      await stopAudioContext(audioContext.value)
-      audioContext.value = null
-    }
-
-    onMounted(async () => {
-      if (navigator.userActivation.hasBeenActive) {
-        await getAudioContext()
-      }
-    })
-
-    onUnmounted(async () => {
-      await closeAudioContext()
-    })
-
-    return {
-      audioContext,
-      getAudioContext,
-      closeAudioContext,
-    }
+    audioContext.value = null
   }
-)
 
-export const useSharedAudioContext = useAudioContext
+  onMounted(async () => {
+    if (navigator.userActivation.hasBeenActive) {
+      await getAudioContext()
+    }
+  })
+
+  onUnmounted(closeAudioContext)
+
+  return {
+    audioContext,
+    getAudioContext,
+    closeAudioContext
+  }
+})
