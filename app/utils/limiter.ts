@@ -1,10 +1,12 @@
 export interface LimiterOptions {
-  threshold?: number
-  ratio?: number
   attack?: number
-  release?: number
   knee?: number
+  ratio?: number
+  release?: number
+  threshold?: number
 }
+
+export type LimiterPresetKey = 'master' | 'track'
 
 /**
  * @param threshold - The point at which the compressor is activated.
@@ -12,53 +14,42 @@ export interface LimiterOptions {
  * @param attack - How long the compressor takes to reach full compression after the signal crosses the threshold.
  * @param release - How quickly the compressor recovers after peak gain reduction.
  * @param knee - How soft or hard the compression will occur around the threshold (softening).
- * @returns DynamicsCompressorOptions
- * @see https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode/DynamicsCompressorNode
  */
-export const LimiterOptions: {
-  master: Required<LimiterOptions>
-  track: Required<LimiterOptions>
-  balanced: Required<LimiterOptions>
-} = {
+export const LimiterOptions: Record<LimiterPresetKey, Required<LimiterOptions>> = {
   master: {
     threshold: -6, // +3dB with -9dB headroom
     ratio: 10,
     attack: 0.05,
     release: 0.2,
-    knee: 0,
+    knee: 0
   },
   track: {
     threshold: -6, // +3dB with -9dB headroom
     ratio: 4,
     attack: 0.005,
     release: 0.1,
-    knee: 0,
-  },
-  balanced: {
-    threshold: -3, // +3dB with -6dB headroom
-    ratio: 6,
-    attack: 0.01,
-    release: 0.15,
     knee: 0
   }
 }
 
-/**
- * Create a limiter node to prevent clipping
- *
- * @param audioContext<AudioContext>
- * @param options<DynamicsCompressorOptions>
- */
-export function createAudioLimiter(
+
+export function newAudioLimiter(
   audioContext: AudioContext,
-  options?: LimiterOptions
+  options: Required<LimiterOptions>
 ): DynamicsCompressorNode {
   const limiter = audioContext.createDynamicsCompressor()
-  const mergedOptions = { ...LimiterOptions.balanced, ...options }
-  limiter.threshold.value = mergedOptions.threshold
-  limiter.ratio.value = mergedOptions.ratio
-  limiter.attack.value = mergedOptions.attack
-  limiter.release.value = mergedOptions.release
-  limiter.knee.value = mergedOptions.knee
+  limiter.threshold.value = options.threshold
+  limiter.ratio.value = options.ratio
+  limiter.attack.value = options.attack
+  limiter.release.value = options.release
+  limiter.knee.value = options.knee
   return limiter
+}
+
+export function createLimiter(
+  audioContext: AudioContext,
+  presetKey: LimiterPresetKey
+): DynamicsCompressorNode {
+  if (!LimiterOptions[presetKey]) throw new Error(`Invalid limiter type: ${presetKey}`)
+  return newAudioLimiter(audioContext, LimiterOptions[presetKey])
 }

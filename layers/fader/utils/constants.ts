@@ -1,7 +1,7 @@
 export const FADER_DEFAULT_SIZE: number = 202 as const
 export const FADER_DEFAULT_HANDLE_SIZE: number = 24 as const
 
-export const MASTER_GAIN_DEFAULT: number = 3 as const
+export const MASTER_GAIN_DEFAULT: number = 0 as const
 export const MASTER_GAIN_MIN: number = -24 as const
 export const MASTER_GAIN_MAX: number = 24 as const
 

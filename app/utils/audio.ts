@@ -97,12 +97,11 @@ export function dbToLinearGain(db: number): number {
   return Math.pow(10, db / 20)
 }
 
-export function mapRange(
-  value: number,
-  inMin: number,
-  inMax: number,
-  outMin: number,
-  outMax: number
-) {
-  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+
+export function cosineFadeIn(value: number) {
+  return Math.cos(value * 0.5 * Math.PI)
+}
+
+export function cosineFadeOut(value: number) {
+  return Math.cos((1.0 - value) * 0.5 * Math.PI)
 }

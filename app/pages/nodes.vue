@@ -4,9 +4,18 @@ import {
   DECK_VOLUME_DEFAULT_VALUE,
   MASTER_GAIN_DEFAULT_VALUE
 } from '~~/layers/fader/utils/constants'
-import { createAudioLimiter, LimiterOptions } from '~/utils/limiter'
+import { createLimiter } from '~/utils/limiter'
+import { cosineFadeIn, cosineFadeOut } from '~/utils/audio'
+import { createHighShelfEQ, createLowShelfEQ, createPeakingEQ } from '~/utils/filters'
 
-const audioCtx = shallowRef<AudioContext>()
+/**
+ * Deck A: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter -> Master Mixer
+ *                                                                                |
+ *                                                                                | -> Master FX -> Master Limiter -> Master Output
+ *                                                                                |
+ * Deck B: Gain -> Hi -> Mid -> Low -> FX -> Volume -> Pan -> Limiter -> Master Mixer
+ */
+const audioContext = shallowRef<AudioContext>()
 
 // Master
 const masterLimiter = shallowRef<DynamicsCompressorNode>()
@@ -18,6 +27,9 @@ const masterAnalyserR = shallowRef<AnalyserNode>()
 // Track A
 const trackASourceEl = useTemplateRef<HTMLAudioElement>('trackASourceEl')
 const trackAGain = shallowRef<GainNode>()
+const trackALowEQ = shallowRef<BiquadFilterNode>()
+const trackAMidEQ = shallowRef<BiquadFilterNode>()
+const trackAHighEQ = shallowRef<BiquadFilterNode>()
 const trackAVolumeGain = shallowRef<GainNode>()
 const trackAFadeGain = shallowRef<GainNode>()
 const trackALimiter = shallowRef<DynamicsCompressorNode>()
@@ -25,11 +37,13 @@ const trackAAnalyserL = shallowRef<AnalyserNode>()
 const trackAAnalyserR = shallowRef<AnalyserNode>()
 const trackAGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 const trackAVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
-const crossFadeValue = shallowRef<number>(0)
 
 // Track B
 const trackBSourceEl = useTemplateRef<HTMLAudioElement>('trackBSourceEl')
 const trackBGain = shallowRef<GainNode>()
+const trackBLowEQ = shallowRef<BiquadFilterNode>()
+const trackBMidEQ = shallowRef<BiquadFilterNode>()
+const trackBHighEQ = shallowRef<BiquadFilterNode>()
 const trackBGainVal = shallowRef<number>(DECK_GAIN_DEFAULT_VALUE)
 const trackBVolumeVal = shallowRef<number>(DECK_VOLUME_DEFAULT_VALUE)
 const trackBVolumeGain = shallowRef<GainNode>()
@@ -38,28 +52,39 @@ const trackBLimiter = shallowRef<DynamicsCompressorNode>()
 const trackBAnalyserL = shallowRef<AnalyserNode>()
 const trackBAnalyserR = shallowRef<AnalyserNode>()
 
+// Cross-fade
+const crossFadeValue = shallowRef<number>(0)
+
+const mounted = useMounted()
+
 onMounted(() => {
-  const audioContext = new AudioContext({ latencyHint: 'playback' })
-  audioCtx.value = audioContext
+  const context = new AudioContext({ latencyHint: 'playback' })
+  audioContext.value = context
 
-  trackAGain.value = audioContext.createGain()
-  trackAVolumeGain.value = audioContext.createGain()
-  trackAFadeGain.value = audioContext.createGain()
-  trackALimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
-  trackAAnalyserL.value = audioContext.createAnalyser()
-  trackAAnalyserR.value = audioContext.createAnalyser()
+  trackAGain.value = context.createGain()
+  trackALowEQ.value = createLowShelfEQ(context)
+  trackAMidEQ.value = createPeakingEQ(context)
+  trackAHighEQ.value = createHighShelfEQ(context)
+  trackAVolumeGain.value = context.createGain()
+  trackAAnalyserL.value = context.createAnalyser()
+  trackAAnalyserR.value = context.createAnalyser()
+  trackAFadeGain.value = context.createGain()
+  trackALimiter.value = createLimiter(context, 'track')
 
-  trackBGain.value = audioContext.createGain()
-  trackBVolumeGain.value = audioContext.createGain()
-  trackBFadeGain.value = audioContext.createGain()
-  trackBLimiter.value = createAudioLimiter(audioContext, LimiterOptions.track)
-  trackBAnalyserL.value = audioContext.createAnalyser()
-  trackBAnalyserR.value = audioContext.createAnalyser()
+  trackBGain.value = context.createGain()
+  trackBLowEQ.value = createLowShelfEQ(context)
+  trackBMidEQ.value = createPeakingEQ(context)
+  trackBHighEQ.value = createHighShelfEQ(context)
+  trackBVolumeGain.value = context.createGain()
+  trackBAnalyserL.value = context.createAnalyser()
+  trackBAnalyserR.value = context.createAnalyser()
+  trackBFadeGain.value = context.createGain()
+  trackBLimiter.value = createLimiter(context, 'track')
 
-  masterGain.value = audioContext.createGain()
+  masterGain.value = context.createGain()
 
   connectDeck(
-    audioContext,
+    context,
     trackASourceEl.value,
     trackAGain.value,
     trackAVolumeGain.value,
@@ -71,7 +96,7 @@ onMounted(() => {
   )
 
   connectDeck(
-    audioContext,
+    context,
     trackBSourceEl.value,
     trackBGain.value,
     trackBVolumeGain.value,
@@ -82,22 +107,22 @@ onMounted(() => {
     masterGain.value
   )
 
-  masterLimiter.value = createAudioLimiter(audioContext, LimiterOptions.master)
+  masterLimiter.value = createLimiter(context, 'master')
   masterGain.value.connect(masterLimiter.value)
 
-  masterAnalyserL.value = audioContext.createAnalyser()
-  masterAnalyserR.value = audioContext.createAnalyser()
+  masterAnalyserL.value = context.createAnalyser()
+  masterAnalyserR.value = context.createAnalyser()
 
   masterGain.value.connect(masterAnalyserL.value)
   masterGain.value.connect(masterAnalyserR.value)
 
-  masterLimiter.value.connect(audioContext.destination)
+  masterLimiter.value.connect(context.destination)
 })
 
 function connectDeck(
   audioContext: AudioContext,
   deckAudioEl: HTMLMediaElement | null,
-  deckGainNode: GainNode,
+  dryGain: GainNode,
   deckVolumeNode: GainNode,
   analyserL: AnalyserNode,
   analyserR: AnalyserNode,
@@ -107,21 +132,13 @@ function connectDeck(
 ) {
   if (!deckAudioEl) return
   const source = audioContext.createMediaElementSource(deckAudioEl)
-  source.connect(deckGainNode)
-  deckGainNode.connect(deckVolumeNode)
-  deckVolumeNode.connect(panGainNode)
+  source.connect(dryGain)
+  dryGain.connect(deckVolumeNode)
   deckVolumeNode.connect(analyserL)
   deckVolumeNode.connect(analyserR)
+  deckVolumeNode.connect(panGainNode)
   panGainNode.connect(limiterNode)
   limiterNode.connect(masterNode)
-}
-
-function cosineFadeIn(value: number) {
-  return Math.cos(value * 0.5 * Math.PI)
-}
-
-function cosineFadeOut(value: number) {
-  return Math.cos((1.0 - value) * 0.5 * Math.PI)
 }
 
 function onCrossFade(value: number) {
@@ -140,9 +157,9 @@ function handleCrossFade(event: Event) {
 }
 
 const setVolume = (node: GainNode, dB: number) => {
-  const audioContext = audioCtx.value!
+  const context = audioContext.value!
   const gainValue = dbToLinearGain(dB)
-  node.gain.setValueAtTime(gainValue, audioContext.currentTime)
+  node.gain.setValueAtTime(gainValue, context.currentTime)
 }
 
 function onGainChange(event: Event) {
@@ -236,255 +253,187 @@ function onPause(_: Event) {
 </script>
 
 <template>
-  <div class="mx-auto grid w-full max-w-4xl grid-cols-[1fr,auto,auto] gap-2 p-2 md:p-4">
-    <div class="flex flex-col gap-2">
-      <fieldset class="flex flex-col p-2 md:p-8">
-        <section class="grid gap-2 p-2 md:grid-cols-4 md:p-4">
-          <div class="col-span-full flex flex-col justify-center gap-2">
-            <div class="flex items-center justify-between gap-2">
-              <h2 class="font-bold">Master Gain</h2>
-              <output> {{ faderToDB(masterGainVal, -12, 12).toFixed() }}dB </output>
-              <div>
-                <p>{{ trackAChannels }}</p>
-                <p>{{ masterChannels }}</p>
-                <p>{{ trackBChannels }}</p>
-              </div>
-            </div>
-            <div class="relative flex w-full flex-col gap-2">
-              <input
-                :data-deck="0"
-                :data-max-db="12"
-                :data-min-db="-12"
-                :value="masterGainVal"
-                class="w-full"
-                max="1"
-                min="0"
-                step="0.01"
-                type="range"
-                @input="onGainChange" />
-              <div class="flex justify-between">
-                <span
-                  class="text-muted-foreground whitespace-nowrap text-xs font-semibold tabular-nums">
-                  -12dB
-                </span>
-                <span
-                  class="text-muted-foreground whitespace-nowrap text-xs font-semibold tabular-nums">
-                  +12dB
-                </span>
-              </div>
-            </div>
+  <div class="mx-auto w-full max-w-md">
+    <!--  -->
+    <section>
+    </section>
+    <!-- Master Gain -->
+    <section>
+      <div>
+        <h2>Master</h2>
+        <p>{{ masterChannels }}</p>
+      </div>
+      <div>
+        <input
+          :data-deck="0"
+          :data-max-db="12"
+          :data-min-db="-12"
+          :value="masterGainVal"
+          max="1"
+          min="0"
+          step="0.01"
+          type="range"
+          @input="onGainChange" />
+        <Button
+          :disabled="masterGainVal === MASTER_GAIN_DEFAULT_VALUE"
+          size="xs"
+          variant="outline"
+          @click="
+            () => {
+              masterGainVal = MASTER_GAIN_DEFAULT_VALUE
+              setVolume(masterGain!, 0)
+            }
+          ">
+          Reset
+        </Button>
+      </div>
+    </section>
+    <!-- CrossFade -->
+    <section>
+      <input
+        :value="crossFadeValue"
+        class="w-full"
+        max="1"
+        min="-1"
+        step="0.001"
+        type="range"
+        @input="handleCrossFade" />
+    </section>
+    <!-- Decks -->
+    <section class="grid grid-cols-2">
+      <section>
+        <div>
+          <h2>Deck A</h2>
+          <p>{{ trackAChannels }}</p>
+        </div>
+
+        <audio
+          ref="trackASourceEl"
+          controls
+          data-deck="1"
+          loop
+          class="w-32"
+          src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3"
+          @pause="onPause"
+          @play="onPlay" />
+        <section>
+          <div>
+            <p>Gain</p>
+          </div>
+          <input
+            :value="trackAGainVal"
+            aria-orientation="vertical"
+            data-deck="1"
+            data-max-db="24"
+            data-min-db="-24"
+            max="1"
+            min="0"
+            step="0.01"
+            type="range"
+            @input="onGainChange" />
+          <Button
+            :disabled="trackAGainVal === DECK_GAIN_DEFAULT_VALUE"
+            class="mr-auto"
+            size="xs"
+            variant="outline"
+            @click="resetDeckGain(1)">
+            Reset
+          </Button>
+        </section>
+        <section>
+          <div>
+            <p>Volume</p>
+          </div>
+          <div>
+            <input
+              :value="trackAVolumeVal"
+              aria-orientation="vertical"
+              data-deck="1"
+              max="1"
+              min="0"
+              step="0.01"
+              type="range"
+              @input="onDeckVolumeChange" />
+
             <Button
-              :disabled="masterGainVal === MASTER_GAIN_DEFAULT_VALUE"
-              class="w-fit"
+              :disabled="trackAVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
               size="xs"
               variant="outline"
-              @click="
-                () => {
-                  masterGainVal = MASTER_GAIN_DEFAULT_VALUE
-                  setVolume(masterGain!, 0)
-                }
-              ">
+              @click="trackAVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
               Reset
             </Button>
           </div>
         </section>
-
-        <section class="grid gap-2 p-2 md:grid-cols-[1fr,auto,1fr] md:p-4">
-          <section class="-2 grid grid-cols-2 gap-x-2 gap-y-4 p-2">
-            <h2 class="col-span-full font-bold">Deck A</h2>
-            <div class="col-span-full flex flex-col gap-2">
-              <audio
-                ref="trackASourceEl"
-                controls
-                data-deck="1"
-                loop
-                src="/assets/Serato/ScratchBeats/ScratchBeat3.mp3"
-                @pause="onPause"
-                @play="onPlay" />
-            </div>
-            <section class="dashed flex size-full flex-col gap-y-2 p-2">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex w-full items-center justify-between gap-2">
-                  <h4 class="text-center text-sm font-semibold">Gain</h4>
-                  <output>{{ faderToDB(trackAGainVal, -24, 24).toFixed() }}dB</output>
-                </div>
-              </div>
-              <div class="relative m-auto w-fit">
-                <span
-                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  +24dB
-                </span>
-                <input
-                  :value="trackAGainVal"
-                  aria-orientation="vertical"
-                  data-deck="1"
-                  data-max-db="24"
-                  data-min-db="-24"
-                  max="1"
-                  min="0"
-                  step="0.01"
-                  type="range"
-                  @input="onGainChange" />
-                <span
-                  class="text-muted-foreground absolute bottom-2 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  -24dB
-                </span>
-              </div>
-              <div class="flex flex-col items-center">
-                <Button
-                  :disabled="trackAGainVal === DECK_GAIN_DEFAULT_VALUE"
-                  class="mr-auto"
-                  size="xs"
-                  variant="outline"
-                  @click="resetDeckGain(1)">
-                  Reset
-                </Button>
-              </div>
-            </section>
-            <section class="flex size-full flex-col gap-y-2">
-              <div class="flex items-center justify-between gap-2">
-                <h4 class="text-center text-sm font-semibold">Volume</h4>
-                <output>{{ trackAVolumeVal }}</output>
-              </div>
-              <div class="grid place-items-center gap-2">
-                <div class="relative flex flex-col items-center gap-2">
-                  <span
-                    class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                    1
-                  </span>
-                  <input
-                    :value="trackAVolumeVal"
-                    aria-orientation="vertical"
-                    data-deck="1"
-                    max="1"
-                    min="0"
-                    step="0.01"
-                    type="range"
-                    @input="onDeckVolumeChange" />
-                  <span
-                    class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                    0
-                  </span>
-                </div>
-                <div class="flex w-full flex-col items-start">
-                  <Button
-                    :disabled="trackAVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
-                    size="xs"
-                    variant="outline"
-                    @click="trackAVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </section>
-          </section>
-          <!--
-        -- CrossFade
-        -->
-          <div class="flex flex-col items-center justify-center">
-            <input
-              :value="crossFadeValue"
-              class="w-full"
-              max="1"
-              min="-1"
-              step="0.001"
-              type="range"
-              @input="handleCrossFade" />
+      </section>
+      <!-- Deck B -->
+      <div>
+        <div>
+          <h2>Deck B</h2>
+        </div>
+        <div>
+          <p>{{ trackBChannels }}</p>
+        </div>
+        <div>
+          <audio
+            ref="trackBSourceEl"
+            class="w-32"
+            controls
+            data-deck="2"
+            loop
+            src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3"
+            @pause="onPause"
+            @play="onPlay" />
+        </div>
+        <section>
+          <div>
+            <h3>Gain</h3>
           </div>
-          <!--
-          -- Deck B
-          -->
-          <section class="grid grid-cols-2 gap-x-2 gap-y-4 p-2">
-            <h3 class="col-span-full font-bold">Deck B</h3>
-            <div class="col-span-full flex flex-col gap-2">
-              <audio
-                ref="trackBSourceEl"
-                controls
-                data-deck="2"
-                loop
-                src="/assets/Serato/ScratchBeats/ScratchBeat4.mp3"
-                @pause="onPause"
-                @play="onPlay" />
-            </div>
-            <section class="col-start-2 flex size-full flex-col gap-y-2 p-2">
-              <div class="flex w-full items-center justify-between gap-2">
-                <h4 class="text-center text-sm font-semibold">Gain</h4>
-                <output>{{ faderToDB(trackBGainVal, -24, 24).toFixed() }}dB</output>
-              </div>
-              <div class="relative m-auto w-fit">
-                <span
-                  class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  +24dB
-                </span>
-                <input
-                  :value="trackBGainVal"
-                  aria-orientation="vertical"
-                  data-deck="2"
-                  data-max-db="24"
-                  data-min-db="-24"
-                  max="1"
-                  min="0"
-                  step="0.01"
-                  type="range"
-                  @input="onGainChange" />
-                <span
-                  class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                  -24dB
-                </span>
-              </div>
-              <div class="flex w-full flex-col items-start">
-                <Button
-                  :disabled="trackBGainVal === DECK_GAIN_DEFAULT_VALUE"
-                  size="xs"
-                  variant="outline"
-                  @click="resetDeckGain(2)">
-                  Reset
-                </Button>
-              </div>
-            </section>
-            <section class="row-start-3 flex size-full flex-col gap-y-2 p-2">
-              <div class="flex w-full items-center justify-between gap-2">
-                <h4 class="text-center text-sm font-semibold">Volume</h4>
-                <output>{{ trackBVolumeVal }}</output>
-              </div>
-              <div class="grid place-items-center gap-2">
-                <div class="relative flex flex-col items-center gap-2">
-                  <span
-                    class="text-muted-foreground absolute left-8 top-0 whitespace-nowrap text-xs font-semibold tabular-nums">
-                    1
-                  </span>
-                  <input
-                    :value="trackBVolumeVal"
-                    aria-orientation="vertical"
-                    data-deck="2"
-                    max="1"
-                    min="0"
-                    step="0.01"
-                    type="range"
-                    @input="onDeckVolumeChange" />
-                  <span
-                    class="text-muted-foreground absolute bottom-0 left-8 whitespace-nowrap text-xs font-semibold tabular-nums">
-                    0
-                  </span>
-                </div>
-                <div class="flex w-full flex-col items-start">
-                  <Button
-                    :disabled="trackBVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
-                    size="xs"
-                    variant="outline"
-                    @click="trackBVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </section>
-          </section>
+          <div>
+            <input
+              :value="trackBGainVal"
+              aria-orientation="vertical"
+              data-deck="2"
+              data-max-db="24"
+              data-min-db="-24"
+              max="1"
+              min="0"
+              step="0.01"
+              type="range"
+              @input="onGainChange" />
+            <Button
+              :disabled="trackBGainVal === DECK_GAIN_DEFAULT_VALUE"
+              size="xs"
+              variant="outline"
+              @click="resetDeckGain(2)">
+              Reset
+            </Button>
+          </div>
         </section>
-      </fieldset>
-    </div>
-    <div class="col-span-full col-start-1">
-      <!-- Panner -->
-    </div>
+        <section>
+          <div>
+            <h4>Volume</h4>
+          </div>
+          <div>
+            <input
+              :value="trackBVolumeVal"
+              aria-orientation="vertical"
+              data-deck="2"
+              max="1"
+              min="0"
+              step="0.01"
+              type="range"
+              @input="onDeckVolumeChange" />
+            <Button
+              :disabled="trackBVolumeVal === DECK_VOLUME_DEFAULT_VALUE"
+              size="xs"
+              variant="outline"
+              @click="trackBVolumeVal = DECK_VOLUME_DEFAULT_VALUE">
+              Reset
+            </Button>
+          </div>
+        </section>
+      </div>
+    </section>
   </div>
 </template>
 
