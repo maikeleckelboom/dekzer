@@ -6,7 +6,7 @@ export interface IAudioTempo {
 }
 
 export function useAudioTempo(url: MaybeRefOrGetter<string>) {
-  const { getAudioContext } = useSharedAudioContext()
+  const { getAudioContext } = useAudioContext()
   const tempo = shallowRef<IAudioTempo>({ bpm: 0, offset: 0 })
   const status = shallowRef<'idle' | 'pending' | 'error'>('idle')
   const error = shallowRef<unknown | null>(null)

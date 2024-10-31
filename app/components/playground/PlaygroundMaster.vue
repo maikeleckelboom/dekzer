@@ -1,38 +1,23 @@
 <script lang="ts" setup>
-import { useAudioStore } from '~/stores/useAudioStore'
+import { useNodesGraph } from '~/composables/useNodesGraph'
 
 const { getAudioContext } = useAudioContext()
 
-const store = useAudioStore()
+const masterGainNode = useGainNode('master-gain', { gain: 1 })
+const masterAnalyserLNode = useAnalyserNode('master-analyser-l', { fftSize: 1024 })
+const masterAnalyserRNode = useAnalyserNode('master-analyser-r', { fftSize: 1024 })
+const masterCompressorNode = useDynamicCompressorNode('master-compressor', 'masterLimiter')
+const graph = useNodesGraph()
 
-// audio analysers
-const {start,stop,channels,setAnalysers} = useAudioLevelAnalyser()
+onMounted(async () => {
 
-onMounted(async()=>{
-  const context =  await getAudioContext()
-  if (!context) return
 
-  const masterNodes = createMasterNodes(context)
-
-  store.decks.forEach((deck) => {
-    deck.limiter.connect(masterNodes.gain)
-  })
-
-  store.setMasterNodes(masterNodes)
-  masterNodes.gain.connect(masterNodes.limiter)
-  masterNodes.limiter.connect(masterNodes.analyserL)
-  masterNodes.limiter.connect(masterNodes.analyserR)
-  masterNodes.limiter.connect(context.destination)
-
-  setAnalysers(masterNodes.analyserL, masterNodes.analyserR)
-  start()
 })
+
+const masterAnalyzer = useAudioLevelAnalyser(masterAnalyserLNode, masterAnalyserRNode)
 </script>
 
 <template>
   <div>
-    <!-- Master controls and output -->
-    <pre>{{store.decks}}</pre>
-    <pre>{{channels}}</pre>
   </div>
 </template>

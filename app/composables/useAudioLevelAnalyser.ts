@@ -12,17 +12,19 @@ export function useAudioLevelAnalyser(
   const _analyserL = shallowRef<AnalyserNode | null | undefined>(toValue(analyzerL))
   const _analyserR = shallowRef<AnalyserNode | null | undefined>(toValue(analyserR))
 
-  function setAnalysers(AnalyserL: AnalyserNode, AnalyserR: AnalyserNode) {
-    _analyserL.value = AnalyserL
-    _analyserR.value = AnalyserR
+  function setAnalysers([L, R]: [AnalyserNode, AnalyserNode]) {
+    _analyserL.value = L
+    _analyserR.value = R
   }
 
   let rAF: number | null = null
 
-
-  function start(algorithm: 'rms' | 'peak' = 'rms') {
-    const a = toValue(_analyserL)
-    const b = toValue(_analyserR)
+  function start(
+    algorithm: 'rms' | 'peak' = 'rms',
+    analysers?: [MaybeRefOrGetter<AnalyserNode>, MaybeRefOrGetter<AnalyserNode>]
+  ) {
+    const a = toValue(analyzerL) ?? _analyserL.value  ?? toValue(analysers?.at(0))
+    const b = toValue(analyserR) ?? _analyserR.value ?? toValue(analysers?.at(1))
 
     if (!a || !b) {
       throw new Error('Analyser nodes are not set')
@@ -90,7 +92,6 @@ export function useAudioLevelAnalyser(
     setAnalysers
   }
 }
-
 
 export const useMasterVolumeAnalyser = createSharedComposable((context: AudioContext) => {
   const analyzer = ref<AnalyserNode | null>(null)

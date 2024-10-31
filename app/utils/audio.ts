@@ -1,5 +1,5 @@
 import { analyze } from 'web-audio-beat-detector'
-import type { DeckNodes, MasterNodes } from '~/composables/useAudioGraph'
+import { createLimiter } from './limiter'
 
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
   const response = await fetch(url, { headers: { ResponseType: 'stream' } })
@@ -35,20 +35,6 @@ export function createAnalysers(
 
   analyser.fftSize = fftSize
   analyserR.fftSize = fftSize
-
-  return [analyser, analyserR]
-}
-
-export function createAnalyserNodes(
-  context: AudioContext,
-  source: AudioBufferSourceNode
-): [AnalyserNode, AnalyserNode] {
-  const [analyser, analyserR] = createAnalysers(context)
-  const splitter = context.createChannelSplitter(2)
-
-  source.connect(splitter)
-  splitter.connect(analyser, 0)
-  splitter.connect(analyserR, 1)
 
   return [analyser, analyserR]
 }
@@ -107,33 +93,31 @@ export function cosineFadeOut(value: number) {
 }
 
 export function createDeckNodes(context: AudioContext): DeckNodes {
-  const gain = context.createGain()
-  const volume = context.createGain()
-  const pan = context.createGain()
-  const limiter = context.createDynamicsCompressor()
-  const analyserL = context.createAnalyser()
-  const analyserR = context.createAnalyser()
-
   return {
-    gain,
-    volume,
-    analyserL,
-    analyserR,
-    pan,
-    limiter
+    gain: createGain(context),
+    volume: createGain(context),
+    mixer: createGain(context, 0),
+    limiter: createLimiter(context, 'track'),
+    analysers: createAnalysers(context)
   }
 }
 
-export function createMasterNodes(context: AudioContext): MasterNodes {
+export function createGain(context: AudioContext, value: number = 1): GainNode {
   const gain = context.createGain()
-  const limiter = context.createDynamicsCompressor()
-  const analyserL = context.createAnalyser()
-  const analyserR = context.createAnalyser()
+  gain.gain.value = value
+  return gain
+}
 
-  return {
-    gain,
-    limiter,
-    analyserL,
-    analyserR
-  }
+export interface DeckNodes {
+  gain: GainNode
+  volume: GainNode
+  mixer: GainNode
+  limiter: DynamicsCompressorNode
+  analysers: [AnalyserNode, AnalyserNode]
+}
+
+export interface MasterNodes {
+  gain: GainNode
+  limiter: DynamicsCompressorNode
+  analysers: [AnalyserNode, AnalyserNode]
 }

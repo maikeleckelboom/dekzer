@@ -15,7 +15,7 @@ export type LimiterPresetKey = 'master' | 'track'
  * @param release - How quickly the compressor recovers after peak gain reduction.
  * @param knee - How soft or hard the compression will occur around the threshold (softening).
  */
-export const LimiterOptions: Record<LimiterPresetKey, Required<LimiterOptions>> = {
+export const LimiterPresets: Record<LimiterPresetKey, Required<LimiterOptions>> = {
   master: {
     threshold: -3,
     ratio: 10,
@@ -33,7 +33,7 @@ export const LimiterOptions: Record<LimiterPresetKey, Required<LimiterOptions>> 
 }
 
 
-export function newAudioLimiter(
+export function createNewLimiter(
   audioContext: AudioContext,
   options: Required<LimiterOptions>
 ): DynamicsCompressorNode {
@@ -50,6 +50,8 @@ export function createLimiter(
   audioContext: AudioContext,
   presetKey: LimiterPresetKey
 ): DynamicsCompressorNode {
-  if (!LimiterOptions[presetKey]) throw new Error(`Invalid limiter type: ${presetKey}`)
-  return newAudioLimiter(audioContext, LimiterOptions[presetKey])
+  if (!LimiterPresets[presetKey]) {
+    throw new Error(`Invalid limiter type: ${presetKey}`)
+  }
+  return createNewLimiter(audioContext, LimiterPresets[presetKey])
 }

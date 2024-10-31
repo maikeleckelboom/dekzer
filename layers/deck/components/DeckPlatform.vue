@@ -28,7 +28,7 @@ const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
 
 const loaded = computed(() => !!track.value && !!audioBuffer.value)
 
-const { audioContext, getAudioContext } = useSharedAudioContext()
+const { audioContext, getAudioContext } = useAudioContext()
 
 let rAF: number | null = null
 
@@ -99,7 +99,7 @@ function setupAnalyserNodes(
   context: AudioContext,
   source: AudioBufferSourceNode
 ): [AnalyserNode, AnalyserNode] {
-  const [analyser, analyserR] = createAnalyserNodes(context, source)
+  const [analyser, analyserR] = createAnalysers(context, 1024)
   analyserNode.value = analyser
   analyserNodeR.value = analyserR
   return [analyser, analyserR]
@@ -269,7 +269,6 @@ function ejectTrack() {
 const duration = computedEager(() => track.value?.format.duration)
 const bpm = computedEager(() => track.value?.common.bpm)
 
-const demoBpm = shallowRef(100)
 const pitchRange = shallowRef<8 | 16 | 50>(8)
 const pitchDelta = shallowRef<number>(0)
 </script>

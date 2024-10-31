@@ -91,7 +91,7 @@ function drawWaveform(
   ctx.closePath()
 }
 
-const { getAudioContext } = useSharedAudioContext()
+const { getAudioContext } = useAudioContext()
 
 async function setWaveformData(url: string) {
   if (!track?.format?.duration) return

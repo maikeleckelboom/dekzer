@@ -1,3 +1,5 @@
+import type { DeckNodes, MasterNodes } from '~/utils/audio'
+
 export const useAudioStore = defineStore('audio', () => {
 
   const decks = ref<DeckNodes[]>([])
@@ -11,32 +13,28 @@ export const useAudioStore = defineStore('audio', () => {
     master.value = nodes
   }
 
-  function setDeckVolume(index: number, value: number) {
-    decks.value[index]!.volume.gain.value = value
-  }
-
-  function setDeckPan(index: number, value: number) {
-    decks.value[index]!.pan.gain.value = value
-  }
-
   function setDeckGain(index: number, value: number) {
     decks.value[index]!.gain.gain.value = value
   }
 
-whenever(master, (m) => {
-  console.log(m)
-  // if (m) {
-  //   m.gain.connect(m.limiter)
-  //   m.limiter.connect(audioContext.destination)
-  // }
-})
+  function setDeckVolume(index: number, value: number) {
+    decks.value[index]!.volume.gain.value = value
+  }
 
+  function setDeckTransition(index: number, value: number) {
+    decks.value[index]!.mixer.gain.value = value
+  }
+
+  function setMasterGain(value: number) {
+    master.value!.gain.gain.value = value
+  }
 
   return {
     decks,
     master,
     setDeckVolume,
-    setDeckPan,
+    setMasterGain,
+    setDeckTransition,
     setDeckGain,
     setDeckNodes,
     setMasterNodes,

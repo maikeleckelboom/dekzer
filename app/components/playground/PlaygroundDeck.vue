@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { createDeckNodes } from '~/utils/audio'
+import { createDeckNodes, type DeckNodes } from '~/utils/audio'
 import { useAudioStore } from '~/stores/useAudioStore'
 
 const { index } = defineProps<{
@@ -16,16 +16,18 @@ const deck = ref<DeckNodes>()
 
 onMounted(getAudioContext)
 
-whenever(audioContext,  (context) => {
+whenever(audioContext, (context) => {
   deck.value = createDeckNodes(context)
 
   const source = context.createMediaElementSource(audioElement.value!)
   source.connect(deck.value.gain)
   deck.value.gain.connect(deck.value.volume)
+  for (const analyser of deck.value.analysers) {
+    deck.value.volume.connect(analyser)
+  }
   deck.value.volume.connect(deck.value.limiter)
-  deck.value.limiter.connect(deck.value.analyserL)
-  deck.value.limiter.connect(deck.value.analyserR)
-  // -> pan -> master limiter -> destination
+  deck.value.limiter.connect(deck.value.mixer)
+
   store.setDeckNodes(index, deck.value)
 })
 
@@ -34,7 +36,7 @@ const { channels, start, stop, setAnalysers } = useAudioLevelAnalyser()
 function onPlay() {
   const nodes = deck.value
   if (!nodes) return
-  setAnalysers(nodes.analyserL, nodes.analyserR)
+  setAnalysers(nodes.analysers)
   start()
 }
 
@@ -57,7 +59,6 @@ function onVolumeInput(event: Event) {
 
 <template>
   <div>
-    <!-- Deck controls and output -->
     <p>{{ channels }}</p>
     <fieldset>
       <legend>Gain</legend>

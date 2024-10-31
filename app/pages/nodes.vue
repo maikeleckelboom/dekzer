@@ -46,8 +46,6 @@ const trackBAnalyserR = shallowRef<AnalyserNode>()
 // Cross-fade
 const crossFadeValue = shallowRef<number>(0)
 
-const mounted = useMounted()
-
 onMounted(() => {
   const context = new AudioContext({ latencyHint: 'playback' })
   audioContext.value = context

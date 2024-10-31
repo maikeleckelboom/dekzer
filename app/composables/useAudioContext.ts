@@ -1,5 +1,5 @@
 export const useAudioContext = createSharedComposable((options?: AudioContextOptions) => {
-  const audioContext = shallowRef<AudioContext | null>(null)
+  const audioContext = shallowRef<AudioContext>()
 
   async function getAudioContext(): Promise<AudioContext> {
     audioContext.value ??= new AudioContext(options)
@@ -18,15 +18,10 @@ export const useAudioContext = createSharedComposable((options?: AudioContextOpt
     if (audioContext.value.state === 'running') {
       await audioContext.value.close()
     }
-    audioContext.value = null
+    audioContext.value = undefined
   }
 
-  onMounted(async () => {
-    if (navigator.userActivation.hasBeenActive) {
-      await getAudioContext()
-    }
-  })
-
+  tryOnMounted(getAudioContext)
   onUnmounted(closeAudioContext)
 
   return {
