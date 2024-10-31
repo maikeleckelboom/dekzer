@@ -94,8 +94,8 @@ export function useAudioLevelAnalyser(
 }
 
 export const useMasterVolumeAnalyser = createSharedComposable((context: AudioContext) => {
-  const analyzer = ref<AnalyserNode | null>(null)
-  const analyserR = ref<AnalyserNode | null>(null)
+  const analyzer = shallowRef<AnalyserNode>()
+  const analyserR = shallowRef<AnalyserNode>()
 
   onMounted(() => {
     const a = context.createAnalyser()

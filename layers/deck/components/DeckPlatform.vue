@@ -6,6 +6,7 @@ import DeckGainFader from '~/components/DeckGainFader.vue'
 import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
 import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
 import { guess } from 'web-audio-beat-detector'
+import { canPlay, createAnalysers, createBufferSourceNode } from '~/utils/audio'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -14,50 +15,67 @@ interface DeckProps extends DeckRootProps {
 const { deck } = defineProps<DeckProps>()
 
 const deckStore = useDeckStore()
+
 const trackStore = useTrackStore()
 
 const track = deckStore.computedTrack(deck)
 
+/**
+ * The time in seconds when the track started playing.
+ */
 const startTime = shallowRef<number>(0)
-const startOffset = shallowRef<number>(0)
-const currentTime = shallowRef<number>(0)
-const playing = shallowRef<boolean>(false)
-const audioBuffer = shallowRef<AudioBuffer | null>(null)
-const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
-const constantSourceNode = shallowRef<ConstantSourceNode | null>(null)
 
-const loaded = computed(() => !!track.value && !!audioBuffer.value)
+/**
+ * The time in seconds from the start of the track.
+ */
+const startOffset = shallowRef<number>(0)
+
+/**
+ * The current time in seconds from the start of the track.
+ */
+const currentTime = shallowRef<number>(0)
+
+/**
+ * Whether the track is currently playing.
+ */
+const playing = shallowRef<boolean>(false)
+
+/**
+ * The audio buffer of the track.
+ */
+const audioBuffer = shallowRef<AudioBuffer | null>(null)
+
+/**
+ * The audio buffer source node.
+ */
+const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
 
 const { audioContext, getAudioContext } = useAudioContext()
 
 let rAF: number | null = null
 
-function playScheduledTime(context: AudioContext, playbackStart: number) {
-  const timeUntilStart = playbackStart - context.currentTime
-  if (timeUntilStart > 0) {
-    currentTime.value = startOffset.value = timeUntilStart * -1
-    startTime.value = context.currentTime
-    rAF = requestAnimationFrame(() => playScheduledTime(context, playbackStart))
+function startPlaybackPreSync(context: AudioContext, playbackStartTime: number) {
+  const timeTillStart = playbackStartTime - context.currentTime
+  if (timeTillStart > 0) {
+    currentTime.value = startOffset.value = timeTillStart * -1
+    rAF = requestAnimationFrame(() => startPlaybackPreSync(context, playbackStartTime))
   } else {
     startTime.value = context.currentTime
     startPlaying()
   }
 }
 
-function schedulePlayback() {
-  const context = unref(audioContext)
-  const source = unref(sourceNode)
-  if (!context || !source) return
-  const playbackStart = context.currentTime + Math.abs(startOffset.value)
-  source.start(playbackStart)
-  playScheduledTime(context, playbackStart)
+function schedulePlayback(context: AudioContext, source: AudioBufferSourceNode) {
+  const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
+  source.start(playbackStartTime)
+
+  startPlaybackPreSync(context, playbackStartTime)
   playing.value = true
 }
 
 function updateCurrentTime() {
   const context = unref(audioContext)
-  const source = unref(sourceNode)
-  if (!source || !context) return
+  if (!context) return
   currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
@@ -89,31 +107,18 @@ function stopPlaying() {
 const analyserNode = shallowRef<AnalyserNode | null>(null)
 const analyserNodeR = shallowRef<AnalyserNode | null>(null)
 
-const { channels, start, stop } = useAudioLevelAnalyser(
-  analyserNode,
-  analyserNodeR,
-  2048
-)
+const { channels, start:startAnalyzer, stop:stopAnalyzer } = useAudioLevelAnalyser(analyserNode, analyserNodeR, 2048)
 
-function setupAnalyserNodes(
-  context: AudioContext,
-  source: AudioBufferSourceNode
-): [AnalyserNode, AnalyserNode] {
+function setAnalyserNodes(context: AudioContext): [AnalyserNode, AnalyserNode] {
   const [analyser, analyserR] = createAnalysers(context, 1024)
   analyserNode.value = analyser
   analyserNodeR.value = analyserR
   return [analyser, analyserR]
 }
 
-function setupSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
+function setSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
   const source = createBufferSourceNode(context, buffer)
   sourceNode.value = source
-  return source
-}
-
-function setupConstantSourceNode(context: AudioContext) {
-  const source = createConstantSourceNode(context)
-  constantSourceNode.value = source
   return source
 }
 
@@ -121,25 +126,27 @@ async function play() {
   const context = await getAudioContext()
   const buffer = unref(audioBuffer)!
   if (!canPlay(context, buffer, playing)) return
-  const source = setupSourceNode(context, buffer)
-
-  setupAnalyserNodes(context, source)
+  const source = setSourceNode(context, buffer)
+  setAnalyserNodes(context)
   source.connect(context.destination)
-  start()
+  startAnalyzer()
 
-  startTime.value = context.currentTime
-  handlePlayback(context, buffer)
+  handlePlayback(context, buffer, source)
 }
 
-function handlePlayback(context: AudioContext, buffer: AudioBuffer) {
+function handlePlayback(
+  context: AudioContext,
+  buffer: AudioBuffer,
+  source: AudioBufferSourceNode
+) {
+  startTime.value = context.currentTime
   const offsetStart = unref(startOffset)
   if (offsetStart < 0) {
-    setupConstantSourceNode(context)
-    schedulePlayback()
+    schedulePlayback(context, source)
   } else if (offsetStart >= buffer.duration) {
     startPlaying()
   } else {
-    sourceNode.value!.start(0, offsetStart, buffer.duration - offsetStart)
+    source.start(0, offsetStart, buffer.duration - offsetStart)
     startPlaying()
   }
 }
@@ -149,7 +156,7 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stop()
+  stopAnalyzer()
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -175,25 +182,20 @@ async function createAndLoadTrack(file: File) {
     deckStore.load(deck, track)
   } catch (error) {
     console.error(error)
-  } finally {
   }
 }
 
-const tempo = shallowRef({
-  bpm: 0,
-  offset: 0,
-})
+const duration = computedEager(() => track.value?.format.duration)
+const nativeBpm = computedEager(() => track.value?.common.bpm)
 
+const pitchRange = shallowRef<8 | 16 | 50>(8)
+const pitchDelta = shallowRef<number>(0)
+const tempo = shallowRef({ bpm: 0, offset: 0 })
+
+whenever(audioBuffer, (buffer) => tryWithoutFail(async () => (tempo.value = await guess(buffer))))
 whenever(tempo, (tempo) => {
-  console.log('tempo', tempo)
-})
-
-whenever(audioBuffer, async (buffer) => {
-  try {
-    tempo.value = await guess(buffer)
-  } catch (error) {
-    console.error(error)
-  }
+  console.log('Native BPM', nativeBpm.value)
+  console.log('Guessed BPM', tempo.bpm, 'Offset', tempo.offset)
 })
 
 const interacting = shallowRef<boolean>(false)
@@ -245,12 +247,6 @@ function resetDeck() {
   })
 
   tryWithoutFail(() => {
-    constantSourceNode.value?.disconnect()
-    constantSourceNode.value?.stop()
-    constantSourceNode.value = null
-  })
-
-  tryWithoutFail(() => {
     analyserNode.value?.disconnect()
     analyserNode.value = null
   })
@@ -266,11 +262,7 @@ function ejectTrack() {
   resetDeck()
 }
 
-const duration = computedEager(() => track.value?.format.duration)
-const bpm = computedEager(() => track.value?.common.bpm)
-
-const pitchRange = shallowRef<8 | 16 | 50>(8)
-const pitchDelta = shallowRef<number>(0)
+const isLoaded = computed(() => !!track.value && !!audioBuffer.value)
 </script>
 
 <template>
@@ -278,7 +270,7 @@ const pitchDelta = shallowRef<number>(0)
     :class="
       cn('items-center md:even:flex-row-reverse odd:[&>div]:first:mr-4 odd:[&>div]:last:ml-4')
     "
-    :disabled="!loaded"
+    :disabled="!isLoaded"
     class="flex"
     @load="createAndLoadTrack">
     <div class="grid h-full place-items-center gap-4 py-1">
@@ -303,7 +295,7 @@ const pitchDelta = shallowRef<number>(0)
         <template v-if="track">
           <DeckButton @click="ejectTrack"> Eject</DeckButton>
           <DeckPlayPause
-            :disabled="!loaded"
+            :disabled="!isLoaded"
             :playing="playing"
             @playPause="onPlayPause" />
         </template>

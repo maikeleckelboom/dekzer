@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { useNodesGraph } from '~/composables/useNodesGraph'
-
 const track1Url = shallowRef<string>(
   '/assets/Serato/StarterPack/02%20-%20House%20Track%20Serato%20House%20Starter%20Pack.mp3'
 )
@@ -34,31 +32,14 @@ const masterAnalyserLNode = useAnalyserNode('masterAnalyserLNode', { fftSize: 10
 const masterAnalyserRNode = useAnalyserNode('masterAnalyserRNode', { fftSize: 1024 })
 const masterCompressorNode = useDynamicCompressorNode('masterCompressorNode', 'masterLimiter')
 
-const graph = useNodesGraph()
 const { audioContext, getAudioContext } = useAudioContext()
 
 whenever(logicAnd(track1BufferSourceNode, track2BufferSourceNode), async () => {
   /** Track 1 Chain */
-  graph.addNode('track1Source', track1BufferSourceNode.value!)
-  graph.addNode('track1kGain', track1GainNode.value!)
-  graph.addNode('track1Volume', track1VolumeNode.value!)
-  graph.addNode('track1AnalyserL', track1AnalyserLNode.value!)
-  graph.addNode('track1AnalyserR', track1AnalyserRNode.value!)
-  graph.addNode('track1Compressor', track1CompressorNode.value!)
-  graph.addNode('track1Mixer', track1MixerNode.value!)
+
   /** Track 2 Chain */
-  graph.addNode('track2Source', track2BufferSourceNode.value!)
-  graph.addNode('track2Gain', track2GainNode.value!)
-  graph.addNode('track2Volume', track2VolumeNode.value!)
-  graph.addNode('track2AnalyserL', track2AnalyserLNode.value!)
-  graph.addNode('track2AnalyserR', track2AnalyserRNode.value!)
-  graph.addNode('track2Compressor', track2CompressorNode.value!)
-  graph.addNode('track2Mixer', track2MixerNode.value!)
+
   /** Master Chain */
-  graph.addNode('MasterGain', masterGainNode.value!)
-  graph.addNode('MasterAnalyserL', masterAnalyserLNode.value!)
-  graph.addNode('MasterAnalyserR', masterAnalyserRNode.value!)
-  graph.addNode('MasterCompressor', masterCompressorNode.value!)
 
 })
 
@@ -87,7 +68,6 @@ function onLoadTrack(event: Event) {
 
 function play(event: Event) {
   const target = event.target as HTMLInputElement
-
   if (target.dataset.track === '1') {
     track1BufferSourceNode.value?.start()
     track1Playing.value = true

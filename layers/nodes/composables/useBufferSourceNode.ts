@@ -10,8 +10,7 @@ export function useBufferSourceNode(id: string, options: BufferSourceNodeOptions
     () => toValue(options.buffer),
     (buffer) => {
       if (!buffer) {
-        source.value?.disconnect()
-        source.value = undefined
+        source.value?.stop()
         return
       }
 
@@ -22,8 +21,7 @@ export function useBufferSourceNode(id: string, options: BufferSourceNodeOptions
   )
 
   useEventListener(source, 'ended', () => {
-    source.value?.disconnect()
-    source.value = undefined
+    source.value?.stop()
   })
 
   return source
