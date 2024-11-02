@@ -33,7 +33,7 @@ export const useAudioNodeChain = createSharedComposable(() => {
     return chain
   }
 
-  function outputNode(id: string) {
+  function getOutputNode(id: string) {
     const chain = get(id)
 
     if (chain.nodes.length === 0) {
@@ -43,7 +43,7 @@ export const useAudioNodeChain = createSharedComposable(() => {
     return chain.nodes.at(-1) as AudioNode
   }
 
-  function inputNode(id: string) {
+  function getInputNode(id: string) {
     const chain = get(id)
 
     if (chain.nodes.length === 0) {
@@ -56,14 +56,6 @@ export const useAudioNodeChain = createSharedComposable(() => {
   function getCrossfadeGain(id: string) {
     const chain = get(id)
     return chain.nodes.at(4) as GainNode
-  }
-
-  function crossfade(id: string, value: number): void {
-    const chain = get(id)
-    const [gain1, gain2] = chain.nodes as [GainNode, GainNode]
-
-    gain1.gain.value = Math.cos(value * 0.5 * Math.PI)
-    gain2.gain.value = Math.cos((1.0 - value) * 0.5 * Math.PI)
   }
 
   function connectNodes(id: string, connected: boolean = true): void {
@@ -85,10 +77,9 @@ export const useAudioNodeChain = createSharedComposable(() => {
     add,
     get,
     connectNodes,
-    inputNode,
-    outputNode,
+    inputNode: getInputNode,
+    outputNode: getOutputNode,
     getCrossfadeGain,
     remove,
-    crossfade
   }
 })

@@ -14,6 +14,7 @@ const {
 }>()
 
 const chain = useAudioNodeChain()
+// const chain2 = useAudioNodeChain2()
 
 onMounted(async () => {
   console.log(`%c${capitalize(identifier)}`, 'color: yellow; font-size: 16px;')
@@ -22,12 +23,6 @@ onMounted(async () => {
   const context = await getAudioContext()
   const source = context.createMediaElementSource(element)
   const gain = context.createGain()
-  // high, mid, low
-  const filterHigh = context.createBiquadFilter()
-  const filterMid = context.createBiquadFilter()
-  const filterLow = context.createBiquadFilter()
-  // todo: Maybe make chain a object with key as identifier
-
   const crossfade = context.createGain()
   const analyserLeft = context.createAnalyser()
   const analyserRight = context.createAnalyser()
@@ -36,6 +31,14 @@ onMounted(async () => {
   chain.add(identifier, [source, gain, analyserLeft, analyserRight, crossfade, compressor], {
     connect: true
   })
+
+  // chain2.add(
+  //   identifier,
+  //   { source, gain, analyserLeft, analyserRight, crossfade, compressor },
+  //   {
+  //     connect: true
+  //   }
+  // )
 
   const masterInputNode = chain.inputNode('master')
   compressor.connect(masterInputNode)

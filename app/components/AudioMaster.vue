@@ -12,10 +12,11 @@ onMounted(async () => {
   const limiter = context.createDynamicsCompressor()
   chain.add('master', [gain, analyserLeft, analyserRight, limiter], { connect: true })
 
+  // chain.add('master', { gain, analyserLeft, analyserRight, limiter }, { connect: true })
+
   const outputNode = chain.outputNode('master')
   outputNode.connect(context.destination)
 })
-
 </script>
 
 <template>
