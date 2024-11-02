@@ -204,34 +204,11 @@ function getDbBounds(el: HTMLInputElement): [number, number] {
   return [minDB, maxDB]
 }
 
-const {
-  start: startTrackAAnalyser,
-  stop: stopTrackAAnalyser,
-  channels: trackAChannels
-} = useAudioLevelAnalyser(trackAAnalyserL, trackAAnalyserR)
-
-const {
-  start: startTrackBAnalyser,
-  stop: stopTrackBAnalyser,
-  channels: trackBChannels
-} = useAudioLevelAnalyser(trackBAnalyserL, trackBAnalyserR)
-
-const {
-  start: startMasterAnalyser,
-  stop: stopMasterAnalyser,
-  channels: masterChannels
-} = useAudioLevelAnalyser(masterAnalyserL, masterAnalyserR)
-
 function onPlay(_: Event) {
-  startTrackAAnalyser()
-  startTrackBAnalyser()
-  startMasterAnalyser()
 }
 
 function onPause(_: Event) {
-  stopTrackAAnalyser()
-  stopTrackBAnalyser()
-  stopMasterAnalyser()
+
 }
 </script>
 
@@ -244,7 +221,6 @@ function onPause(_: Event) {
       <div>
         <h2>Master</h2>
         <div class="my-2">
-          <p>{{ masterChannels }}</p>
         </div>
       </div>
       <div>
@@ -279,7 +255,6 @@ function onPause(_: Event) {
         <div>
           <h2>Deck A</h2>
           <div class="my-2">
-            <p>{{ trackAChannels }}</p>
           </div>
           <audio
             ref="trackASourceEl"
@@ -359,7 +334,6 @@ function onPause(_: Event) {
           <h2>Deck B</h2>
         </div>
         <div class="my-2">
-          <p>{{ trackBChannels }}</p>
         </div>
         <div>
           <audio

@@ -2,11 +2,11 @@
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
 import type { Deck } from '~~/layers/deck/stores/deck'
-import DeckGainFader from '~/components/DeckGainFader.vue'
 import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
 import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
 import { guess } from 'web-audio-beat-detector'
-import { canPlay, createAnalysers, createBufferSourceNode } from '~/utils/audio'
+import { createAnalysers, createBufferSourceNode } from '~/utils/audio'
+import { useActiveNodes } from '~/composables/useActiveNodes'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -15,42 +15,89 @@ interface DeckProps extends DeckRootProps {
 const { deck } = defineProps<DeckProps>()
 
 const deckStore = useDeckStore()
-
 const trackStore = useTrackStore()
-
 const track = deckStore.computedTrack(deck)
 
-/**
- * The time in seconds when the track started playing.
- */
 const startTime = shallowRef<number>(0)
-
-/**
- * The time in seconds from the start of the track.
- */
 const startOffset = shallowRef<number>(0)
-
-/**
- * The current time in seconds from the start of the track.
- */
 const currentTime = shallowRef<number>(0)
-
-/**
- * Whether the track is currently playing.
- */
 const playing = shallowRef<boolean>(false)
 
-/**
- * The audio buffer of the track.
- */
-const audioBuffer = shallowRef<AudioBuffer | null>(null)
-
-/**
- * The audio buffer source node.
- */
-const sourceNode = shallowRef<AudioBufferSourceNode | null>(null)
+const audioBuffer = shallowRef<AudioBuffer>()
+const sourceNode = shallowRef<AudioBufferSourceNode>()
+const analyserNodes = shallowRef<AnalyserNode[]>([])
 
 const { audioContext, getAudioContext } = useAudioContext()
+
+const audioAnalyser = useAudioLevelAnalyser(analyserNodes)
+
+function initializeAudioSourceNode(
+  context: AudioContext,
+  buffer: AudioBuffer
+): AudioBufferSourceNode {
+  const source = createBufferSourceNode(context, buffer)
+  sourceNode.value = source
+  if(analyserNodes.value.length === 0) {
+    analyserNodes.value = createAnalysers(context, 1024)
+  }
+  return source
+}
+const { activeNodes, addNode, removeNode } = useActiveNodes()
+
+watch(activeNodes, (nodes) => {
+ console.log('activeNodes', nodes)
+})
+
+async function play() {
+  const context = await getAudioContext()
+  const buffer = unref(audioBuffer)
+  if (!buffer) return
+
+  if (sourceNode.value) {
+    sourceNode.value.stop()
+    sourceNode.value.disconnect()
+  }
+
+  const source = initializeAudioSourceNode(context, buffer)
+
+  addNode('source', source)
+
+  playAudioBufferSource(context, buffer, source)
+}
+
+function cleanupSourceNode(source: AudioBufferSourceNode) {
+  source.onended = null
+  source.disconnect()
+  removeNode('source')
+}
+
+function playAudioBufferSource(
+  context: AudioContext,
+  buffer: AudioBuffer,
+  source: AudioBufferSourceNode
+) {
+  startTime.value = context.currentTime
+  const offsetStart = unref(startOffset)
+  if (offsetStart < 0) {
+    schedulePlayback(context, source)
+  } else {
+    const duration = Math.max(0, buffer.duration - offsetStart)
+    source.start(0, offsetStart, duration)
+    source.onended = () => {
+      cleanupSourceNode(source)
+      audioAnalyser.stop()
+    }
+    audioAnalyser.start()
+    startPlaying()
+  }
+}
+
+function schedulePlayback(context: AudioContext, source: AudioBufferSourceNode) {
+  const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
+  source.start(playbackStartTime)
+  playing.value = true
+  startPlaybackPreSync(context, playbackStartTime)
+}
 
 let rAF: number | null = null
 
@@ -65,90 +112,27 @@ function startPlaybackPreSync(context: AudioContext, playbackStartTime: number) 
   }
 }
 
-function schedulePlayback(context: AudioContext, source: AudioBufferSourceNode) {
-  const playbackStartTime = context.currentTime + Math.abs(startOffset.value)
-  source.start(playbackStartTime)
-
-  startPlaybackPreSync(context, playbackStartTime)
-  playing.value = true
-}
-
-function updateCurrentTime() {
-  const context = unref(audioContext)
-  if (!context) return
-  currentTime.value = context.currentTime - startTime.value + startOffset.value
-}
-
-function renderAnimationFrame() {
-  updateCurrentTime()
-  rAF = requestAnimationFrame(renderAnimationFrame)
-}
-
 function startPlaying() {
   playing.value = true
   if (rAF !== null) {
     cancelAnimationFrame(rAF)
-    rAF = null
   }
   rAF = requestAnimationFrame(renderAnimationFrame)
 }
 
-function stopPlaying() {
-  playing.value = false
-  if (rAF !== null) {
+function renderAnimationFrame() {
+  if (playing.value) {
+    updateCurrentTime()
+    rAF = requestAnimationFrame(renderAnimationFrame)
+  } else if (rAF !== null) {
     cancelAnimationFrame(rAF)
     rAF = null
   }
-  tryWithoutFail(() => {
-    sourceNode.value?.stop()
-  })
 }
 
-const analyserNode = shallowRef<AnalyserNode | null>(null)
-const analyserNodeR = shallowRef<AnalyserNode | null>(null)
-
-const { channels, start:startAnalyzer, stop:stopAnalyzer } = useAudioLevelAnalyser(analyserNode, analyserNodeR, 2048)
-
-function setAnalyserNodes(context: AudioContext): [AnalyserNode, AnalyserNode] {
-  const [analyser, analyserR] = createAnalysers(context, 1024)
-  analyserNode.value = analyser
-  analyserNodeR.value = analyserR
-  return [analyser, analyserR]
-}
-
-function setSourceNode(context: AudioContext, buffer: AudioBuffer): AudioBufferSourceNode {
-  const source = createBufferSourceNode(context, buffer)
-  sourceNode.value = source
-  return source
-}
-
-async function play() {
-  const context = await getAudioContext()
-  const buffer = unref(audioBuffer)!
-  if (!canPlay(context, buffer, playing)) return
-  const source = setSourceNode(context, buffer)
-  setAnalyserNodes(context)
-  source.connect(context.destination)
-  startAnalyzer()
-
-  handlePlayback(context, buffer, source)
-}
-
-function handlePlayback(
-  context: AudioContext,
-  buffer: AudioBuffer,
-  source: AudioBufferSourceNode
-) {
-  startTime.value = context.currentTime
-  const offsetStart = unref(startOffset)
-  if (offsetStart < 0) {
-    schedulePlayback(context, source)
-  } else if (offsetStart >= buffer.duration) {
-    startPlaying()
-  } else {
-    source.start(0, offsetStart, buffer.duration - offsetStart)
-    startPlaying()
-  }
+function updateCurrentTime() {
+  const context = unref(audioContext)!
+  currentTime.value = context.currentTime - startTime.value + startOffset.value
 }
 
 function pause() {
@@ -156,7 +140,15 @@ function pause() {
   if (!context) return
   startOffset.value += context.currentTime - startTime.value
   stopPlaying()
-  stopAnalyzer()
+}
+
+function stopPlaying() {
+  playing.value = false
+  sourceNode.value?.stop()
+  if (rAF !== null) {
+    cancelAnimationFrame(rAF)
+    rAF = null
+  }
 }
 
 const wasPlaying = shallowRef<boolean>(false)
@@ -193,22 +185,18 @@ const pitchDelta = shallowRef<number>(0)
 const tempo = shallowRef({ bpm: 0, offset: 0 })
 
 whenever(audioBuffer, (buffer) => tryWithoutFail(async () => (tempo.value = await guess(buffer))))
-whenever(tempo, (tempo) => {
-  console.log('Native BPM', nativeBpm.value)
-  console.log('Guessed BPM', tempo.bpm, 'Offset', tempo.offset)
-})
 
 const interacting = shallowRef<boolean>(false)
 
 watch(
   interacting,
-  async (interacting) => {
+  (interacting) => {
     startOffset.value = currentTime.value
     if (interacting) {
       wasPlaying.value = playing.value
       pause()
     } else if (wasPlaying.value) {
-      await play()
+      play()
     }
   },
   { flush: 'sync' }
@@ -227,34 +215,16 @@ onBeforeUnmount(() => {
 
 function resetDeck() {
   stopPlaying()
-  stop()
-
   currentTime.value = 0
-  audioBuffer.value = null
+  audioBuffer.value = undefined
   playing.value = false
   startTime.value = 0
   startOffset.value = 0
-
-  if (rAF !== null) {
-    cancelAnimationFrame(rAF)
-    rAF = null
-  }
-
-  tryWithoutFail(() => {
-    sourceNode.value?.disconnect()
-    sourceNode.value?.stop()
-    sourceNode.value = null
-  })
-
-  tryWithoutFail(() => {
-    analyserNode.value?.disconnect()
-    analyserNode.value = null
-  })
-
-  tryWithoutFail(() => {
-    analyserNodeR.value?.disconnect()
-    analyserNodeR.value = null
-  })
+  sourceNode.value?.disconnect()
+  sourceNode.value?.stop()
+  sourceNode.value = undefined
+  analyserNodes.value.forEach((node) => node.disconnect())
+  analyserNodes.value = []
 }
 
 function ejectTrack() {
@@ -316,7 +286,6 @@ const isLoaded = computed(() => !!track.value && !!audioBuffer.value)
         :duration="duration"
         :pitch-delta="pitchDelta"
         :pitch-range="pitchRange" />
-      <DeckGainFader :channels="channels" />
     </div>
   </DeckRoot>
 </template>

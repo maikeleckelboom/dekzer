@@ -5,7 +5,7 @@ export function useNode<T extends AudioNode>(
   nodeFactory: (context: AudioContext) => T
 ): Ref<T | undefined > {
   const { audioContext } = useAudioContext()
-  const node = ref<T | undefined>()
+  const node = shallowRef<T | undefined>()
 
   onMounted(() => {
     if (!audioContext.value) return

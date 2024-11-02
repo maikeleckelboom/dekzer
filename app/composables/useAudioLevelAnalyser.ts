@@ -1,6 +1,5 @@
 export function useAudioLevelAnalyser(
-  analyzerL?: MaybeRefOrGetter<AnalyserNode | null | undefined>,
-  analyserR?: MaybeRefOrGetter<AnalyserNode | null | undefined>,
+  analyserNodes: MaybeRefOrGetter<AnalyserNode[]>,
   fftSize: 1024 | 2048 | 4096 = 1024
 ) {
   const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
@@ -9,22 +8,11 @@ export function useAudioLevelAnalyser(
   const floatSampleBufferL = new Float32Array(fftSize)
   const floatSampleBufferR = new Float32Array(fftSize)
 
-  const _analyserL = shallowRef<AnalyserNode | null | undefined>(toValue(analyzerL))
-  const _analyserR = shallowRef<AnalyserNode | null | undefined>(toValue(analyserR))
-
-  function setAnalysers([L, R]: [AnalyserNode, AnalyserNode]) {
-    _analyserL.value = L
-    _analyserR.value = R
-  }
-
   let rAF: number | null = null
 
-  function start(
-    algorithm: 'rms' | 'peak' = 'rms',
-    analysers?: [MaybeRefOrGetter<AnalyserNode>, MaybeRefOrGetter<AnalyserNode>]
-  ) {
-    const a = toValue(analyzerL) ?? _analyserL.value  ?? toValue(analysers?.at(0))
-    const b = toValue(analyserR) ?? _analyserR.value ?? toValue(analysers?.at(1))
+  function start(algorithm: 'rms' | 'peak' = 'rms') {
+    const a = toValue(analyserNodes)?.at(0)
+    const b = toValue(analyserNodes)?.at(1)
 
     if (!a || !b) {
       throw new Error('Analyser nodes are not set')
@@ -89,22 +77,8 @@ export function useAudioLevelAnalyser(
     channels,
     start,
     stop,
-    setAnalysers
+    valueL: returnValueL,
+    valueR: returnValueR,
+    isRunning: computed(() => rAF !== null)
   }
 }
-
-export const useMasterVolumeAnalyser = createSharedComposable((context: AudioContext) => {
-  const analyzer = shallowRef<AnalyserNode>()
-  const analyserR = shallowRef<AnalyserNode>()
-
-  onMounted(() => {
-    const a = context.createAnalyser()
-    const b = context.createAnalyser()
-    a.fftSize = 1024
-    b.fftSize = 1024
-    analyzer.value = a
-    analyserR.value = b
-  })
-
-  return useAudioLevelAnalyser(analyzer, analyserR)
-})

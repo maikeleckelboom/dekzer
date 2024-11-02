@@ -43,18 +43,6 @@ whenever(logicAnd(track1BufferSourceNode, track2BufferSourceNode), async () => {
 
 })
 
-const { channels: track1Channels } = useAudioLevelAnalyser(
-  track1AnalyserLNode,
-  track1AnalyserRNode
-)
-const { channels: track2Channels } = useAudioLevelAnalyser(
-  track2AnalyserLNode,
-  track2AnalyserRNode
-)
-const { channels: masterChannels } = useAudioLevelAnalyser(
-  masterAnalyserLNode,
-  masterAnalyserRNode
-)
 
 function onLoadTrack(event: Event) {
   const target = event.target as HTMLInputElement
@@ -95,14 +83,6 @@ const track2Playing = shallowRef<boolean>(false)
         <div>
           <h2 class="text-lg font-semibold">Master</h2>
           <div class="flex flex-row space-x-2">
-            <div class="w-1/2">
-              <p class="text-sm">Left</p>
-              <p class="text-sm">{{ masterChannels?.[0] }}</p>
-            </div>
-            <div class="w-1/2">
-              <p class="text-sm">Right</p>
-              <p class="text-sm">{{ masterChannels?.[1] }}</p>
-            </div>
           </div>
         </div>
         <div class="flex flex-col space-y-2">
@@ -136,16 +116,7 @@ const track2Playing = shallowRef<boolean>(false)
           Pause
         </button>
         <!-- # Here -->
-        <div class="flex flex-row space-x-2">
-          <div class="w-1/2">
-            <p class="text-sm">Left</p>
-            <p class="text-sm">{{ track1Channels?.[0] }}</p>
-          </div>
-          <div class="w-1/2">
-            <p class="text-sm">Right</p>
-            <p class="text-sm">{{ track1Channels?.[1] }}</p>
-          </div>
-        </div>
+
       </div>
       <label
         class="text-sm"
@@ -175,16 +146,6 @@ const track2Playing = shallowRef<boolean>(false)
           Pause
         </button>
 
-        <div class="flex flex-row space-x-2">
-          <div class="w-1/2">
-            <p class="text-sm">Left</p>
-            <p class="text-sm">{{ track2Channels?.[0] }}</p>
-          </div>
-          <div class="w-1/2">
-            <p class="text-sm">Right</p>
-            <p class="text-sm">{{ track2Channels?.[1] }}</p>
-          </div>
-        </div>
       </div>
       <label
         class="text-sm"

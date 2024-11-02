@@ -4,6 +4,10 @@ export interface GainNodeOptions {
 
 export function useGainNode(id: string, { gain = 1 }: GainNodeOptions = { gain: 1 }) {
   const node = useNode<GainNode>(id, (context) => context.createGain())
-  whenever(node, (n) => (n.gain.value = gain), { immediate: true })
+  watchEffect(() => {
+    if (node.value) {
+      node.value.gain.value = gain
+    }
+  })
   return node
 }

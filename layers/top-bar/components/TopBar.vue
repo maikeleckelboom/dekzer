@@ -1,4 +1,6 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+
+</script>
 
 <template>
   <div class="grid w-full grid-cols-[202px,1fr,202px] items-center p-2">
