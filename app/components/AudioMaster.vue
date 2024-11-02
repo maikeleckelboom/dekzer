@@ -1,21 +1,21 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 const chain = useAudioNodeChain()
 const { getAudioContext } = useAudioContext()
 
 onMounted(async () => {
   console.log(`%cAudioMaster`, 'color: red; font-size: 16px;')
+
   const context = await getAudioContext()
   const gain = context.createGain()
-  const analyserNodeL = context.createAnalyser()
-  const analyserNodeR = context.createAnalyser()
-  const compressorNode = context.createDynamicsCompressor()
-  chain.addChain('master', [gain, analyserNodeL, analyserNodeR, compressorNode])
-  chain.connectChainNodes('master')
+  const analyserLeft = context.createAnalyser()
+  const analyserRight = context.createAnalyser()
+  const limiter = context.createDynamicsCompressor()
+  chain.add('master', [gain, analyserLeft, analyserRight, limiter], { connect: true })
 
-
-  const outputNode = chain.getOutputNode('master')
+  const outputNode = chain.outputNode('master')
   outputNode.connect(context.destination)
 })
+
 </script>
 
 <template>
@@ -24,6 +24,4 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

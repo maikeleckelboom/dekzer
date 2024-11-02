@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { unrefNotNull } from '~/utils/resolveRef'
+import { capitalize } from 'vue'
 
 const { getAudioContext } = useAudioContext()
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
@@ -15,23 +16,29 @@ const {
 const chain = useAudioNodeChain()
 
 onMounted(async () => {
-  console.log(`%cAudioTrack - ${identifier}`, 'color: yellow; font-size: 16px;')
+  console.log(`%c${capitalize(identifier)}`, 'color: yellow; font-size: 16px;')
 
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
   const source = context.createMediaElementSource(element)
   const gain = context.createGain()
+  // high, mid, low
+  const filterHigh = context.createBiquadFilter()
+  const filterMid = context.createBiquadFilter()
+  const filterLow = context.createBiquadFilter()
+  // todo: Maybe make chain a object with key as identifier
+
   const crossfade = context.createGain()
   const analyserLeft = context.createAnalyser()
   const analyserRight = context.createAnalyser()
   const compressor = context.createDynamicsCompressor()
 
-  chain.addChain(identifier, [source, gain,  analyserLeft, analyserRight, crossfade, compressor])
-  chain.connectChainNodes(identifier)
+  chain.add(identifier, [source, gain, analyserLeft, analyserRight, crossfade, compressor], {
+    connect: true
+  })
 
-  const masterChain = chain.getChain('master')
-
-  compressor.connect(masterChain.nodes.at(0) as AudioNode)
+  const masterInputNode = chain.inputNode('master')
+  compressor.connect(masterInputNode)
 })
 </script>
 
