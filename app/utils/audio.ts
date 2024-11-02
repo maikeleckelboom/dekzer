@@ -6,17 +6,6 @@ export async function loadAudioBuffer(context: AudioContext, url: string): Promi
   return await context.decodeAudioData(arrayBuffer)
 }
 
-export function createConstantSourceNode(
-  context: AudioContext,
-  offsetValue: number = 0
-): ConstantSourceNode {
-  const constantSourceNode = context.createConstantSource()
-  constantSourceNode.offset.value = offsetValue
-  constantSourceNode.start(context.currentTime)
-  return constantSourceNode
-}
-
-
 export function createBufferSourceNode(
   context: AudioContext,
   buffer: AudioBuffer
@@ -26,13 +15,6 @@ export function createBufferSourceNode(
   return source
 }
 
-export function canPlay(
-  context: MaybeRefOrGetter<AudioContext | null>,
-  buffer: MaybeRefOrGetter<AudioBuffer | null>,
-  playing: MaybeRefOrGetter<boolean>
-): boolean {
-  return (toValue(context) && toValue(buffer) && !toValue(playing)) || false
-}
 
 export function fadeIn(context: AudioContext, node: AudioBufferSourceNode, duration: number) {
   const gainNode = context.createGain()
@@ -62,14 +44,6 @@ export async function getAnalyzedTempo(
   return await analyze(buffer, options)
 }
 
-
-export function cosineFadeIn(value: number) {
-  return Math.cos(value * 0.5 * Math.PI)
-}
-
-export function cosineFadeOut(value: number) {
-  return Math.cos((1.0 - value) * 0.5 * Math.PI)
-}
 export interface DeckNodes {
   gain: GainNode
   volume: GainNode

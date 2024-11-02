@@ -16,3 +16,12 @@
     </div>
   </div>
 </template>
+
+<style>
+input[type='range'][aria-orientation='vertical'] {
+  writing-mode: vertical-rl;
+  direction: rtl;
+  width: 12px;
+  height: 180px;
+}
+</style>

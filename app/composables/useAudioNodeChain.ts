@@ -4,15 +4,16 @@ export interface AudioNodeChain {
   connected: boolean
 }
 
-export type AudioNodeMap = Map<string, AudioNodeChain>
-
 export const useAudioNodeChain = createSharedComposable(() => {
+  const chains: Map<string, AudioNodeChain> = reactive(new Map())
 
-  const chains: AudioNodeMap = reactive(new Map())
-
-  function add(id: string, nodes: Record<string, AudioNode>, options?: { connect: boolean }): void {
-    const { connect = false } = options || {}
-    chains.set(id, { id, nodes, connected: connect })
+  function add(
+    id: string,
+    nodes: Record<string, AudioNode>,
+    options?: { connect?: boolean, connected?: boolean }
+  ): void {
+    const { connect = false, connected = false } = options || {}
+    chains.set(id, { id, nodes, connected: connect || connected })
     if (connect) {
       connectNodes(id)
     }
@@ -28,7 +29,8 @@ export const useAudioNodeChain = createSharedComposable(() => {
     const chain = chains.get(id)
 
     if (!chain || !Object.keys(chain.nodes).length) {
-      throw new Error(`Chain with id ${id} not found`)
+      return { id, nodes: {}, connected: false }
+      // throw new Error(`Chain with id ${id} not found`)
     }
 
     return chain
@@ -54,7 +56,7 @@ export const useAudioNodeChain = createSharedComposable(() => {
     return Object.values(chain.nodes).at(0) as AudioNode
   }
 
-  function getCrossfadeGainNode(id: string) {
+  function getCrossfadeNode(id: string) {
     const chain = get(id)
     return chain.nodes.crossfade as GainNode
   }
@@ -64,19 +66,24 @@ export const useAudioNodeChain = createSharedComposable(() => {
     return chain.nodes.gain as GainNode
   }
 
-  function getAmplifierNode(id: string) {
+  function getFaderNode(id: string) {
     const chain = get(id)
-    return chain.nodes.amplifier as GainNode
+    return chain.nodes.fader as GainNode
+  }
+
+  function getAnalyserNodes(id: string) {
+    const chain = get(id)
+    const analyserNodes = Object.values(chain.nodes).filter((node) => node instanceof AnalyserNode)
+    return analyserNodes as AnalyserNode[]
   }
 
   function connectNodes(id: string) {
     const chain = get(id)
     const chainNodes = Object.values(chain.nodes)
 
-    chainNodes.forEach((node, index) => {
-      if (index < chainNodes.length - 1) {
-        node.connect(chainNodes.at(index + 1) as AudioNode)
-      }
+    chainNodes.reduce((prevNode, currentNode) => {
+      prevNode.connect(currentNode)
+      return currentNode
     })
 
     chain.connected = true
@@ -89,8 +96,9 @@ export const useAudioNodeChain = createSharedComposable(() => {
     get,
     getOutputNode,
     getInputNode,
-    getCrossfadeGainNode,
+    getCrossfadeNode,
+    getAnalyserNodes,
     getGainNode,
-    getAmplifierNode
+    getFaderNode
   }
 })

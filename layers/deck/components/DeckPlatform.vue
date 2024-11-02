@@ -5,8 +5,6 @@ import type { Deck } from '~~/layers/deck/stores/deck'
 import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
 import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
 import { guess } from 'web-audio-beat-detector'
-import { createAnalysers, createBufferSourceNode } from '~/utils/audio'
-import { useActiveNodes } from '~/composables/useActiveNodes'
 
 interface DeckProps extends DeckRootProps {
   deck: Deck
@@ -38,15 +36,10 @@ function initializeAudioSourceNode(
   const source = createBufferSourceNode(context, buffer)
   sourceNode.value = source
   if(analyserNodes.value.length === 0) {
-    analyserNodes.value = createAnalysers(context, 1024)
+    analyserNodes.value = createAnalysers(context)
   }
   return source
 }
-const { activeNodes, addNode, removeNode } = useActiveNodes()
-
-watch(activeNodes, (nodes) => {
- console.log('activeNodes', nodes)
-})
 
 async function play() {
   const context = await getAudioContext()
@@ -60,7 +53,6 @@ async function play() {
 
   const source = initializeAudioSourceNode(context, buffer)
 
-  addNode('source', source)
 
   playAudioBufferSource(context, buffer, source)
 }
@@ -68,7 +60,6 @@ async function play() {
 function cleanupSourceNode(source: AudioBufferSourceNode) {
   source.onended = null
   source.disconnect()
-  removeNode('source')
 }
 
 function playAudioBufferSource(

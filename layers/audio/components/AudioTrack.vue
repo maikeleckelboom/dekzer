@@ -1,31 +1,29 @@
 <script lang="ts" setup>
-const { audioContext, getAudioContext } = useAudioContext()
-const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
+import { useAudioAmplitudeMeter } from '~~/layers/audio/composables/useAudioAmplitudeMeter'
 
-const {
-  identifier,
-  url = '/assets/Serato/StarterPack/02%20-%20House%20Track%20Serato%20House%20Starter%20Pack.mp3'
-} = defineProps<{
-  identifier: string
-  url: string
-}>()
+const { identifier, url } = defineProps<{ identifier: string; url: string }>()
+
+const { audioContext, getAudioContext } = useAudioContext()
 
 const chain = useAudioNodeChain()
+
+const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 
 onMounted(async () => {
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
+
   const source = context.createMediaElementSource(element)
 
   const gain = createGain(context)
-  const amplifier = createGain(context)
+  const fader = createGain(context)
   const crossfade = createGain(context)
   const [analyserLeft, analyserRight] = createAnalysers(context, { fftSize: 2048 })
   const compressor = createDynamicsCompressor(context, CompressorPreset.TrackBalancer)
 
   chain.add(
     identifier,
-    { source, gain, amplifier, analyserLeft, analyserRight, crossfade, compressor },
+    { source, gain, fader, analyserLeft, analyserRight, crossfade, compressor },
     {
       connect: true
     }
@@ -47,53 +45,64 @@ const gainModel = computed({
   }
 })
 
-const amplifierValue = shallowRef<number>(1)
-const amplifierModel = computed({
-  get: () => amplifierValue.value,
+const faderValue = shallowRef<number>(1)
+const faderModel = computed({
+  get: () => faderValue.value,
   set: (value: number) => {
-    const amplifier = chain.getAmplifierNode(identifier)
-    amplifier.gain.value = value
+    const faderNode = chain.getFaderNode(identifier)
+    faderNode.gain.value = value
   }
 })
+
+const analysers = computed(() => chain.getAnalyserNodes(identifier))
+const amplitudeMeter = useAudioAmplitudeMeter(analysers)
 </script>
 
 <template>
-  <div>
+  <div >
     <audio
       ref="audioElement"
       :src="url"
-      controls />
-
+      controls
+      @pause="
+        () => {
+          amplitudeMeter.stop()
+        }
+      "
+      @play="
+        () => {
+          amplitudeMeter.start()
+        }
+      " />
     <div class="grid grid-cols-3 gap-2">
-      <!-- Gain Sliders SIMPLE -->
       <div>
         <div class="flex items-center gap-1">
           <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold">
-            Gain
-          </span>
+          <span class="text-xs font-bold"> Gain </span>
         </div>
         <input
           v-model="gainModel"
+          aria-orientation="vertical"
           max="1"
           min="0"
           step="0.01"
           type="range" />
       </div>
-      <!-- Amplifier Sliders SIMPLE -->
       <div>
         <div class="flex items-center gap-1">
           <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold">
-            Volume
-          </span>
+          <span class="text-xs font-bold"> Fader </span>
         </div>
         <input
-          v-model="amplifierModel"
+          v-model="faderModel"
+          aria-orientation="vertical"
           max="1"
           min="0"
           step="0.01"
           type="range" />
+      </div>
+      <div class="max-w-64 col-span-3 w-full flex text-start">
+        <pre>{{ amplitudeMeter }}</pre>
       </div>
     </div>
   </div>

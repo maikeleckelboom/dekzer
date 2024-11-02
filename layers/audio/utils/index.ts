@@ -1,15 +1,18 @@
 export * from './dynamicsCompressor'
 
-export function createGain(context: AudioContext, value: number = 1): GainNode {
+export function createGain(
+  context: AudioContext,
+  options: { value: number } = { value: 1 }
+): GainNode {
   const gain = context.createGain()
-  gain.gain.value = value
+  gain.gain.value = options.value
   return gain
 }
 
 export function createAnalysers(
   context: AudioContext,
   options: {
-    fftSize: 1024 | 2048 | 4096 | 8192 | 16384
+    fftSize: 1024 | 2048 | 4096 | 8192 | 16384 | 32768
   } = {
     fftSize: 2048
   }
@@ -22,8 +25,8 @@ export function createAnalysers(
 }
 
 export function faderToDB(value: number, minDB: number, maxDB: number): number {
-  const normalizedValue = (value - 0.5) * 2
-  return (normalizedValue * (maxDB - minDB)) / 2
+  const scaledValue = (value - 0.5) * 2
+  return (scaledValue * (maxDB - minDB)) / 2
 }
 
 export function dbToLinearGain(db: number): number {
