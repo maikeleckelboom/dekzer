@@ -2,18 +2,18 @@
 const chain = useAudioNodeChain()
 
 function crossfade(value: number) {
-  const crossfadeValue = value / 100
+  const crossfadeValue = value
   const gainA = Math.cos(crossfadeValue * 0.5 * Math.PI)
   const gainB = Math.cos((1.0 - crossfadeValue) * 0.5 * Math.PI)
 
-  const trackAGain = chain.getCrossfadeGain('trackA')
-  const trackBGain = chain.getCrossfadeGain('trackB')
+  const trackAGain = chain.getCrossfadeGainNode('trackA')
+  const trackBGain = chain.getCrossfadeGainNode('trackB')
 
   trackAGain.gain.value = gainA
   trackBGain.gain.value = gainB
 }
 
-const crossfadeValue = ref<number>(50)
+const crossfadeValue = ref<number>(0.5)
 </script>
 
 <template>
@@ -24,8 +24,9 @@ const crossfadeValue = ref<number>(50)
     </div>
     <input
       v-model="crossfadeValue"
-      max="100"
+      max="1"
       min="0"
+      step="0.01"
       type="range"
       @input="crossfade(crossfadeValue)" />
     <div class="text-muted-foreground flex items-center gap-2">

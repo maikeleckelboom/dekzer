@@ -11,15 +11,7 @@ const store = useAudioStore()
 onMounted(async () => {
   const context = await getAudioContext()
 
-  const nodes = createMasterNodes(context)
 
-  store.decks.forEach((deck) => {
-    deck.limiter.connect(nodes.limiter)
-  })
-
-  store.setMasterNodes(nodes)
-
-  nodes.limiter.connect(context.destination)
 })
 
 function onCrossFade(value: number) {

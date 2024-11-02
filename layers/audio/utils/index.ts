@@ -8,10 +8,15 @@ export function createGain(context: AudioContext, value: number = 1): GainNode {
 
 export function createAnalysers(
   context: AudioContext,
-  fftSize: number = 2048
+  options: {
+    fftSize: 1024 | 2048 | 4096 | 8192 | 16384
+  } = {
+    fftSize: 2048
+  }
 ): [AnalyserNode, AnalyserNode] {
-  const analyserLeft = context.createAnalyser()
-  const analyserRight = context.createAnalyser()
-  analyserLeft.fftSize = analyserRight.fftSize = fftSize
-  return [analyserLeft, analyserRight]
+  const analyserL = context.createAnalyser()
+  analyserL.fftSize = options.fftSize
+  const analyserR = context.createAnalyser()
+  analyserR.fftSize = options.fftSize
+  return [analyserL, analyserR]
 }

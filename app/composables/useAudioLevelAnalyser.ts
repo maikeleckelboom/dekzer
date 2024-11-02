@@ -1,6 +1,6 @@
 export function useAudioLevelAnalyser(
   analyserNodes: MaybeRefOrGetter<AnalyserNode[]>,
-  fftSize: 1024 | 2048 | 4096 = 1024
+  fftSize: 1024 | 2048 | 4096 = 2048
 ) {
   const returnValueL = shallowRef<number>(Number.NEGATIVE_INFINITY)
   const returnValueR = shallowRef<number>(Number.NEGATIVE_INFINITY)
