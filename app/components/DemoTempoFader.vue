@@ -6,12 +6,6 @@ const modelValue = ref<number>(100)
 
 <template>
   <div class="flex h-60 w-auto flex-row">
-    <!--    <div-->
-    <!--      class="flex h-full w-full flex-col items-center justify-center gap-1 px-4 pb-5 pt-1 text-center *:leading-none">-->
-    <!--      <IconMinus class="size-3.5" />-->
-    <!--      <span class="h-full my-auto flex items-center text-xs leading-none"></span>-->
-    <!--      <IconPlus class="size-3.5 -translate-y-1/2 "/>-->
-    <!--    </div>-->
     <div class="flex gap-y-4 flex-col justify-center items-center ">
       <FaderRoot
         v-model="modelValue"

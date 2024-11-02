@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { useAudioAmplitudeMeter } from '~~/layers/audio/composables/useAudioAmplitudeMeter'
-
 const { identifier, url } = defineProps<{ identifier: string; url: string }>()
 
 const { audioContext, getAudioContext } = useAudioContext()
@@ -36,12 +34,13 @@ onMounted(async () => {
 const gainValue = shallowRef<number>(0.5)
 const gainModel = computed({
   get: () => gainValue.value,
-  set: (inputValue: number) => {
-    const dB = faderToDB(inputValue, -24, 24)
+  set: (value: number) => {
+    const dB = faderToDB(value, -24, 24)
     const linearGainValue = dbToLinearGain(dB)
     const context = unrefNotNull(audioContext)
     const gainNode = chain.getGainNode(identifier)
     gainNode.gain.setValueAtTime(linearGainValue, context.currentTime)
+    gainValue.value = value
   }
 })
 
@@ -50,7 +49,9 @@ const faderModel = computed({
   get: () => faderValue.value,
   set: (value: number) => {
     const faderNode = chain.getFaderNode(identifier)
-    faderNode.gain.value = value
+    const context = unrefNotNull(audioContext)
+    faderNode.gain.setValueAtTime(value, context.currentTime)
+    faderValue.value = value
   }
 })
 
@@ -59,7 +60,7 @@ const amplitudeMeter = useAudioAmplitudeMeter(analysers)
 </script>
 
 <template>
-  <div >
+  <div class="w-full max-w-xl mx-auto">
     <audio
       ref="audioElement"
       :src="url"
@@ -76,10 +77,8 @@ const amplitudeMeter = useAudioAmplitudeMeter(analysers)
       " />
     <div class="grid grid-cols-3 gap-2">
       <div>
-        <div class="flex items-center gap-1">
-          <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold"> Gain </span>
-        </div>
+        <span class="text-xs font-bold"> Gain </span>
+
         <input
           v-model="gainModel"
           aria-orientation="vertical"
@@ -89,10 +88,7 @@ const amplitudeMeter = useAudioAmplitudeMeter(analysers)
           type="range" />
       </div>
       <div>
-        <div class="flex items-center gap-1">
-          <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold"> Fader </span>
-        </div>
+        <span class="text-xs font-bold"> Fader </span>
         <input
           v-model="faderModel"
           aria-orientation="vertical"
@@ -101,11 +97,9 @@ const amplitudeMeter = useAudioAmplitudeMeter(analysers)
           step="0.01"
           type="range" />
       </div>
-      <div class="max-w-64 col-span-3 w-full flex text-start">
+      <div class="relative w-64 overflow-clip">
         <pre>{{ amplitudeMeter }}</pre>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped></style>

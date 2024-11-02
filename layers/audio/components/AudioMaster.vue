@@ -2,6 +2,8 @@
 const chain = useAudioNodeChain()
 const { audioContext, getAudioContext } = useAudioContext()
 
+const masterIndentifier: string = 'master'  as const
+
 onMounted(async () => {
   const context = await getAudioContext()
   const gain = createGain(context)
