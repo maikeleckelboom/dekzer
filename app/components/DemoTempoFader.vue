@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import FaderGroove from '~~/layers/fader/components/Fader/FaderGroove.vue'
-
 const modelValue = ref<number>(100)
 </script>
 

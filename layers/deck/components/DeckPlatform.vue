@@ -88,6 +88,7 @@ function schedulePlayback(context: AudioContext, source: AudioBufferSourceNode) 
   source.start(playbackStartTime)
   playing.value = true
   startPlaybackPreSync(context, playbackStartTime)
+
 }
 
 let rAF: number | null = null

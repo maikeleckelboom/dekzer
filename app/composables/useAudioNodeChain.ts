@@ -10,7 +10,10 @@ export const useAudioNodeChain = createSharedComposable(() => {
   function add(
     id: string,
     nodes: Record<string, AudioNode>,
-    options?: { connect?: boolean, connected?: boolean }
+    options?: {
+      connect?: boolean
+      connected?: boolean
+    }
   ): void {
     const { connect = false, connected = false } = options || {}
     chains.set(id, { id, nodes, connected: connect || connected })
@@ -29,8 +32,7 @@ export const useAudioNodeChain = createSharedComposable(() => {
     const chain = chains.get(id)
 
     if (!chain || !Object.keys(chain.nodes).length) {
-      return { id, nodes: {}, connected: false }
-      // throw new Error(`Chain with id ${id} not found`)
+      throw new Error(`Chain with id ${id} not found`)
     }
 
     return chain
@@ -73,7 +75,10 @@ export const useAudioNodeChain = createSharedComposable(() => {
 
   function getAnalyserNodes(id: string) {
     const chain = get(id)
-    const analyserNodes = Object.values(chain.nodes).filter((node) => node instanceof AnalyserNode)
+    if (!chain) return []
+    const analyserNodes = Object.values(chain.nodes).filter(
+      (node) => node instanceof AnalyserNode
+    )
     return analyserNodes as AnalyserNode[]
   }
 

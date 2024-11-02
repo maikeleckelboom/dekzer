@@ -1,18 +1,18 @@
 <script lang="ts" setup>
+import { useAudioAnalyser } from '~~/layers/audio/composables/useAudioAnalyser'
+
 const { identifier, url } = defineProps<{ identifier: string; url: string }>()
 
 const { audioContext, getAudioContext } = useAudioContext()
 
-const chain = useAudioNodeChain()
-
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
+
+const chain = useAudioNodeChain()
 
 onMounted(async () => {
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
-
   const source = context.createMediaElementSource(element)
-
   const gain = createGain(context)
   const fader = createGain(context)
   const crossfade = createGain(context)
@@ -22,9 +22,7 @@ onMounted(async () => {
   chain.add(
     identifier,
     { source, gain, fader, analyserLeft, analyserRight, crossfade, compressor },
-    {
-      connect: true
-    }
+    { connect: true }
   )
 
   const masterInputNode = chain.getInputNode('master')
@@ -56,11 +54,11 @@ const faderModel = computed({
 })
 
 const analysers = computed(() => chain.getAnalyserNodes(identifier))
-const amplitudeMeter = useAudioAmplitudeMeter(analysers)
+const amplitudeMeter = useAudioAnalyser(analysers)
 </script>
 
 <template>
-  <div class="w-full max-w-xl mx-auto">
+  <div class="mx-auto w-full max-w-xl">
     <audio
       ref="audioElement"
       :src="url"

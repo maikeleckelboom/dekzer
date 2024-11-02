@@ -1,20 +1,26 @@
-interface AudioAmplitudeMeterOptions {
+interface UseAudioAnalyserOptions {
   fftSize: 1024 | 2048 | 4096
 }
 
-export function useAudioAmplitudeMeter(
-  analysers: MaybeRefOrGetter<AnalyserNode[]>|undefined,
-  options: AudioAmplitudeMeterOptions = {
+interface AnalyserValues {
+  rms: number;
+  peak: number
+}
+
+export function useAudioAnalyser(
+  analysers: MaybeRefOrGetter<AnalyserNode[]> | undefined,
+  options: UseAudioAnalyserOptions = {
     fftSize: 2048
   }
 ) {
   const { fftSize = 2048 } = options || {}
 
-  const returnValueL = reactive<{ rms: number; peak: number }>({
+  const valuesL = reactive<AnalyserValues>({
     rms: Number.NEGATIVE_INFINITY,
     peak: Number.NEGATIVE_INFINITY
   })
-  const returnValueR = reactive<{ rms: number; peak: number }>({
+
+  const valuesR = reactive<AnalyserValues>({
     rms: Number.NEGATIVE_INFINITY,
     peak: Number.NEGATIVE_INFINITY
   })
@@ -26,15 +32,19 @@ export function useAudioAmplitudeMeter(
 
   function start() {
     const analyserNodes = toValue(analysers) || []
-    const leftChannel = analyserNodes.at(0)
-    if (!leftChannel) {
+
+    if (analyserNodes.length === 0) {
       return
     }
 
-    const rightChannel = analyserNodes?.at(1) || leftChannel
+    const analyserL = analyserNodes.at(0)
+    const analyserR = analyserNodes?.at(1) || analyserL
+    if (!analyserL || !analyserR) {
+      return
+    }
 
-    leftChannel.getFloatTimeDomainData(floatSampleBufferL)
-    rightChannel.getFloatTimeDomainData(floatSampleBufferR)
+    analyserL.getFloatTimeDomainData(floatSampleBufferL)
+    analyserR.getFloatTimeDomainData(floatSampleBufferR)
 
     let peakInstantaneousPowerL = 0
     let peakInstantaneousPowerR = 0
@@ -56,19 +66,19 @@ export function useAudioAmplitudeMeter(
     }
 
     /* Peak Instantaneous Power in dB */
-    returnValueL.peak = 10 * Math.log10(peakInstantaneousPowerL)
-    returnValueR.peak = 10 * Math.log10(peakInstantaneousPowerR)
+    valuesL.peak = 10 * Math.log10(peakInstantaneousPowerL)
+    valuesR.peak = 10 * Math.log10(peakInstantaneousPowerR)
 
     /* Average Power in dB */
-    returnValueL.rms = 10 * Math.log10(sumOfSquaresL / fftSize)
-    returnValueR.rms = 10 * Math.log10(sumOfSquaresR / fftSize)
+    valuesL.rms = 10 * Math.log10(sumOfSquaresL / fftSize)
+    valuesR.rms = 10 * Math.log10(sumOfSquaresR / fftSize)
 
     rAF = requestAnimationFrame(start)
   }
 
   function stop() {
-    returnValueL.peak = returnValueR.peak = Number.NEGATIVE_INFINITY
-    returnValueL.rms = returnValueR.rms = Number.NEGATIVE_INFINITY
+    valuesL.peak = valuesR.peak = Number.NEGATIVE_INFINITY
+    valuesL.rms = valuesR.rms = Number.NEGATIVE_INFINITY
 
     if (rAF) {
       cancelAnimationFrame(rAF)
@@ -79,7 +89,7 @@ export function useAudioAmplitudeMeter(
   return {
     start,
     stop,
-    returnValueL,
-    returnValueR
+    valuesL,
+    valuesR
   }
 }

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useDeckStore } from '~~/layers/deck/stores/deck'
 import { useTrackStore } from '~~/layers/track/stores/track'
-import TopBar from '~~/layers/top-bar/components/TopBar.vue'
 
 useHead({
   title: 'Decks',
@@ -18,13 +17,10 @@ const { decks } = storeToRefs(deckStore)
 
 const trackStore = useTrackStore()
 const { tracks } = storeToRefs(trackStore)
-
-const pannerValue = ref(0)
 </script>
 
 <template>
   <div class="relative mx-4 flex flex-col gap-4">
-    <TopBar />
     <div class="grid gap-2 md:grid-cols-2">
       <DeckPlatform
         v-for="deck in decks"
@@ -40,7 +36,7 @@ const pannerValue = ref(0)
         v-model="pannerValue"
         :max="1"
         :min="-1"
-        class=" md:w-52">
+        class="md:w-52">
         <FaderTrack>
           <FaderMarkerRail
             :nth="2"

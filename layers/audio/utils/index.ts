@@ -40,3 +40,7 @@ export function cosineFadeIn(value: number) {
 export function cosineFadeOut(value: number) {
   return Math.cos((1.0 - value) * 0.5 * Math.PI)
 }
+
+export function getTempoAdjustment(tempo: number, pitch: number): number {
+  return tempo * Math.pow(2, pitch / 12)
+}

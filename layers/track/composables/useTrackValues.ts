@@ -1,6 +1,6 @@
 import type { Track } from '~~/layers/track/types'
 
-export function useTrackProperties(track: MaybeRefOrGetter<Track>) {
+export function useTrackValues(track: MaybeRefOrGetter<Track>) {
   const title = computed(() => toValue(track)?.common.title)
   const artist = computed(() => toValue(track)?.common.artist)
   const picture = computed(() => toValue(track)?.pictureUrl)
