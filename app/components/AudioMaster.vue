@@ -10,12 +10,11 @@ onMounted(async () => {
   const analyserNodeR = context.createAnalyser()
   const compressorNode = context.createDynamicsCompressor()
   chain.addChain('master', [gainNode, analyserNodeL, analyserNodeR, compressorNode])
-  chain.setChainActive('master')
-
-  // connect to destination
-  compressorNode.connect(context.destination)
+  chain.connectChainNodes('master')
+  const outputNode = chain.getOutputNode('master')
+  outputNode.connect(context.destination)
+  // compressorNode.connect(context.destination)
 })
-
 </script>
 
 <template>

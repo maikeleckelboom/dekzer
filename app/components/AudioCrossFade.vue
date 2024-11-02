@@ -3,7 +3,7 @@ const chain = useAudioNodeChain()
 const { getAudioContext } = useAudioContext()
 
 onMounted(async() => {
-  console.log(`%cAudioCrossFade`, 'color: pink; font-size: 16px;')
+  console.log(`%cAudioCrossFade`, 'color: hotpink; font-size: 16px;')
 
   const audioContext = await getAudioContext()
 
@@ -11,28 +11,48 @@ onMounted(async() => {
   const chainTrackA = chain.getChain('trackA')
   const chainTrackB = chain.getChain('trackB')
 
-  console.log(chainTrackA)
-  console.log(chainTrackB)
-
-  // get the source nodes
+  console.log('chainTrackA', chainTrackA.nodes)
+  console.log('chainTrackB', chainTrackB.nodes)
 
 
-  // const routerGainA = audioContext.createGain();
-  // const routerGainB = audioContext.createGain();
-  // const mergerNode = audioContext.createChannelMerger(2);
+  // TODO: Remove stereo panning and use a crossfade instead
+
+  const sourceA = chainTrackA?.nodes.at(0) as AudioNode
+  const sourceB = chainTrackB?.nodes.at(0) as AudioNode
+
+  const routerGainA = audioContext.createGain();
+  const routerGainB = audioContext.createGain();
+  const mergerNode = audioContext.createChannelMerger(2);
+
   // Connect sources
-  // sourceA.connect(routerGainA).connect(mergerNode, 0, 0);
-  // sourceB.connect(routerGainB).connect(mergerNode, 0, 1);
-  // Crossfade control (adjust gain levels)
-  // function setCrossfade(value: number): void {
-  //   routerGainA.gain.value = 1 - value;
-  //   routerGainB.gain.value = value;
-  // }
+  sourceA.connect(routerGainA).connect(mergerNode, 0, 0);
+  sourceB.connect(routerGainB).connect(mergerNode, 0, 1);
+
+  // Connect merger to destination
+  mergerNode.connect(audioContext.destination);
 })
+
+function crossfade(value: number) {
+  const crossfadeValue = value / 100
+  const gainA = Math.cos(crossfadeValue * 0.5 * Math.PI);
+  const gainB = Math.cos((1.0 - crossfadeValue) * 0.5 * Math.PI);
+
+  const routerGainA = chain.getChain('trackA')?.nodes.at(1) as GainNode
+  const routerGainB = chain.getChain('trackB')?.nodes.at(1) as GainNode
+
+  console.log('routerGainA', routerGainA.gain.value)
+  console.log('routerGainB', routerGainB.gain.value)
+  routerGainA.gain.value = gainA;
+  routerGainB.gain.value = gainB;
+}
+
+const crossfadeValue = ref(50)
+
 </script>
 
 <template>
   <div>
     <!-- -->
+    <input type="range" min="0" max="100" v-model="crossfadeValue" @input="crossfade(crossfadeValue)" />
   </div>
 </template>

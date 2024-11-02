@@ -1,7 +1,7 @@
 export interface AudioNodeChain {
   id: string
   nodes: AudioNode[]
-  active: boolean
+  connected: boolean
 }
 
 export type NodeMap = Map<string, AudioNodeChain>
@@ -10,29 +10,20 @@ export const useAudioNodeChain = createSharedComposable(() => {
   const chains: NodeMap = reactive(new Map())
 
   function addChain(id: string, nodes: AudioNode[]): void {
-    chains.set(id, { id, nodes, active: false })
+    chains.set(id, { id, nodes, connected: false })
   }
 
   function removeChain(id: string): void {
-    const chain = chains.get(id)
-    if (chain) {
-      chain.nodes.forEach((node) => node.disconnect())
-      chains.delete(id)
-    }
+    const chain = getChain(id)
+    chain.nodes.forEach((node) => node.disconnect())
+    chains.delete(id)
   }
 
-  function clearChains(): void {
-    chains.forEach((chain) => {
-      chain.nodes.forEach((node) => node.disconnect())
-    })
-    chains.clear()
-  }
+  function connectChainNodes(id: string, connected: boolean = true): void {
+    const chain = getChain(id)
+    chain.connected = connected
 
-  function setChainActive(id: string, isActive: boolean = true): void {
-    const chain = chains.get(id)
-    if (!chain) return
-    chain.active = isActive
-    if (isActive) {
+    if (connected) {
       chain.nodes.reduce((previousNode, currentNode) => {
         previousNode.connect(currentNode)
         return currentNode
@@ -42,38 +33,43 @@ export const useAudioNodeChain = createSharedComposable(() => {
     }
   }
 
-  function connectDestination(id: string, destination: AudioNode): void {
+  function getChain(id: string) {
     const chain = chains.get(id)
-    if (!chain || chain.nodes.length === 0) return
-    chain.nodes.at(-1)?.connect(destination)
+
+    if (!chain) {
+      throw new Error(`Chain with id ${id} not found`)
+    }
+
+    return chain
   }
 
-  function getChain(id: string): AudioNodeChain | undefined {
-    return chains.get(id)
-  }
-  function logActiveChains(): void {
-    chains.forEach(chain => {
-      console.log(`Chain ID: ${chain.id}, Active: ${chain.active}`);
-      chain.nodes.forEach((node, index) => {
-        console.log(`  Node ${index}: ${node.constructor.name}`);
-      });
-    });
+  function getOutputNode(id: string) {
+    const chain = getChain(id)
+
+    if (chain.nodes.length === 0) {
+      throw new Error(`Chain with id ${id} has no nodes`)
+    }
+
+    return chain.nodes.at(-1) as AudioNode
   }
 
-  function hasChain(id: string): boolean {
-    return chains.has(id)
-  }
+  function getInputNode(id: string) {
+    const chain = getChain(id)
 
+    if (chain.nodes.length === 0) {
+      throw new Error(`Chain with id ${id} has no nodes`)
+    }
+
+    return chain.nodes.at(0) as AudioNode
+  }
 
   return {
     chains,
     addChain,
-    removeChain,
-    clearChains,
-    setChainActive,
-    logActiveChains,
-    connectDestination,
     getChain,
-    hasChain
+    getOutputNode,
+    connectChainNodes,
+    getInputNode,
+    removeChain
   }
 })

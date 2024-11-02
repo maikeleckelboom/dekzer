@@ -16,18 +16,25 @@ const chain = useAudioNodeChain()
 
 onMounted(async () => {
   console.log(`%cAudioTrack - ${identifier}`, 'color: yellow; font-size: 16px;')
+
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
-  const source = context.createMediaElementSource(element)
+  const sourceNode = context.createMediaElementSource(element)
   const gainNode = context.createGain()
-  const analyserNodeL = context.createAnalyser()
-  const analyserNodeR = context.createAnalyser()
+  const analyserLNode = context.createAnalyser()
+  const analyserRNode = context.createAnalyser()
   const compressorNode = context.createDynamicsCompressor()
-  chain.addChain(identifier, [source, gainNode, analyserNodeL, analyserNodeR, compressorNode])
-  chain.setChainActive(identifier)
 
-  // connect to destination
-  compressorNode.connect(context.destination)
+  chain.addChain(identifier, [sourceNode, gainNode, analyserLNode, analyserRNode, compressorNode])
+  chain.connectChainNodes(identifier)
+
+  const masterChain = chain.getChain('master')
+
+  if (!masterChain?.nodes?.length) {
+    throw new Error('Master chain not found')
+  }
+
+  compressorNode.connect(masterChain.nodes.at(0) as AudioNode)
 })
 </script>
 

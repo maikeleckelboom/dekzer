@@ -17,32 +17,6 @@ export const useAudioContext = createSharedComposable(
 
       return context
     }
-
-    async function unlock() {
-      const context = unref(audioContext)
-      if (!context) return
-
-      if (context.state === 'suspended') {
-        await context.resume()
-      }
-
-      const buffer = context.createBuffer(1, 1, context.sampleRate)
-      const source = context.createBufferSource()
-      source.buffer = buffer
-      source.connect(context.destination)
-      source.start()
-
-      if (source.stop) {
-        source.stop()
-      } else {
-        source.onended = () => {
-          source.disconnect()
-        }
-      }
-
-      return context.resume()
-    }
-
     async function closeAudioContext(): Promise<void> {
       if (!audioContext.value) return
       if (audioContext.value.state === 'running') {
@@ -58,7 +32,30 @@ export const useAudioContext = createSharedComposable(
       audioContext,
       getAudioContext,
       closeAudioContext,
-      unlock
+      async unlock() {
+        const context = unref(audioContext)
+        if (!context) return
+
+        if (context.state === 'suspended') {
+          await context.resume()
+        }
+
+        const buffer = context.createBuffer(1, 1, context.sampleRate)
+        const source = context.createBufferSource()
+        source.buffer = buffer
+        source.connect(context.destination)
+        source.start()
+
+        if (source.stop) {
+          source.stop()
+        } else {
+          source.onended = () => {
+            source.disconnect()
+          }
+        }
+
+        return context.resume()
+      }
     }
   }
 )
