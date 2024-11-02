@@ -1,9 +1,3 @@
-// masterLimiter - For final mastering, very high compression for peak limiting
-// trackBalancer - Used on individual tracks for balance within the mix, medium compression
-// subtleControl - Soft compression for gentle dynamics control, minimal impact on transients
-// mixCohesion - Light compression for overall mix cohesion, sometimes called "glue compression"
-// drumPunch - High-ratio, fast-attack compression for drums, capturing transients
-// vocalPresence - Smooth compression tailored for vocals, preserving a natural sound
 const compressorPresets = {
   masterLimiter: {
     threshold: -3,

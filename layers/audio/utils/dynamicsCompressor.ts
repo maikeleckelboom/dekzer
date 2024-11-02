@@ -1,9 +1,15 @@
 export enum CompressorPreset {
+  /** For final mastering, very high compression for peak limiting */
   MasterLimiter,
+  /** Used on individual tracks for balance within the mix, medium compression */
   TrackBalancer,
+  /** Soft compression for gentle dynamics control, minimal impact on transients */
   SubtleControl,
+  /** Light compression for overall mix cohesion, sometimes called "glue compression" */
   MixCohesion,
+  /** High-ratio, fast-attack compression for drums, capturing transients */
   DrumPunch,
+  /** Smooth compression tailored for vocals, preserving a natural sound */
   VocalPresence
 }
 
@@ -59,7 +65,7 @@ export function getDynamicCompressorPreset(preset: CompressorPreset): Compressor
   return compressorPresets[preset];
 }
 
-export function createDynamicCompressor(
+export function createDynamicsCompressor(
   audioContext: AudioContext,
   presetKey: CompressorPresetKey
 ): DynamicsCompressorNode {

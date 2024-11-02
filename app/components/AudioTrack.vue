@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import {
+  CompressorPreset,
+  createDynamicsCompressor
+} from '~~/layers/audio/utils/dynamicsCompressor'
+
 const { getAudioContext } = useAudioContext()
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 
@@ -16,22 +21,24 @@ onMounted(async () => {
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
   const source = context.createMediaElementSource(element)
-  const gain = context.createGain()
-  const amplifier = context.createGain()
-  const crossfade = context.createGain()
-  const analyserLeft = context.createAnalyser()
-  const analyserRight = context.createAnalyser()
-  const compressor = context.createDynamicsCompressor()
 
-  chain.add(identifier, {source, gain, amplifier, analyserLeft, analyserRight, crossfade, compressor}, {
-    connect: true,
-  })
+  const gain = createGain(context)
+  const amplifier = createGain(context)
+  const crossfade = createGain(context)
+  const [analyserLeft, analyserRight] = createAnalysers(context)
+  const compressor = createDynamicsCompressor(context, CompressorPreset.TrackBalancer)
+
+  chain.add(
+    identifier,
+    { source, gain, amplifier, analyserLeft, analyserRight, crossfade, compressor },
+    {
+      connect: true
+    }
+  )
 
   const masterInputNode = chain.getInputNode('master')
   compressor.connect(masterInputNode)
 })
-
-
 </script>
 
 <template>

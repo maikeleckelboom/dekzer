@@ -1,22 +1,18 @@
 <script lang="ts" setup>
+import {
+  CompressorPreset,
+  createDynamicsCompressor
+} from '~~/layers/audio/utils/dynamicsCompressor'
+
 const chain = useAudioNodeChain()
 const { getAudioContext } = useAudioContext()
-function createAnalysers(context: AudioContext) {
-  const analyserLeft = context.createAnalyser()
-  const analyserRight = context.createAnalyser()
-  return { analyserLeft, analyserRight }
-}
-
 
 onMounted(async () => {
-  console.log(`%cAudioMaster`, 'color: red; font-size: 16px;')
-
   const context = await getAudioContext()
-  const gain = context.createGain()
-  const analyserLeft = context.createAnalyser()
-  const analyserRight = context.createAnalyser()
-  const compressor = context.createDynamicsCompressor()
-  chain.add('master', {gain, analyserLeft, analyserRight, compressor}, { connect: true })
+  const gain = createGain(context)
+  const [analyserLeft, analyserRight]  = createAnalysers(context)
+  const compressor = createDynamicsCompressor(context, CompressorPreset.MasterLimiter)
+  chain.add('master', { gain, analyserLeft, analyserRight, compressor }, { connect: true })
   const outputNode = chain.getOutputNode('master')
   outputNode.connect(context.destination)
 })
@@ -27,5 +23,3 @@ onMounted(async () => {
     <!-- -->
   </div>
 </template>
-
-<style scoped></style>

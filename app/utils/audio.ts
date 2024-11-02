@@ -26,19 +26,6 @@ export function createBufferSourceNode(
   return source
 }
 
-export function createAnalysers(
-  context: AudioContext,
-  fftSize: 1024 | 2048 | 4096 | 8192 | 16384 = 1024
-): [AnalyserNode, AnalyserNode] {
-  const analyser = context.createAnalyser()
-  const analyserR = context.createAnalyser()
-
-  analyser.fftSize = fftSize
-  analyserR.fftSize = fftSize
-
-  return [analyser, analyserR]
-}
-
 export function canPlay(
   context: MaybeRefOrGetter<AudioContext | null>,
   buffer: MaybeRefOrGetter<AudioBuffer | null>,
@@ -91,13 +78,6 @@ export function cosineFadeIn(value: number) {
 export function cosineFadeOut(value: number) {
   return Math.cos((1.0 - value) * 0.5 * Math.PI)
 }
-
-export function createGain(context: AudioContext, value: number = 1): GainNode {
-  const gain = context.createGain()
-  gain.gain.value = value
-  return gain
-}
-
 export interface DeckNodes {
   gain: GainNode
   volume: GainNode
