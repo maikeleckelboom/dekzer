@@ -5,7 +5,19 @@ import {
 } from '~~/layers/audio/utils/dynamicsCompressor'
 
 const chain = useAudioNodeChain()
-const { getAudioContext } = useAudioContext()
+const { audioContext, getAudioContext } = useAudioContext()
+
+const gainValue = shallowRef<number>(0.5)
+const gainModel = computed({
+  get: () => gainValue.value,
+  set: (value: number) => {
+    const dB = faderToDB(value, -12, 12)
+    const linearGainValue = dbToLinearGain(dB)
+    const context = unrefNotNull(audioContext)
+    const gainNode = chain.getGainNode('master')
+    gainNode.gain.setValueAtTime(linearGainValue, context.currentTime)
+  }
+})
 
 onMounted(async () => {
   const context = await getAudioContext()
@@ -20,6 +32,11 @@ onMounted(async () => {
 
 <template>
   <div>
-    <!-- -->
+    <input
+      v-model="gainModel"
+      max="1"
+      min="0"
+      step="0.01"
+      type="range" />
   </div>
 </template>

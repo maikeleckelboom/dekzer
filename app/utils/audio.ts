@@ -62,14 +62,6 @@ export async function getAnalyzedTempo(
   return await analyze(buffer, options)
 }
 
-export function faderToDB(value: number, minDB: number, maxDB: number): number {
-  const normalizedValue = (value - 0.5) * 2
-  return (normalizedValue * (maxDB - minDB)) / 2
-}
-
-export function dbToLinearGain(db: number): number {
-  return Math.pow(10, db / 20)
-}
 
 export function cosineFadeIn(value: number) {
   return Math.cos(value * 0.5 * Math.PI)

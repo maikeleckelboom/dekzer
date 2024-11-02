@@ -22,11 +22,11 @@ const compressorPresets = {
     knee: 0
   },
   [CompressorPreset.TrackBalancer]: {
-    threshold: -6,
+    threshold: -3,
     ratio: 4,
-    attack: 0.005,
-    release: 0.1,
-    knee: 0
+    attack: 0.02,
+    release: 0.25,
+    knee: 2
   },
   [CompressorPreset.SubtleControl]: {
     threshold: -12,

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { getAudioContext } = useAudioContext()
+const { audioContext, getAudioContext } = useAudioContext()
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 
 const {
@@ -35,12 +35,15 @@ onMounted(async () => {
   compressor.connect(masterInputNode)
 })
 
-const gainValue = shallowRef<number>(1)
+const gainValue = shallowRef<number>(0.5)
 const gainModel = computed({
   get: () => gainValue.value,
-  set: (value: number) => {
-    const gain = chain.getGainNode(identifier)
-    gain.gain.value = value
+  set: (inputValue: number) => {
+    const dB = faderToDB(inputValue, -24, 24)
+    const linearGainValue = dbToLinearGain(dB)
+    const context = unrefNotNull(audioContext)
+    const gainNode = chain.getGainNode(identifier)
+    gainNode.gain.setValueAtTime(linearGainValue, context.currentTime)
   }
 })
 
@@ -66,7 +69,9 @@ const amplifierModel = computed({
       <div>
         <div class="flex items-center gap-1">
           <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold">Volume</span>
+          <span class="text-xs font-bold">
+            Gain
+          </span>
         </div>
         <input
           v-model="gainModel"
@@ -79,7 +84,9 @@ const amplifierModel = computed({
       <div>
         <div class="flex items-center gap-1">
           <IconVolume2 class="size-5" />
-          <span class="text-xs font-bold">Amplifier</span>
+          <span class="text-xs font-bold">
+            Volume
+          </span>
         </div>
         <input
           v-model="amplifierModel"

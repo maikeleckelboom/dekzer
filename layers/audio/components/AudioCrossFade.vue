@@ -2,9 +2,8 @@
 const chain = useAudioNodeChain()
 
 function crossfade(value: number) {
-  const crossfadeValue = value
-  const gainA = Math.cos(crossfadeValue * 0.5 * Math.PI)
-  const gainB = Math.cos((1.0 - crossfadeValue) * 0.5 * Math.PI)
+  const gainA = Math.cos(value * 0.5 * Math.PI)
+  const gainB = Math.cos((1.0 - value) * 0.5 * Math.PI)
 
   const trackAGain = chain.getCrossfadeGainNode('trackA')
   const trackBGain = chain.getCrossfadeGainNode('trackB')
