@@ -4,7 +4,6 @@ import {
   DECK_VOLUME_DEFAULT_VALUE,
   MASTER_GAIN_DEFAULT_VALUE
 } from '~~/layers/fader/utils/constants'
-import { createLimiter } from '~/utils/limiter'
 import { cosineFadeIn, cosineFadeOut } from '~/utils/audio'
 
 /**
@@ -47,59 +46,59 @@ const trackBAnalyserR = shallowRef<AnalyserNode>()
 const crossFadeValue = shallowRef<number>(0)
 
 onMounted(() => {
-  const context = new AudioContext({ latencyHint: 'playback' })
-  audioContext.value = context
-
-  trackAGain.value = context.createGain()
-  trackAVolumeGain.value = context.createGain()
-  trackAAnalyserL.value = context.createAnalyser()
-  trackAAnalyserR.value = context.createAnalyser()
-  trackAFadeGain.value = context.createGain()
-  trackALimiter.value = createLimiter(context, 'track')
-
-  trackBGain.value = context.createGain()
-  trackBVolumeGain.value = context.createGain()
-  trackBAnalyserL.value = context.createAnalyser()
-  trackBAnalyserR.value = context.createAnalyser()
-  trackBFadeGain.value = context.createGain()
-  trackBLimiter.value = createLimiter(context, 'track')
-
-  masterGain.value = context.createGain()
-
-  connectDeck(
-    context,
-    trackASourceEl.value,
-    trackAGain.value,
-    trackAVolumeGain.value,
-    trackAAnalyserL.value,
-    trackAAnalyserR.value,
-    trackAFadeGain.value,
-    trackALimiter.value,
-    masterGain.value
-  )
-
-  connectDeck(
-    context,
-    trackBSourceEl.value,
-    trackBGain.value,
-    trackBVolumeGain.value,
-    trackBAnalyserL.value,
-    trackBAnalyserR.value,
-    trackBFadeGain.value,
-    trackBLimiter.value,
-    masterGain.value
-  )
-
-  masterLimiter.value = createLimiter(context, 'master')
-  masterGain.value.connect(masterLimiter.value)
-
-  masterAnalyserL.value = context.createAnalyser()
-  masterAnalyserR.value = context.createAnalyser()
-
-  masterGain.value.connect(masterAnalyserL.value)
-  masterGain.value.connect(masterAnalyserR.value)
-
-  masterLimiter.value.connect(context.destination)
+  // const context = new AudioContext({ latencyHint: 'playback' })
+  // audioContext.value = context
+  //
+  // trackAGain.value = context.createGain()
+  // trackAVolumeGain.value = context.createGain()
+  // trackAAnalyserL.value = context.createAnalyser()
+  // trackAAnalyserR.value = context.createAnalyser()
+  // trackAFadeGain.value = context.createGain()
+  // trackALimiter.value = createLimiter(context, 'track')
+  //
+  // trackBGain.value = context.createGain()
+  // trackBVolumeGain.value = context.createGain()
+  // trackBAnalyserL.value = context.createAnalyser()
+  // trackBAnalyserR.value = context.createAnalyser()
+  // trackBFadeGain.value = context.createGain()
+  // trackBLimiter.value = createLimiter(context, 'track')
+  //
+  // masterGain.value = context.createGain()
+  //
+  // connectDeck(
+  //   context,
+  //   trackASourceEl.value,
+  //   trackAGain.value,
+  //   trackAVolumeGain.value,
+  //   trackAAnalyserL.value,
+  //   trackAAnalyserR.value,
+  //   trackAFadeGain.value,
+  //   trackALimiter.value,
+  //   masterGain.value
+  // )
+  //
+  // connectDeck(
+  //   context,
+  //   trackBSourceEl.value,
+  //   trackBGain.value,
+  //   trackBVolumeGain.value,
+  //   trackBAnalyserL.value,
+  //   trackBAnalyserR.value,
+  //   trackBFadeGain.value,
+  //   trackBLimiter.value,
+  //   masterGain.value
+  // )
+  //
+  // masterLimiter.value = createLimiter(context, 'master')
+  // masterGain.value.connect(masterLimiter.value)
+  //
+  // masterAnalyserL.value = context.createAnalyser()
+  // masterAnalyserR.value = context.createAnalyser()
+  //
+  // masterGain.value.connect(masterAnalyserL.value)
+  // masterGain.value.connect(masterAnalyserR.value)
+  //
+  // masterLimiter.value.connect(context.destination)
 })
 
 function connectDeck(

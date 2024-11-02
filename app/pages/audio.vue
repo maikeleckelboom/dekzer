@@ -7,9 +7,9 @@ const chain = useAudioNodeChain()
 
 onMounted(()=>{
   setTimeout(()=>{
-    console.log('Audio Routing')
+    console.log('Audio Chains')
     console.log(chain.chains)
-  }, 1000)
+  }, 0)
 })
 </script>
 

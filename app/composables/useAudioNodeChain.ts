@@ -1,15 +1,16 @@
 export interface AudioNodeChain {
   id: string
-  nodes: AudioNode[]
+  nodes: Record<string, AudioNode>
   connected: boolean
 }
 
-export type NodeMap = Map<string, AudioNodeChain>
+export type AudioNodeMap = Map<string, AudioNodeChain>
 
 export const useAudioNodeChain = createSharedComposable(() => {
-  const chains: NodeMap = reactive(new Map())
 
-  function add(id: string, nodes: AudioNode[], options?: { connect: boolean }): void {
+  const chains: AudioNodeMap = reactive(new Map())
+
+  function add(id: string, nodes: Record<string, AudioNode>, options?: { connect: boolean }): void {
     const { connect = false } = options || {}
     chains.set(id, { id, nodes, connected: connect })
     if (connect) {
@@ -19,14 +20,14 @@ export const useAudioNodeChain = createSharedComposable(() => {
 
   function remove(id: string): void {
     const chain = get(id)
-    chain.nodes.forEach((node) => node.disconnect())
+    Object.values(chain.nodes).forEach((node) => node.disconnect())
     chains.delete(id)
   }
 
   function get(id: string) {
     const chain = chains.get(id)
 
-    if (!chain || !chain.nodes?.length) {
+    if (!chain || !Object.keys(chain.nodes).length) {
       throw new Error(`Chain with id ${id} not found`)
     }
 
@@ -36,50 +37,48 @@ export const useAudioNodeChain = createSharedComposable(() => {
   function getOutputNode(id: string) {
     const chain = get(id)
 
-    if (chain.nodes.length === 0) {
+    if (Object.keys(chain.nodes).length === 0) {
       throw new Error(`Chain with id ${id} has no nodes`)
     }
 
-    return chain.nodes.at(-1) as AudioNode
+    return Object.values(chain.nodes).at(-1) as AudioNode
   }
 
   function getInputNode(id: string) {
     const chain = get(id)
 
-    if (chain.nodes.length === 0) {
+    if (Object.keys(chain.nodes).length === 0) {
       throw new Error(`Chain with id ${id} has no nodes`)
     }
 
-    return chain.nodes.at(0) as AudioNode
+    return Object.values(chain.nodes).at(0) as AudioNode
   }
 
   function getCrossfadeGain(id: string) {
     const chain = get(id)
-    return chain.nodes.at(4) as GainNode
+    return chain.nodes.crossfade as GainNode
   }
 
-  function connectNodes(id: string, connected: boolean = true): void {
+  function connectNodes(id: string) {
     const chain = get(id)
-    chain.connected = connected
+    const chainNodes = Object.values(chain.nodes)
 
-    if (connected) {
-      chain.nodes.reduce((previousNode, currentNode) => {
-        previousNode.connect(currentNode)
-        return currentNode
-      })
-    } else {
-      chain.nodes.forEach((node) => node.disconnect())
-    }
+    chainNodes.forEach((node, index) => {
+      if (index < chainNodes.length - 1) {
+        node.connect(chainNodes.at(index + 1) as AudioNode)
+      }
+    })
+
+    chain.connected = true
   }
 
   return {
-    chains,
+    chains: readonly(chains),
     add,
-    get,
-    connectNodes,
-    inputNode: getInputNode,
-    outputNode: getOutputNode,
-    getCrossfadeGain,
     remove,
+    get,
+    getOutputNode,
+    getInputNode,
+    getCrossfadeGain,
   }
 })

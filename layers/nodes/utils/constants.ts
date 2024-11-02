@@ -4,7 +4,7 @@
 // mixCohesion - Light compression for overall mix cohesion, sometimes called "glue compression"
 // drumPunch - High-ratio, fast-attack compression for drums, capturing transients
 // vocalPresence - Smooth compression tailored for vocals, preserving a natural sound
-const CompressionLevelPresets = {
+const compressorPresets = {
   masterLimiter: {
     threshold: -3,
     ratio: 10,
@@ -49,9 +49,9 @@ const CompressionLevelPresets = {
   }
 } as const
 
-export type CompressionLevelPresetKey = keyof typeof CompressionLevelPresets
-export type CompressionLevelPreset = (typeof CompressionLevelPresets)[CompressionLevelPresetKey]
+export type CompressorPresetKey = keyof typeof compressorPresets
+export type CompressorPresetConfig = (typeof compressorPresets)[CompressorPresetKey]
 
-export function getCompressionLevelPreset(level: CompressionLevelPresetKey): CompressionLevelPreset {
-  return CompressionLevelPresets[level]
+export function getDynamicCompressorPreset(presetKey: CompressorPresetKey): CompressorPresetConfig {
+  return compressorPresets[presetKey]
 }

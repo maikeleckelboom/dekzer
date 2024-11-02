@@ -1,5 +1,4 @@
 import { analyze } from 'web-audio-beat-detector'
-import { createLimiter } from './limiter'
 
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
   const response = await fetch(url, { headers: { ResponseType: 'stream' } })
@@ -91,16 +90,6 @@ export function cosineFadeIn(value: number) {
 
 export function cosineFadeOut(value: number) {
   return Math.cos((1.0 - value) * 0.5 * Math.PI)
-}
-
-export function createDeckNodes(context: AudioContext): DeckNodes {
-  return {
-    gain: createGain(context),
-    volume: createGain(context),
-    mixer: createGain(context, 0),
-    limiter: createLimiter(context, 'track'),
-    analysers: createAnalysers(context)
-  }
 }
 
 export function createGain(context: AudioContext, value: number = 1): GainNode {

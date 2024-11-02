@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-import { unrefNotNull } from '~/utils/resolveRef'
-import { capitalize } from 'vue'
-
 const { getAudioContext } = useAudioContext()
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 
@@ -14,35 +11,27 @@ const {
 }>()
 
 const chain = useAudioNodeChain()
-// const chain2 = useAudioNodeChain2()
 
 onMounted(async () => {
-  console.log(`%c${capitalize(identifier)}`, 'color: yellow; font-size: 16px;')
-
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
   const source = context.createMediaElementSource(element)
   const gain = context.createGain()
+  const amplifier = context.createGain()
   const crossfade = context.createGain()
   const analyserLeft = context.createAnalyser()
   const analyserRight = context.createAnalyser()
   const compressor = context.createDynamicsCompressor()
 
-  chain.add(identifier, [source, gain, analyserLeft, analyserRight, crossfade, compressor], {
-    connect: true
+  chain.add(identifier, {source, gain, amplifier, analyserLeft, analyserRight, crossfade, compressor}, {
+    connect: true,
   })
 
-  // chain2.add(
-  //   identifier,
-  //   { source, gain, analyserLeft, analyserRight, crossfade, compressor },
-  //   {
-  //     connect: true
-  //   }
-  // )
-
-  const masterInputNode = chain.inputNode('master')
+  const masterInputNode = chain.getInputNode('master')
   compressor.connect(masterInputNode)
 })
+
+
 </script>
 
 <template>
