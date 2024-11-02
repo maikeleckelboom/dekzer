@@ -2,6 +2,7 @@
 const chain = useAudioNodeChain()
 const { getAudioContext } = useAudioContext()
 
+
 onMounted(async() => {
   console.log(`%cAudioCrossFade`, 'color: hotpink; font-size: 16px;')
 
@@ -11,25 +12,16 @@ onMounted(async() => {
   const chainTrackA = chain.getChain('trackA')
   const chainTrackB = chain.getChain('trackB')
 
-  console.log('chainTrackA', chainTrackA.nodes)
-  console.log('chainTrackB', chainTrackB.nodes)
-
-
-  // TODO: Remove stereo panning and use a crossfade instead
-
   const sourceA = chainTrackA?.nodes.at(0) as AudioNode
   const sourceB = chainTrackB?.nodes.at(0) as AudioNode
 
-  const routerGainA = audioContext.createGain();
-  const routerGainB = audioContext.createGain();
-  const mergerNode = audioContext.createChannelMerger(2);
+  console.log('sourceA', sourceA, 'sourceB', sourceB)
 
-  // Connect sources
-  sourceA.connect(routerGainA).connect(mergerNode, 0, 0);
-  sourceB.connect(routerGainB).connect(mergerNode, 0, 1);
+  const trackACrossfadeNode = chainTrackA?.nodes.at(4) as GainNode
+  const trackBCrossfadeNode = chainTrackB?.nodes.at(4) as GainNode
 
-  // Connect merger to destination
-  mergerNode.connect(audioContext.destination);
+  console.log('trackACrossfadeNode', trackACrossfadeNode, 'trackBCrossfadeNode', trackBCrossfadeNode)
+
 })
 
 function crossfade(value: number) {
@@ -37,8 +29,8 @@ function crossfade(value: number) {
   const gainA = Math.cos(crossfadeValue * 0.5 * Math.PI);
   const gainB = Math.cos((1.0 - crossfadeValue) * 0.5 * Math.PI);
 
-  const routerGainA = chain.getChain('trackA')?.nodes.at(1) as GainNode
-  const routerGainB = chain.getChain('trackB')?.nodes.at(1) as GainNode
+  const routerGainA = chain.getChain('trackA')?.nodes.at(4) as GainNode
+  const routerGainB = chain.getChain('trackB')?.nodes.at(4) as GainNode
 
   console.log('routerGainA', routerGainA.gain.value)
   console.log('routerGainB', routerGainB.gain.value)

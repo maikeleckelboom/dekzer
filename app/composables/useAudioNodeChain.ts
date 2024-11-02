@@ -36,7 +36,7 @@ export const useAudioNodeChain = createSharedComposable(() => {
   function getChain(id: string) {
     const chain = chains.get(id)
 
-    if (!chain) {
+    if (!chain || !chain.nodes?.length) {
       throw new Error(`Chain with id ${id} not found`)
     }
 

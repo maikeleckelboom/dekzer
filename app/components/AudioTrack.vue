@@ -19,22 +19,19 @@ onMounted(async () => {
 
   const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
-  const sourceNode = context.createMediaElementSource(element)
-  const gainNode = context.createGain()
-  const analyserLNode = context.createAnalyser()
-  const analyserRNode = context.createAnalyser()
-  const compressorNode = context.createDynamicsCompressor()
+  const source = context.createMediaElementSource(element)
+  const gain = context.createGain()
+  const crossfade = context.createGain()
+  const analyserLeft = context.createAnalyser()
+  const analyserRight = context.createAnalyser()
+  const compressor = context.createDynamicsCompressor()
 
-  chain.addChain(identifier, [sourceNode, gainNode, analyserLNode, analyserRNode, compressorNode])
+  chain.addChain(identifier, [source, gain,  analyserLeft, analyserRight, crossfade, compressor])
   chain.connectChainNodes(identifier)
 
   const masterChain = chain.getChain('master')
 
-  if (!masterChain?.nodes?.length) {
-    throw new Error('Master chain not found')
-  }
-
-  compressorNode.connect(masterChain.nodes.at(0) as AudioNode)
+  compressor.connect(masterChain.nodes.at(0) as AudioNode)
 })
 </script>
 
