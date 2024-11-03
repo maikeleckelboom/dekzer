@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import AudioCrossFaderBox from '~~/layers/audio/components/container/AudioCrossFadeBox.vue'
+
 const chain = useAudioNodeChain()
 
 function crossfade(value: number) {
@@ -13,11 +15,7 @@ const crossfadeValue = ref<number>(0.5)
 </script>
 
 <template>
-  <div class="grid grid-cols-[auto,1fr,auto] gap-2 py-2">
-    <div class="text-muted-foreground flex items-center gap-1">
-      <IconChevronLeft class="size-5" />
-      <span class="text-xs font-bold">A</span>
-    </div>
+  <AudioCrossFaderBox>
     <input
       v-model="crossfadeValue"
       max="1"
@@ -25,9 +23,5 @@ const crossfadeValue = ref<number>(0.5)
       step="0.01"
       type="range"
       @input="crossfade(crossfadeValue)" />
-    <div class="text-muted-foreground flex items-center gap-2">
-      <span class="text-xs font-bold">B</span>
-      <IconChevronRight class="size-5" />
-    </div>
-  </div>
+  </AudioCrossFaderBox>
 </template>

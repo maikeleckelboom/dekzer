@@ -5,23 +5,24 @@ export enum CompressorPreset {
   SubtleControl /** Light compression for overall mix cohesion, sometimes called "glue compression" */,
   MixCohesion /** High-ratio, fast-attack compression for drums, capturing transients */,
   DrumPunch /** Smooth compression tailored for vocals, preserving a natural sound */,
-  VocalPresence
+  VocalPresence,
+  None
 }
 
 const compressorPresets = {
   [CompressorPreset.MasterLimiter]: {
-    threshold: -1,
-    ratio: 6,
+    threshold: -6,
+    ratio: 20,
     attack: 0.01,
-    release: 0.3,
-    knee: 1
+    release: 0.1,
+    knee: 0
   },
   [CompressorPreset.TrackBalancer]: {
-    threshold: -6,
-    ratio: 3,
-    attack: 0.01,
+    threshold: -3,
+    ratio: 2,
+    attack: 0.05,
     release: 0.2,
-    knee: 3
+    knee: 0
   },
   [CompressorPreset.SubtleControl]: {
     threshold: -10,
@@ -50,6 +51,13 @@ const compressorPresets = {
     attack: 0.02,
     release: 0.25,
     knee: 2
+  },
+  [CompressorPreset.None]: {
+    threshold: -100,
+    ratio: 1,
+    attack: 0.01,
+    release: 0.1,
+    knee: 0
   }
 } as const
 

@@ -22,10 +22,6 @@ const modelValue = ref<number>(100)
         </FaderTrack>
         <FaderHandle :translucent="false" />
       </FaderRoot>
-      <span
-        class="text-muted-foreground text-[10px] font-semibold tabular-nums leading-tight">
-        TEMPO
-      </span>
     </div>
   </div>
 </template>

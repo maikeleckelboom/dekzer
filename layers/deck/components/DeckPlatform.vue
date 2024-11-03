@@ -2,7 +2,6 @@
 import type { DeckRootProps } from '~~/layers/deck/components/DeckRoot.vue'
 import { parseWebStream } from 'music-metadata'
 import type { Deck } from '~~/layers/deck/stores/deck'
-import { useAudioLevelAnalyser } from '~/composables/useAudioLevelAnalyser'
 import VirtualDeck from '~~/layers/virtual-deck/components/VirtualDeck.vue'
 import { guess } from 'web-audio-beat-detector'
 
@@ -26,8 +25,6 @@ const sourceNode = shallowRef<AudioBufferSourceNode>()
 const analyserNodes = shallowRef<AnalyserNode[]>([])
 
 const { audioContext, getAudioContext } = useAudioContext()
-
-const audioAnalyser = useAudioLevelAnalyser(analyserNodes)
 
 function initializeAudioSourceNode(
   context: AudioContext,
@@ -76,9 +73,9 @@ function playAudioBufferSource(
     source.start(0, offsetStart, duration)
     source.onended = () => {
       cleanupSourceNode(source)
-      audioAnalyser.stop()
+      // audioAnalyser.stop()
     }
-    audioAnalyser.start()
+    // audioAnalyser.start()
     startPlaying()
   }
 }
@@ -170,7 +167,6 @@ async function createAndLoadTrack(file: File) {
 }
 
 const duration = computedEager(() => track.value?.format.duration)
-const nativeBpm = computedEager(() => track.value?.common.bpm)
 
 const pitchRange = shallowRef<8 | 16 | 50>(8)
 const pitchDelta = shallowRef<number>(0)

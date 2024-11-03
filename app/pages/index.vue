@@ -27,32 +27,7 @@ const { tracks } = storeToRefs(trackStore)
         :key="deck.id"
         :deck="deck" />
     </div>
-    <div class="flex flex-row justify-center">
-      <div class="text-muted flex flex-nowrap items-center gap-1.5 p-2">
-        <IconChevronLeft class="size-6" />
-        <span class="font-bold tabular-nums leading-none text-muted-foreground text-sm">A</span>
-      </div>
-      <FaderRoot
-        v-model="pannerValue"
-        :max="1"
-        :min="-1"
-        class="md:w-52">
-        <FaderTrack>
-          <FaderMarkerRail
-            :nth="2"
-            :stripe-count="5" />
-          <FaderGroove />
-          <FaderMarkerRail
-            :nth="2"
-            :stripe-count="5" />
-        </FaderTrack>
-        <FaderHandle :translucent="false" />
-      </FaderRoot>
-      <div class="text-muted flex flex-nowrap items-center gap-1.5 p-2">
-        <span class="font-bold tabular-nums leading-none text-muted-foreground text-sm">B</span>
-        <IconChevronRight class="size-6" />
-      </div>
-    </div>
+
     <div class="flex flex-col">
       <!-- Tracks Table/List -->
     </div>

@@ -14,17 +14,17 @@ const slots = defineSlots<{
       <slot name="northwest" />
       <!-- Key lock -->
     </div>
-    <div class="col-start-3 grid place-items-center">
-      <slot name="northeast" />
-      <!-- Slip Mode -->
-    </div>
     <div class="col-start-3 row-start-3 grid place-items-center">
       <slot name="southeast" />
       <!-- Eject -->
     </div>
+    <div class="col-start-3 grid place-items-center">
+      <slot name="northeast" />
+      <!-- Slip Mode -->
+    </div>
     <div class="row-start-3 grid place-items-center">
       <slot name="southwest" />
-      <!-- ? -->
+      <!-- Play/Pause -->
     </div>
     <div class="col-start-2 row-start-2 grid place-items-center">
       <slot />

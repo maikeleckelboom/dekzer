@@ -1,17 +1,19 @@
+<script lang="ts">
+export const MasterIdentifier: string = 'master' as const
+</script>
+
 <script lang="ts" setup>
 const chain = useAudioNodeChain()
 
 const { audioContext, getAudioContext } = useAudioContext()
-
-const identifier: string = 'master' as const
 
 onMounted(async () => {
   const context = await getAudioContext()
   const gain = createGain(context)
   const [analyserLeft, analyserRight] = createAnalysers(context)
   const compressor = createDynamicsCompressor(context, CompressorPreset.MasterLimiter)
-  chain.add(identifier, { gain, analyserLeft, analyserRight, compressor }, { connect: true })
-  const outputNode = chain.getOutputNode(identifier)
+  chain.add(MasterIdentifier, { gain, analyserLeft, analyserRight, compressor }, { connect: true })
+  const outputNode = chain.getOutputNode(MasterIdentifier)
   outputNode.connect(context.destination)
 })
 
@@ -22,33 +24,31 @@ const gainModel = computed({
     const dB = faderToDB(value, -12, 12)
     const linearGainValue = dbToLinearGain(dB)
     const context = unrefNotNull(audioContext)
-    const gainNode = chain.getGainNode(identifier)
+    const gainNode = chain.getGainNode(MasterIdentifier)
     gainNode.gain.setValueAtTime(linearGainValue, context.currentTime)
     gainValue.value = value
   }
 })
 
 const analysers = computed(() => {
-  if (!chain.chains.has(identifier)) return []
-  return chain.getAnalyserNodes(identifier)
+  if (!chain.chains.has(MasterIdentifier)) return []
+  return chain.getAnalyserNodes(MasterIdentifier)
 })
-const amplitudeMeter = useAudioAnalyser(analysers)
 
-// todo: Start the amplitude meter when is playing
+const audioAnalyser = useAudioAnalyser(analysers)
+
+// todo: run the audio analyser only when playing
 watch(analysers, (payload) => {
   if (payload.length > 0) {
-    amplitudeMeter.start()
+    audioAnalyser.start()
   } else {
-    amplitudeMeter.stop()
+    audioAnalyser.stop()
   }
 })
 </script>
 
 <template>
   <div>
-    <div class="col-span-3 flex w-full max-w-64 text-start">
-      <pre>{{ amplitudeMeter }}</pre>
-    </div>
     <input
       v-model="gainModel"
       max="1"

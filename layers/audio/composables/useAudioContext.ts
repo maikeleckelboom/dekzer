@@ -11,15 +11,17 @@ export const useAudioContext = createSharedComposable(
 
       const context = unref(audioContext)
 
-      if(!context) throw new Error('AudioContext is not initialized')
+      if (!context || context.state === 'closed') {
+        throw new Error('AudioContext is closed')
+      }
 
-      // && navigator.userActivation.hasBeenActive
-      if (context.state === 'suspended' && 'resume' in context) {
+      if (navigator.userActivation.hasBeenActive && context.state === 'suspended') {
         await context.resume()
       }
 
       return context
     }
+
     async function closeAudioContext(): Promise<void> {
       if (!audioContext.value) return
       if (audioContext.value.state === 'running') {
@@ -29,24 +31,13 @@ export const useAudioContext = createSharedComposable(
     }
 
     tryOnMounted(getAudioContext)
+
     onUnmounted(closeAudioContext)
 
     return {
       audioContext,
       getAudioContext,
-      closeAudioContext,
-      async unlock() {
-        const context = await getAudioContext()
-        if (context.state === 'suspended') {
-          await context.resume()
-        }
-        const buffer = context.createBuffer(1, 1, 22050)
-        const source = context.createBufferSource()
-        source.buffer = buffer
-        source.connect(context.destination)
-        source.start()
-        source.stop()
-      }
+      closeAudioContext
     }
   }
 )

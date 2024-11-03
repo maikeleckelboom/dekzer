@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useAudioAnalyser } from '~~/layers/audio/composables/useAudioAnalyser'
+import { MasterIdentifier } from './AudioMaster.vue'
 
 const { identifier, url } = defineProps<{ identifier: string; url: string }>()
 
@@ -16,16 +16,28 @@ onMounted(async () => {
   const gain = createGain(context)
   const fader = createGain(context)
   const crossfade = createGain(context)
+  const [filterLow, filterMid, filterHigh] = createEQFilters(context)
   const [analyserLeft, analyserRight] = createAnalysers(context, { fftSize: 2048 })
-  const compressor = createDynamicsCompressor(context, CompressorPreset.TrackBalancer)
+  const compressor = createDynamicsCompressor(context, CompressorPreset.None)
 
   chain.add(
     identifier,
-    { source, gain, fader, analyserLeft, analyserRight, crossfade, compressor },
+    {
+      source,
+      gain,
+      filterLow,
+      filterMid,
+      filterHigh,
+      fader,
+      analyserLeft,
+      analyserRight,
+      crossfade,
+      compressor
+    },
     { connect: true }
   )
 
-  const masterInputNode = chain.getInputNode('master')
+  const masterInputNode = chain.getInputNode(MasterIdentifier)
   compressor.connect(masterInputNode)
 })
 
@@ -54,49 +66,45 @@ const faderModel = computed({
 })
 
 const analysers = computed(() => chain.getAnalyserNodes(identifier))
-const amplitudeMeter = useAudioAnalyser(analysers)
+const audioAnalyser = useAudioAnalyser(analysers)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-xl">
+  <div class="mx-auto flex w-full max-w-xl flex-col items-center gap-2">
     <audio
       ref="audioElement"
       :src="url"
       controls
       @pause="
         () => {
-          amplitudeMeter.stop()
+          audioAnalyser.stop()
         }
       "
       @play="
         () => {
-          amplitudeMeter.start()
+          audioAnalyser.start()
         }
       " />
-    <div class="grid grid-cols-3 gap-2">
+    <div class="grid grid-cols-2 gap-2">
       <div>
-        <span class="text-xs font-bold"> Gain </span>
-
         <input
           v-model="gainModel"
           aria-orientation="vertical"
           max="1"
           min="0"
+          title="Gain Adjust"
           step="0.01"
           type="range" />
       </div>
       <div>
-        <span class="text-xs font-bold"> Fader </span>
         <input
           v-model="faderModel"
           aria-orientation="vertical"
           max="1"
+          title="Channel Fader"
           min="0"
           step="0.01"
           type="range" />
-      </div>
-      <div class="relative w-64 overflow-clip">
-        <pre>{{ amplitudeMeter }}</pre>
       </div>
     </div>
   </div>
