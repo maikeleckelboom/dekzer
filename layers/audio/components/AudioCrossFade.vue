@@ -3,7 +3,7 @@ import AudioCrossFaderBox from '~~/layers/audio/components/container/AudioCrossF
 
 const chain = useAudioNodeChain()
 
-function crossfade(value: number) {
+function onCrossfade(value: number) {
   const trackAGain = chain.getCrossfadeNode('trackA')
   const trackBGain = chain.getCrossfadeNode('trackB')
 
@@ -22,6 +22,6 @@ const crossfadeValue = ref<number>(0.5)
       min="0"
       step="0.01"
       type="range"
-      @input="crossfade(crossfadeValue)" />
+      @input="onCrossfade(crossfadeValue)" />
   </AudioCrossFaderBox>
 </template>

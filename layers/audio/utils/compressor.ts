@@ -11,9 +11,9 @@ export enum CompressorPreset {
 
 const compressorPresets = {
   [CompressorPreset.MasterLimiter]: {
-    threshold: -6,
+    threshold: -1,
     ratio: 20,
-    attack: 0.01,
+    attack:0.01,
     release: 0.1,
     knee: 0
   },

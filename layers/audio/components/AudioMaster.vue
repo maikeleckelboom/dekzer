@@ -1,8 +1,6 @@
-<script lang="ts">
-export const MasterIdentifier: string = 'master' as const
-</script>
-
 <script lang="ts" setup>
+const MasterIdentifier: string = 'master' as const
+
 const chain = useAudioNodeChain()
 
 const { audioContext, getAudioContext } = useAudioContext()

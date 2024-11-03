@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { MasterIdentifier } from './AudioMaster.vue'
-
 const { identifier, url } = defineProps<{ identifier: string; url: string }>()
 
 const { audioContext, getAudioContext } = useAudioContext()
@@ -37,7 +35,7 @@ onMounted(async () => {
     { connect: true }
   )
 
-  const masterInputNode = chain.getInputNode(MasterIdentifier)
+  const masterInputNode = chain.getInputNode('master')
   compressor.connect(masterInputNode)
 })
 

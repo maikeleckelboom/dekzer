@@ -15,7 +15,6 @@ export function createBufferSourceNode(
   return source
 }
 
-
 export function fadeIn(context: AudioContext, node: AudioBufferSourceNode, duration: number) {
   const gainNode = context.createGain()
   gainNode.gain.setValueAtTime(0, context.currentTime)
@@ -42,18 +41,4 @@ export async function getAnalyzedTempo(
 ): Promise<number> {
   const buffer = await loadAudioBuffer(context, url)
   return await analyze(buffer, options)
-}
-
-export interface DeckNodes {
-  gain: GainNode
-  volume: GainNode
-  mixer: GainNode
-  limiter: DynamicsCompressorNode
-  analysers: [AnalyserNode, AnalyserNode]
-}
-
-export interface MasterNodes {
-  gain: GainNode
-  limiter: DynamicsCompressorNode
-  analysers: [AnalyserNode, AnalyserNode]
 }
