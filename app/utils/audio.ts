@@ -1,5 +1,10 @@
 import { analyze } from 'web-audio-beat-detector'
 
+export async function loadArrayBuffer(url: string): Promise<ArrayBuffer> {
+    const response = await fetch(url, { headers: { ResponseType: 'stream' } })
+    return await response.arrayBuffer()
+}
+
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
   const response = await fetch(url, { headers: { ResponseType: 'stream' } })
   const arrayBuffer = await response.arrayBuffer()

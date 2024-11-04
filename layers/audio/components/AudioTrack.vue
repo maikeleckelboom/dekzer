@@ -8,12 +8,13 @@ const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 const chain = useAudioNodeChain()
 
 onMounted(async () => {
-  const element = unrefNotNull(audioElement)
   const context = await getAudioContext()
+  const element = unrefNotNull(audioElement)
   const source = context.createMediaElementSource(element)
-  const gain = createGain(context)
-  const fader = createGain(context)
-  const crossfade = createGain(context)
+
+  const gain = createGain(context, {value: 0.5})
+  const fader = createGain(context, {value: 1})
+  const crossfade = createGain(context, {value: 1})
   const [filterLow, filterMid, filterHigh] = createEQFilters(context)
   const [analyserLeft, analyserRight] = createAnalysers(context, { fftSize: 2048 })
   const compressor = createDynamicsCompressor(context, CompressorPreset.None)
@@ -23,9 +24,9 @@ onMounted(async () => {
     {
       source,
       gain,
-      filterLow,
-      filterMid,
       filterHigh,
+      filterMid,
+      filterLow,
       fader,
       analyserLeft,
       analyserRight,
@@ -43,7 +44,7 @@ const gainValue = shallowRef<number>(0.5)
 const gainModel = computed({
   get: () => gainValue.value,
   set: (value: number) => {
-    const dB = faderToDB(value, -24, 24)
+    const dB = faderToDB(value, -12, 12)
     const linearGainValue = dbToLinearGain(dB)
     const context = unrefNotNull(audioContext)
     const gainNode = chain.getGainNode(identifier)
@@ -65,6 +66,22 @@ const faderModel = computed({
 
 const analysers = computed(() => chain.getAnalyserNodes(identifier))
 const audioAnalyser = useAudioAnalyser(analysers)
+
+function setPlaybackRate(rate: number) {
+  const element = unrefNotNull(audioElement)
+  element.playbackRate = rate
+}
+
+function setPreservesPitch(payload: boolean) {
+  const element = unrefNotNull(audioElement)
+  element.preservesPitch = payload
+}
+
+defineExpose({
+  audioElement,
+  setPlaybackRate,
+  setPreservesPitch
+})
 </script>
 
 <template>

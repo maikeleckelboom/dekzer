@@ -41,3 +41,11 @@ export const useAudioContext = createSharedComposable(
     }
   }
 )
+
+import type {ShallowRef} from "vue";
+
+export interface AudioElementContext {
+  audioElement: ShallowRef<HTMLAudioElement | null>
+}
+
+export const AudioElementContextKey = Symbol() as InjectionKey<AudioElementContext>
