@@ -5,6 +5,8 @@ const { audioContext, getAudioContext } = useAudioContext()
 
 const audioElement = useTemplateRef<HTMLAudioElement>('audioElement')
 
+const tempo = shallowRef<{ bpm: number; offset: number }>()
+
 const chain = useAudioNodeChain()
 
 onMounted(async () => {
@@ -12,10 +14,9 @@ onMounted(async () => {
   const element = unrefNotNull(audioElement)
   const source = context.createMediaElementSource(element)
 
-  const gain = createGain(context, {value: 0.5})
-  const fader = createGain(context, {value: 1})
-  const crossfade = createGain(context, {value: 1})
-  const [filterLow, filterMid, filterHigh] = createEQFilters(context)
+  const gain = createGain(context, { value: 0.5 })
+  const fader = createGain(context, { value: 1 })
+  const crossfade = createGain(context, { value: 1 })
   const [analyserLeft, analyserRight] = createAnalysers(context, { fftSize: 2048 })
   const compressor = createDynamicsCompressor(context, CompressorPreset.None)
 
@@ -24,9 +25,6 @@ onMounted(async () => {
     {
       source,
       gain,
-      filterHigh,
-      filterMid,
-      filterLow,
       fader,
       analyserLeft,
       analyserRight,
@@ -86,6 +84,10 @@ defineExpose({
 
 <template>
   <div class="mx-auto flex w-full max-w-xl flex-col items-center gap-2">
+    <div class="flex p-2">
+      <span class="text-lg font-bold">Tempo:</span>
+      <span class="text-lg">{{ tempo }}</span>
+    </div>
     <audio
       ref="audioElement"
       :src="url"
@@ -107,8 +109,8 @@ defineExpose({
           aria-orientation="vertical"
           max="1"
           min="0"
-          title="Gain Adjust"
           step="0.01"
+          title="Gain Adjust"
           type="range" />
       </div>
       <div>
@@ -116,9 +118,9 @@ defineExpose({
           v-model="faderModel"
           aria-orientation="vertical"
           max="1"
-          title="Channel Fader"
           min="0"
           step="0.01"
+          title="Channel Fader"
           type="range" />
       </div>
     </div>

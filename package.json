@@ -12,7 +12,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@soundtouchjs/audio-worklet": "^0.1.17",
     "nuxt": "^3.13.2",
+    "soundtouch-ts": "^1.1.1",
+    "soundtouchjs": "^0.1.30",
     "vue": "latest",
     "vue-router": "latest"
   },
@@ -24,14 +27,12 @@
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@pinia/nuxt": "^0.5.5",
     "@tanstack/vue-table": "^8.20.5",
-    "@types/d3": "^7.4.3",
     "@vue/test-utils": "latest",
     "@vueuse/math": "^11.1.0",
     "@vueuse/nuxt": "^11.1.0",
     "@vueuse/shared": "^11.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "d3": "^7.9.0",
     "music-metadata": "^10.5.0",
     "nuxt-lucide-icons": "^1.0.5",
     "pinia": "latest",

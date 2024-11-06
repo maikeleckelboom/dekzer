@@ -13,8 +13,8 @@ const compressorPresets = {
   [CompressorPreset.MasterLimiter]: {
     threshold: -1,
     ratio: 20,
-    attack:0.01,
-    release: 0.1,
+    attack: 0.01,
+    release: 0.05,
     knee: 0
   },
   [CompressorPreset.TrackBalancer]: {

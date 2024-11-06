@@ -6,8 +6,7 @@ export async function loadArrayBuffer(url: string): Promise<ArrayBuffer> {
 }
 
 export async function loadAudioBuffer(context: AudioContext, url: string): Promise<AudioBuffer> {
-  const response = await fetch(url, { headers: { ResponseType: 'stream' } })
-  const arrayBuffer = await response.arrayBuffer()
+  const arrayBuffer = await loadArrayBuffer(url)
   return await context.decodeAudioData(arrayBuffer)
 }
 
@@ -17,6 +16,16 @@ export function createBufferSourceNode(
 ): AudioBufferSourceNode {
   const source = context.createBufferSource()
   source.buffer = buffer
+  return source
+}
+export async function playSourceNode(
+  context: AudioContext,
+  buffer: AudioBuffer,
+  offset = 0,
+  duration = buffer.duration
+): Promise<AudioBufferSourceNode> {
+  const source = createBufferSourceNode(context, buffer)
+  source.start(0, offset, duration)
   return source
 }
 

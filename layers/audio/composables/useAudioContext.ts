@@ -7,15 +7,17 @@ export const useAudioContext = createSharedComposable(
     const audioContext = shallowRef<AudioContext>()
 
     async function getAudioContext(): Promise<AudioContext> {
-      audioContext.value ??= new AudioContext(options)
+      const context = audioContext.value ?? new AudioContext(options)
 
-      const context = unref(audioContext)
+      audioContext.value ??= context
 
-      if (!context || context.state === 'closed') {
-        throw new Error('AudioContext is closed')
+      if (context.state === 'closed') {
+        // eslint-disable-next-line no-console
+        console.warn('AudioContext was closed unexpectedly')
       }
 
-      if (navigator.userActivation.hasBeenActive && context.state === 'suspended') {
+      // navigator.userActivation.hasBeenActive
+      if (context.state === 'suspended') {
         await context.resume()
       }
 
@@ -41,11 +43,3 @@ export const useAudioContext = createSharedComposable(
     }
   }
 )
-
-import type {ShallowRef} from "vue";
-
-export interface AudioElementContext {
-  audioElement: ShallowRef<HTMLAudioElement | null>
-}
-
-export const AudioElementContextKey = Symbol() as InjectionKey<AudioElementContext>

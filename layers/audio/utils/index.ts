@@ -32,7 +32,9 @@ export function createGain(
 
 export function createAnalysers(
   context: AudioContext,
-  options: { fftSize: 1024 | 2048 | 4096 | 8192 | 16384 | 32768 } = { fftSize: 2048 }
+  options: {
+    fftSize: 1024 | 2048 | 4096 | 8192 | 16384 | 32768
+  } = { fftSize: 2048 }
 ): [AnalyserNode, AnalyserNode] {
   const analyserL = context.createAnalyser()
   analyserL.fftSize = options.fftSize
@@ -63,4 +65,8 @@ export function createEQFilters(
   const filterMid = createBiquadFilter(context, 'peaking')
   const filterLow = createBiquadFilter(context, 'lowshelf')
   return [filterLow, filterMid, filterHigh]
+}
+
+export async function defer(callback?: () => void, time: number = 0) {
+  return new Promise((resolve) => setTimeout(callback ? callback : resolve, time))
 }
